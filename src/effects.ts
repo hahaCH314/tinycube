@@ -141,9 +141,11 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
   // 下から昇らせる作りだと、上がりきる前に消えて何も見えなかった
   // （2026-08-10、伊波さんの「出ない」「光のぼかしみたいなのがイイ」）。
   // 画面のどこにでも湧かせて、大きくぼかす
-  const want = 26;
+  // 大きな光の丸を少なく。小さい粒をたくさん撒くと「ゴミ」に見える
+  // （2026-08-10、伊波さんの「光の丸はおおきいほうがいい。粒じゃなく」）
+  const want = 9;
   while (motes.length < want) {
-    const r = unit * (0.03 + Math.random() * 0.055);
+    const r = unit * (0.13 + Math.random() * 0.17);
     motes.push({
       x: Math.random() * W,
       y: Math.random() * H,
@@ -171,9 +173,11 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
     const t = m.age / m.life;
     const a = t < 0.25 ? t / 0.25 : t > 0.6 ? (1 - t) / 0.4 : 1;
 
+    // 中心をふわっと明るく、外へ長く伸ばす。輪郭が出ないよう途中を厚めに取る
     const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r);
-    grad.addColorStop(0,    `rgba(255, 244, 225, ${0.30 * a})`);
-    grad.addColorStop(0.35, `rgba(255, 214, 205, ${0.14 * a})`);
+    grad.addColorStop(0,    `rgba(255, 246, 230, ${0.26 * a})`);
+    grad.addColorStop(0.25, `rgba(255, 228, 212, ${0.15 * a})`);
+    grad.addColorStop(0.6,  `rgba(255, 206, 200, ${0.06 * a})`);
     grad.addColorStop(1,    'rgba(255, 200, 195, 0)');
     g.fillStyle = grad;
     g.beginPath();
