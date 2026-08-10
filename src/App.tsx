@@ -2,8 +2,8 @@ import { useState, useRef } from 'react'
 import './App.css'
 import { startRecording, type RecordHandle, type OutShape } from './recorder'
 import { FRAMES, fitsShape, loadFrame } from './frames'
-import { t, getLang, setLang, type Lang } from './i18n'
 import { fireEffect, fireTelop, type EffectId } from './effects'
+import { t, getLang, setLang } from './i18n'
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -133,7 +133,7 @@ function App() {
   // 下見の開始・停止。録らないので、音は動画そのものの出力で鳴る
   const togglePreview = async () => {
     const v = videoRef.current;
-    if (!v || !videoSrc) { alert('先に動画を読み込んでください！'); return; }
+    if (!v || !videoSrc) { alert(t('alert_load_first')); return; }
     if (isPreviewing) {
       v.pause();
       v.currentTime = 0;
@@ -166,7 +166,7 @@ function App() {
     }
 
     if (!videoRef.current || !videoSrc) {
-      alert(t('alert_no_video'));
+      alert(t('alert_load_first'));
       return;
     }
 
@@ -213,8 +213,8 @@ function App() {
           </div>
         </div>
         <div className="head-btns">
-          <button className="settings-btn" onClick={() => setShowGuide(true)}>{t('btn_guide')}</button>
-          <button className="settings-btn" onClick={() => setShowSettings(true)}>{t('btn_settings')}</button>
+          <button className="settings-btn" onClick={() => setShowGuide(true)}>{t('guide_btn')}</button>
+          <button className="settings-btn" onClick={() => setShowSettings(true)}>{t('settings_btn')}</button>
         </div>
       </header>
 
@@ -253,7 +253,7 @@ function App() {
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
             </div>
-            <p>{t('preview_empty')}</p>
+            <p>{t('upload_hint')}</p>
           </div>
         )}
         
@@ -279,14 +279,14 @@ function App() {
       <footer className="control-deck">
         <div className="effect-grid">
           {/* 一発エフェクト (Burst) */}
-          <button className="effect-btn btn-burst" onClick={() => fire('flash')}>💥 フラッシュ</button>
-          <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>⚡ グリッチ</button>
+          <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
+          <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
           
           {/* 効果音 (Sound) */}
-          <button className="effect-btn btn-sound" onClick={() => fire('bam')}>🥁 どんっ</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('ding')}>✨ きらっ</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('pon')}>🫧 ぽん</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>📢 ぶー</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('bam')}>{t('eff_bam')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('ding')}>{t('eff_ding')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('pon')}>{t('eff_pon')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>{t('eff_buzz')}</button>
           
           {/* テロップ (Telop)。言葉は設定で書き換えられる */}
           {telops.map((text, i) => text.trim() ? (
@@ -303,69 +303,56 @@ function App() {
           onClick={togglePreview}
           disabled={isRecording || !videoSrc}
         >
-          {isPreviewing ? '⏸ とめる' : '▶ 試してみる（録画無し）'}
+          {isPreviewing ? t('btn_preview_stop') : t('btn_preview')}
         </button>
         <button
           className={`record-btn big ${isRecording ? 'recording' : ''}`}
           onClick={toggleRecording}
         >
           <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'currentColor' }}></div>
-          {isRecording ? '■ 停止' : '● 録画スタート'}
+          {isRecording ? t('btn_stop') : t('btn_record')}
         </button>
       </footer>
 
       {showGuide && (
         <div className="sheet-backdrop" onClick={closeGuide}>
           <div className="sheet guide" onClick={e => e.stopPropagation()}>
-            <div className="sheet-head"><span>tinyCUBE の使い方</span></div>
+            <div className="sheet-head"><span>{t('guide_title')}</span></div>
 
             <ol className="guide-steps">
-              <li><b>動画を読み込む</b><br />すでに撮ってある動画に、声とエフェクトを乗せる道具です。</li>
-              <li><b>録画スタートを押して喋る</b><br />動画が流れます。マイクの許可を聞かれたら「許可」を押してください。</li>
-              <li><b>もう一度押すと止まります</b><br />そのまま保存できます。iPhone は共有シートから「ビデオを保存」を選んでください。</li>
+              <li><b>{t('guide_step1_title')}</b><br />{t('guide_step1_desc')}</li>
+              <li><b>{t('guide_step2_title')}</b><br />{t('guide_step2_desc')}</li>
+              <li><b>{t('guide_step3_title')}</b><br />{t('guide_step3_desc')}</li>
             </ol>
 
             <div className="guide-warn">
-              <h3>⚠ 撮る前に、必ず確認してください</h3>
+              <h3>{t('guide_warn_title')}</h3>
               <ul>
-                <li><b>他人の個人情報を映さない。</b>読み込んだ動画に映ったチャット、名前、住所、通知はすべて残ります。一度公開した動画は取り消せません。</li>
-                <li><b>他人の作品を無断で使わない。</b>ゲーム映像、動画、音楽、画像には権利者がいます。投稿や収益化の可否は、各権利者の規約に従ってください。</li>
-                <li><b>人を映す・録音するときは、相手の同意を得てください。</b>マイクの内容は実際に記録されます。</li>
-                <li><b>人を貶める目的、誤解させる目的で使わないでください。</b></li>
+                <li><b>{t('guide_warn1_title')}</b> {t('guide_warn1_desc')}</li>
+                <li><b>{t('guide_warn2_title')}</b> {t('guide_warn2_desc')}</li>
+                <li><b>{t('guide_warn3_title')}</b> {t('guide_warn3_desc')}</li>
+                <li><b>{t('guide_warn4_title')}</b></li>
               </ul>
-              <p className="guide-note">
-                枠の絵は本来 CMCUBE（PC版）のもので、16:9 で描かれています。
-                縦（9:16）で使うと<b>左右が欠けます</b>。それでも使えるようにしてあるので、
-                欠けるものには一覧で印を出しています。
-              </p>
-              <p className="guide-note">
-                tinyCUBE がロイヤリティフリーを保証するのは、あなた自身が作った部分だけです。
-                読み込んだ素材の権利処理は利用者の責任になります。
-              </p>
+              <p className="guide-note">{t('guide_note1')}</p>
+              <p className="guide-note">{t('guide_note2')}</p>
             </div>
 
-            {/* CMCUBE の紹介。tinyCUBE は「撮ったものに乗せる」道具なので、
-                「撮りながら演出したい人」の行き先を出しておく。
-                製品どうしを直リンクしない約束があるので、リンクは張らず名前だけ。
-                探すときの手がかりとして、会社の名乗りを添えている */}
             <div className="promo">
               <div className="promo-head">
-                <span className="promo-badge">PC版</span>
+                <span className="promo-badge">{t('guide_promo_badge')}</span>
                 <b>CMCUBE</b>
               </div>
-              <p className="promo-lead">撮りながら、演出する。</p>
+              <p className="promo-lead">{t('guide_promo_lead')}</p>
               <ul className="promo-points">
-                <li>ゲーム画面を<b>そのまま録画</b>。読み込む手間がありません</li>
-                <li>遊びながら<b>キーひとつ</b>でテロップ・効果音・エフェクト</li>
-                <li>止めた瞬間に<b>完成</b>。あとから編集しません</li>
-                <li>枠は<b>30種</b>。この tinyCUBE の枠は、そこから来ています</li>
+                <li>{t('guide_promo_p1')}</li>
+                <li>{t('guide_promo_p2')}</li>
+                <li>{t('guide_promo_p3')}</li>
+                <li>{t('guide_promo_p4')}</li>
               </ul>
-              <p className="promo-foot">
-                Windows / 買い切り。<b>CUBICENGINEstudio</b> で検索すると見つかります。
-              </p>
+              <p className="promo-foot">{t('guide_promo_foot')}</p>
             </div>
 
-            <button className="sheet-btn" onClick={closeGuide}>確認しました。はじめる</button>
+            <button className="sheet-btn" onClick={closeGuide}>{t('guide_ok')}</button>
           </div>
         </div>
       )}
@@ -375,31 +362,41 @@ function App() {
         <div className="sheet-backdrop" onClick={() => setShowSettings(false)}>
           <div className="sheet" onClick={e => e.stopPropagation()}>
             <div className="sheet-head">
-              <span>⚙ 設定</span>
-              <button onClick={() => setShowSettings(false)}>閉じる</button>
+              <span>{t('setting_title')}</span>
+              <button onClick={() => setShowSettings(false)}>{t('setting_close')}</button>
             </div>
 
-            <h3>動画</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Language / 言語</span>
+              <select 
+                style={{ background: '#0b1021', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '4px 8px', borderRadius: 4 }}
+                value={getLang()} 
+                onChange={(e) => {
+                  setLang(e.target.value as 'ja' | 'en');
+                  window.location.reload();
+                }}
+              >
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+
+            <h3>{t('setting_video')}</h3>
             <button className="sheet-btn" onClick={() => fileInputRef.current?.click()}>
-              {videoSrc ? '動画を選び直す' : '動画を読み込む'}
+              {videoSrc ? t('setting_video_change') : t('setting_video_load')}
             </button>
 
-            <h3>書き出しの形</h3>
+            <h3>{t('setting_shape')}</h3>
             {srcIsWide && (
-              <p className="sheet-note">
-                読み込んだ動画は<b>横長</b>です。スマホを横向きにすると大きく見えます。
-              </p>
+              <p className="sheet-note">{t('setting_shape_wide_note')}</p>
             )}
             <div className="shape-switch">
-              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => setShape('landscape')}>横（16:9）</button>
-              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => setShape('portrait')}>縦（9:16）</button>
+              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => setShape('landscape')}>{t('setting_shape_land')}</button>
+              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => setShape('portrait')}>{t('setting_shape_port')}</button>
             </div>
 
-            <h3>テロップの言葉</h3>
-            <p className="sheet-note">
-              下のボタンに出る言葉です。書き換えると、そのまま動画に出ます。
-              <b>空にすると、そのボタンは出なくなります。</b>
-            </p>
+            <h3>{t('setting_telop')}</h3>
+            <p className="sheet-note">{t('setting_telop_note')}</p>
             <div className="telop-inputs">
               {telops.map((text, i) => (
                 <input
@@ -413,9 +410,9 @@ function App() {
               ))}
             </div>
 
-            <h3>枠</h3>
+            <h3>{t('setting_frame')}</h3>
             <div className="frame-picker">
-              <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>なし</button>
+              <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
               {FRAMES.map(f => (
                 <button
                   key={f.id}
@@ -425,7 +422,7 @@ function App() {
                 >
                   <img src={f.file} alt={f.name} />
                   <span>{f.name}</span>
-                  {!fitsShape(f, shape) && <em className="crop-mark">端が欠けます</em>}
+                  {!fitsShape(f, shape) && <em className="crop-mark">{t('frame_crop')}</em>}
                 </button>
               ))}
             </div>
