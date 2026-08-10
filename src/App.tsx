@@ -22,7 +22,7 @@ function App() {
     shape: OutShape;
     frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
     watermark: string | null;
-  }>({ video: null, shape: 'portrait', frame: null, watermark: 'tinyCUBE' });
+  }>({ video: null, shape: 'landscape', frame: null, watermark: 'tinyCUBE' });
   
   // ボタンから呼ばれる口。中身は effects.ts が持っている。
   // 録画していないときに押しても鳴る（本番前に手応えを確かめられるように）。
@@ -65,7 +65,7 @@ function App() {
   const [frameId, setFrameId] = useState<string | null>(null);
   // 読み込んだ動画が横長かどうか。16:9 を 9:16 へ詰めると画面の6割が黒帯になるので、
   // 元の形に合わせるほうを既定にして、そのことを画面で伝える（2026-08-10）
-  const [shape, setShape] = useState<OutShape>('portrait');
+  const [shape, setShape] = useState<OutShape>('landscape');   // 横で使うほうが持ちやすい（伊波さんの判断）
   const [srcIsWide, setSrcIsWide] = useState(false);
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
@@ -82,6 +82,20 @@ function App() {
   // 撮る前の注意。人の動画を読み込んで声を乗せる道具なので、
   // 権利と同意の話は最初に一度は目に入れてもらう（CMCUBE と同じ扱い）。
   // 一度読んだら出さない
+  // 縦に持ったまま 16:9 を選ぶと、映す場所が細くなる。持ち替えを勧める
+  const [portraitDevice, setPortraitDevice] = useState(
+    typeof window !== 'undefined' && window.innerHeight > window.innerWidth
+  );
+  useEffect(() => {
+    const on = () => setPortraitDevice(window.innerHeight > window.innerWidth);
+    window.addEventListener('resize', on);
+    window.addEventListener('orientationchange', on);
+    return () => {
+      window.removeEventListener('resize', on);
+      window.removeEventListener('orientationchange', on);
+    };
+  }, []);
+
   const [showGuide, setShowGuide] = useState(() => {
     try { return localStorage.getItem('tinycube.guideSeen') !== '1'; } catch { return true; }
   });
@@ -298,6 +312,11 @@ function App() {
           style={{ '--ar': shape === 'portrait' ? '0.5625' : '1.7778' } as React.CSSProperties}
         >
           <canvas ref={canvasRef} className="stage-canvas" />
+          {/* 縦に持ったまま横向きの動画を作ろうとすると、映す場所が細くなる。
+              持ち替えれば2倍以上広く使える（2026-08-10、伊波さんの指示） */}
+          {shape === 'landscape' && portraitDevice && (
+            <div className="turn-hint">{t('turn_hint')}</div>
+          )}
           {videoSrc ? (
             <video
               ref={videoRef}
@@ -347,10 +366,10 @@ function App() {
         </div>
       </main>
 
-      {/* 録画中に指で押すところ。事前準備はここに置かない（PC版と同じ約束）。
-          録画ボタンは親指が届く下端に、大きく置く */}
-      <footer className="control-deck">
-        <div className="effect-grid">
+        {/* クラス名の left / right は「どちらの塊か」を表すだけ。
+            画面のどちら側に置くかは CSS で決めている。
+            2026-08-10 に、右＝エフェクトと音、左＝文字 に入れ替えた */}
+        <div className="effect-grid effect-left">
           {/* 一発エフェクト (Burst) */}
           <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
           <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
@@ -360,7 +379,16 @@ function App() {
           <button className="effect-btn btn-sound" onClick={() => fire('ding')}>{t('eff_ding')}</button>
           <button className="effect-btn btn-sound" onClick={() => fire('pon')}>{t('eff_pon')}</button>
           <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>{t('eff_buzz')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('clap')}>{t('eff_clap')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('drum')}>{t('eff_drum')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('blip')}>{t('eff_blip')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('dread')}>{t('eff_dread')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('slash')}>{t('eff_slash')}</button>
+          <button className="effect-btn btn-sound" onClick={() => fire('fanfare')}>{t('eff_fanfare')}</button>
           
+        </div>
+
+        <div className="effect-grid effect-right">
           {/* テロップ (Telop)。言葉は設定で書き換えられる */}
           {telops.map((text, i) => text.trim() ? (
             <button
@@ -370,6 +398,10 @@ function App() {
             >💬 {text}</button>
           ) : null)}
         </div>
+
+      {/* 録画中に指で押すところ。事前準備はここに置かない（PC版と同じ約束）。
+          録画ボタンは親指が届く下端に、大きく置く */}
+      <footer className="control-deck">
         {/* 試してみる。録画中は押せない（押すと二重に再生されて頭から狂う） */}
         <button
           className="preview-btn"

@@ -17,6 +17,12 @@ export type EffectId =
   | 'ding'          // 効果音（高くて短い）
   | 'pon'           // 効果音（軽く跳ねる）
   | 'buzz'          // 効果音（外れ・ブー）
+  | 'clap'          // 効果音（拍手）
+  | 'drum'          // 効果音（ドラムロール）
+  | 'blip'          // 効果音（ぴこ）
+  | 'dread'         // 効果音（ずーん）
+  | 'slash'         // 効果音（しゃきーん）
+  | 'fanfare'       // 効果音（ジャーン）
   | 'telop';        // 文字を出す（中身は利用者が決める）
 
 type Live = { id: EffectId; start: number; dur: number; text?: string };
@@ -31,6 +37,12 @@ const DUR: Record<EffectId, number> = {
   ding: 0,
   pon: 0,
   buzz: 0,
+  clap: 0,
+  drum: 0,
+  blip: 0,
+  dread: 0,
+  slash: 0,
+  fanfare: 0,
   telop: 1500,
 };
 
@@ -144,11 +156,52 @@ function drawTelop(g: CanvasRenderingContext2D, W: number, H: number, t: number,
   g.restore();
 }
 
+/** ざらざらした音のもと。拍手やドラムのように、音程の無い音に使う */
+function noiseSource(ctx: AudioContext, seconds: number): AudioBufferSourceNode {
+  const len = Math.floor(ctx.sampleRate * seconds);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  return src;
+}
+
 /** 効果音。ファイルを持たずにその場で作る（読み込み待ちが無く、容量も増えない） */
 function playSoundFor(id: EffectId) {
   if (!audio) return;
   const { ctx, dest } = audio;
   const now = ctx.currentTime;
+
+  // 音程を持たない音は、ざらざらした音のもとを削って作る
+  if (id === 'clap' || id === 'drum') {
+    const src = noiseSource(ctx, id === 'clap' ? 0.5 : 0.9);
+    const filt = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    filt.type = 'bandpass';
+    filt.frequency.value = id === 'clap' ? 1400 : 180;
+    filt.Q.value = id === 'clap' ? 0.8 : 1.2;
+    src.connect(filt); filt.connect(gain);
+    gain.connect(dest); gain.connect(ctx.destination);
+    if (id === 'clap') {
+      // ぱらぱらと重なる手のひら。4回に分けて叩く
+      gain.gain.setValueAtTime(0.0001, now);
+      for (let i = 0; i < 4; i++) {
+        const t = now + i * 0.055;
+        gain.gain.exponentialRampToValueAtTime(0.35 - i * 0.05, t + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.02, t + 0.05);
+      }
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+    } else {
+      // だんだん強くなって、最後に止まる
+      gain.gain.setValueAtTime(0.05, now);
+      gain.gain.linearRampToValueAtTime(0.45, now + 0.75);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    }
+    src.start(now); src.stop(now + 1.0);
+    return;
+  }
+
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.connect(gain);
@@ -186,6 +239,46 @@ function playSoundFor(id: EffectId) {
     gain.gain.setValueAtTime(0.26, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.34);
     osc.start(now); osc.stop(now + 0.36);
+  } else if (id === 'blip') {
+    // 短くて硬い。テンポを刻むとき
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1200, now);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+    osc.start(now); osc.stop(now + 0.08);
+  } else if (id === 'dread') {
+    // ずーん。低いところへ長く落とす
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(35, now + 1.1);
+    gain.gain.setValueAtTime(0.45, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+    osc.start(now); osc.stop(now + 1.25);
+  } else if (id === 'slash') {
+    // しゃきーん。高いところから一気に上げて切る
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(1800, now);
+    osc.frequency.exponentialRampToValueAtTime(3600, now + 0.06);
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
+    osc.start(now); osc.stop(now + 0.3);
+  } else if (id === 'fanfare') {
+    // ジャーン。3つの音を重ねて和音にする
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(523, now);      // ド
+    gain.gain.setValueAtTime(0.22, now);
+    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.9);
+    osc.start(now); osc.stop(now + 0.95);
+    for (const hz of [659, 784]) {               // ミ・ソ
+      const o = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(hz, now);
+      g2.gain.setValueAtTime(0.16, now);
+      g2.gain.exponentialRampToValueAtTime(0.01, now + 0.9);
+      o.connect(g2); g2.connect(dest); g2.connect(ctx.destination);
+      o.start(now); o.stop(now + 0.95);
+    }
   } else if (id === 'glitch') {
     osc.type = 'square';
     osc.frequency.setValueAtTime(90, now);

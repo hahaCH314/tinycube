@@ -1,8 +1,27 @@
 .app-container {
-  display: flex;
-  flex-direction: column;
+  /* ボタンは左右の端に1列ずつ。真ん中に映すものを置く。
+     両手で持ったとき、どちらの親指も動かさずに届く（2026-08-10、伊波さんの指示）。
+     縦でも横でも同じ考え方で、幅だけ変える */
+  display: grid;
+  grid-template-columns: clamp(56px, 17%, 72px) 1fr clamp(56px, 17%, 72px);
+  grid-template-rows: auto 1fr auto;
   height: 100%;
   width: 100%;
+}
+.header { grid-column: 1 / -1; grid-row: 1; }
+.preview-stage { grid-column: 2; grid-row: 2; }
+.effect-left  { grid-column: 3; grid-row: 2; }   /* 一発エフェクトと効果音は右へ */
+.effect-right { grid-column: 1; grid-row: 2; }   /* テロップ（文字）は左へ */
+.control-deck { grid-column: 1 / -1; grid-row: 3; }
+
+/* 柱の中は1列。上から詰めて、あふれる分だけ中で送れるようにする */
+.effect-grid.effect-left, .effect-grid.effect-right {
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 4px;
+  padding: 4px;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* ヘッダー */
@@ -302,6 +321,7 @@
 .effect-btn {
   /* 正方形。並べたときに目が揃って、押す場所を探さずに済む */
   aspect-ratio: 1;
+  min-height: 0;
   background: rgba(15, 23, 42, 0.4);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -399,6 +419,9 @@
   background: rgba(0, 210, 255, 0.12); border: 1px solid rgba(0, 210, 255, 0.4);
   color: var(--text-main); font-size: 0.85rem; cursor: pointer;
 }
+
+/* 縦のときは、左右に分けた2つの塊を続けて並べる（今までと同じ見え方） */
+.effect-left { margin-bottom: 6px; }
 
 /* 形が合わない枠に出す印。黙って切ると「なぜか絵が違う」になる */
 .crop-mark {
@@ -569,5 +592,55 @@
   width: 1px;
   height: 1px;
   opacity: 0;
+  pointer-events: none;
+}
+
+/* スマホを横に持ったとき。
+   縦のまま積むと映す場所がぺしゃんこになるので、横に並べ替える。
+   ボタンは右の列に集めて、両手で持ったときの親指の側へ置く
+   （2026-08-10、伊波さん「横型が使いやすいと思う」） */
+@media (orientation: landscape) and (max-height: 560px) {
+  /* 横に持ったとき。柱を太くして、ボタンを大きくする */
+  .app-container {
+    grid-template-columns: clamp(92px, 13%, 130px) 1fr clamp(92px, 13%, 130px);
+    grid-template-rows: auto 1fr auto;
+    height: 100dvh;
+  }
+  .header { padding: 3px 10px; }
+  .logo-cube { width: 16px; height: 16px; }
+  .logo-text { font-size: 0.9rem; }
+  .logo-studio { font-size: 0.48rem; }
+  .settings-btn { padding: 4px 10px; font-size: 0.7rem; }
+
+  /* 横は幅に余裕があるので2列にして、縦に長くならないようにする */
+  .effect-grid.effect-left, .effect-grid.effect-right { grid-template-columns: repeat(2, 1fr); }
+
+  .control-deck {
+    max-height: none;
+    padding: 4px 8px 6px;
+    gap: 4px;
+    flex-direction: row;
+    align-items: center;
+  }
+  .live-row { display: none; }
+  .preview-btn { margin-bottom: 0; padding: 8px; font-size: 0.7rem; width: 40%; }
+  .record-btn.big { padding: 8px; font-size: 0.85rem; }
+  .sheet { max-height: 94dvh; }
+}
+
+/* 縦に持ったまま横向きの動画を作ろうとしたときの案内。
+   映す場所の上に薄く重ねる（隠さない） */
+.turn-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.62rem;
+  padding: 5px 10px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(0, 210, 255, 0.45);
+  color: var(--text-main);
   pointer-events: none;
 }

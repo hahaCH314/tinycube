@@ -34,11 +34,19 @@ body {
 #root {
   width: 100%;
   height: 100%;
-  max-width: 500px; /* モバイルサイズに制限 */
+  /* 500px で止めていたが、横に持ったスマホ（844px）で右に344pxの空きが
+     できていた（2026-08-10、伊波さんの指摘）。
+     横のときは画面いっぱい。縦や PC のときだけ幅を抑える */
+  max-width: 500px;
   margin: 0 auto;
   position: relative;
   box-shadow: 0 0 50px rgba(0,0,0,0.5);
   background: radial-gradient(circle at top right, #1e293b, var(--bg-dark));
+}
+
+/* 横に持ったときは端まで使う */
+@media (orientation: landscape) and (max-height: 560px) {
+  #root { max-width: none; }
 }
 
 button {

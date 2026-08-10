@@ -43,6 +43,13 @@ type I18nDict = {
   eff_ding: string;
   eff_pon: string;
   eff_buzz: string;
+  turn_hint: string;
+  eff_clap: string;
+  eff_drum: string;
+  eff_blip: string;
+  eff_dread: string;
+  eff_slash: string;
+  eff_fanfare: string;
 
   // Guide Sheet
   guide_title: string;
@@ -110,6 +117,13 @@ const dictJa: I18nDict = {
   eff_ding: '✨ きらっ',
   eff_pon: '🫧 ぽん',
   eff_buzz: '📢 ぶー',
+  turn_hint: '📱↻ スマホを横にすると大きく使えます',
+  eff_clap: '👏 拍手',
+  eff_drum: '🥁 ドラム',
+  eff_blip: '🔹 ぴこ',
+  eff_dread: '🌑 ずーん',
+  eff_slash: '⚔️ しゃきん',
+  eff_fanfare: '🎉 ジャーン',
 
   guide_title: 'tinyCUBE の使い方',
   guide_step1_title: '動画を読み込む',
@@ -174,6 +188,13 @@ const dictEn: I18nDict = {
   eff_ding: '✨ Ding',
   eff_pon: '🫧 Pon',
   eff_buzz: '📢 Buzz',
+  turn_hint: '📱↻ Turn your phone sideways for a bigger view',
+  eff_clap: '👏 Clap',
+  eff_drum: '🥁 Drum',
+  eff_blip: '🔹 Blip',
+  eff_dread: '🌑 Dread',
+  eff_slash: '⚔️ Slash',
+  eff_fanfare: '🎉 Fanfare',
 
   guide_title: 'How to use tinyCUBE',
   guide_step1_title: 'Load a video',
