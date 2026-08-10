@@ -44,6 +44,14 @@ type I18nDict = {
   eff_pon: string;
   eff_buzz: string;
   turn_hint: string;
+  setting_camera: string;
+  setting_srcaudio: string;
+  srcaudio_on: string;
+  srcaudio_off: string;
+  cam_front: string;
+  cam_back: string;
+  cam_off: string;
+  cam_fail: string;
   eff_clap: string;
   eff_drum: string;
   eff_blip: string;
@@ -117,7 +125,15 @@ const dictJa: I18nDict = {
   eff_ding: '✨ きらっ',
   eff_pon: '🫧 ぽん',
   eff_buzz: '📢 ぶー',
-  turn_hint: '📱↻ スマホを横にすると大きく使えます',
+  turn_hint: '📱↻ 16:9（横動画）は、横向きでの操作がおすすめです',
+  setting_camera: 'カメラ',
+  setting_srcaudio: '動画の音',
+  srcaudio_on: '🔊 入れる',
+  srcaudio_off: '🔇 消す',
+  cam_front: '📷 自分',
+  cam_back: '🌄 外',
+  cam_off: '⏹ 使わない',
+  cam_fail: 'カメラを開けませんでした。許可の設定を確かめてください。',
   eff_clap: '👏 拍手',
   eff_drum: '🥁 ドラム',
   eff_blip: '🔹 ぴこ',
@@ -188,7 +204,15 @@ const dictEn: I18nDict = {
   eff_ding: '✨ Ding',
   eff_pon: '🫧 Pon',
   eff_buzz: '📢 Buzz',
-  turn_hint: '📱↻ Turn your phone sideways for a bigger view',
+  turn_hint: '📱↻ For 16:9, holding the phone sideways works best',
+  setting_camera: 'Camera',
+  setting_srcaudio: 'Video sound',
+  srcaudio_on: '🔊 Keep',
+  srcaudio_off: '🔇 Mute',
+  cam_front: '📷 Front',
+  cam_back: '🌄 Back',
+  cam_off: '⏹ Off',
+  cam_fail: 'Could not open the camera. Check the permission settings.',
   eff_clap: '👏 Clap',
   eff_drum: '🥁 Drum',
   eff_blip: '🔹 Blip',

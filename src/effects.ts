@@ -46,15 +46,36 @@ const DUR: Record<EffectId, number> = {
   telop: 1500,
 };
 
-// recorder が録画を始めるときに渡してくる。渡ってくるまで音は鳴らせない
-let audio: { ctx: AudioContext; dest: AudioNode } | null = null;
+// 音の出し先。
+//
+// 以前は録画中しか鳴らなかった（recorder が渡してくるまで null だったため）。
+// ボタンを押しても無反応で、押した手応えが無い（2026-08-10、伊波さんの指摘）。
+// いまは自前の AudioContext を持ち、録画が始まったらそこへ枝を1本足す。
+let ctx: AudioContext | null = null;
+let recDest: AudioNode | null = null;
 
-/** 録画側から音の合流点を借りる。ここへ流したものが動画に入る */
-export function attachAudio(ctx: AudioContext, dest: AudioNode) {
-  audio = { ctx, dest };
+function getCtx(): AudioContext | null {
+  try {
+    if (!ctx || ctx.state === 'closed') ctx = new AudioContext();
+    // 眠っていたら起こす。待たない（利用者が触っていれば起きる）
+    if (ctx.state === 'suspended') ctx.resume().catch(() => { /* 起きなくても続ける */ });
+    return ctx;
+  } catch {
+    return null;   // 音が出せない環境でも、絵は出る
+  }
+}
+
+/** 録画側の合流点を借りる。ここへも流したものが動画に入る */
+export function attachAudio(_ctx: AudioContext, dest: AudioNode) {
+  recDest = dest;
 }
 export function detachAudio() {
-  audio = null;
+  recDest = null;
+}
+
+/** 録画が使う AudioContext。効果音と同じものを使う（別々だと動画に入らない） */
+export function audioContext(): AudioContext | null {
+  return getCtx();
 }
 
 export function fireEffect(id: EffectId, text?: string) {
@@ -169,9 +190,13 @@ function noiseSource(ctx: AudioContext, seconds: number): AudioBufferSourceNode 
 
 /** 効果音。ファイルを持たずにその場で作る（読み込み待ちが無く、容量も増えない） */
 function playSoundFor(id: EffectId) {
-  if (!audio) return;
-  const { ctx, dest } = audio;
+  const ctx = getCtx();
+  if (!ctx) return;
   const now = ctx.currentTime;
+  // 耳にも届かせ、録画中なら動画にも入れる
+  const outs: AudioNode[] = [ctx.destination];
+  if (recDest) outs.push(recDest);
+  const dest = { connect: (n: AudioNode) => { for (const o of outs) n.connect(o); } };
 
   // 音程を持たない音は、ざらざらした音のもとを削って作る
   if (id === 'clap' || id === 'drum') {
@@ -182,7 +207,7 @@ function playSoundFor(id: EffectId) {
     filt.frequency.value = id === 'clap' ? 1400 : 180;
     filt.Q.value = id === 'clap' ? 0.8 : 1.2;
     src.connect(filt); filt.connect(gain);
-    gain.connect(dest); gain.connect(ctx.destination);
+    dest.connect(gain);
     if (id === 'clap') {
       // ぱらぱらと重なる手のひら。4回に分けて叩く
       gain.gain.setValueAtTime(0.0001, now);
@@ -205,9 +230,7 @@ function playSoundFor(id: EffectId) {
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.connect(gain);
-  gain.connect(dest);
-  // 本人の耳にも届くようにする。録画にしか入らないと、押した手応えが無い
-  gain.connect(ctx.destination);
+  dest.connect(gain);
 
   if (id === 'bam' || id === 'flash') {
     osc.type = 'sine';
@@ -276,7 +299,7 @@ function playSoundFor(id: EffectId) {
       o.frequency.setValueAtTime(hz, now);
       g2.gain.setValueAtTime(0.16, now);
       g2.gain.exponentialRampToValueAtTime(0.01, now + 0.9);
-      o.connect(g2); g2.connect(dest); g2.connect(ctx.destination);
+      o.connect(g2); dest.connect(g2);
       o.start(now); o.stop(now + 0.95);
     }
   } else if (id === 'glitch') {

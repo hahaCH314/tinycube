@@ -19,10 +19,11 @@ function App() {
   // 係が作られた時点の古い値を見続けることになる
   const liveRef = useRef<{
     video: HTMLVideoElement | null;
+    fill: boolean;
     shape: OutShape;
     frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
     watermark: string | null;
-  }>({ video: null, shape: 'landscape', frame: null, watermark: 'tinyCUBE' });
+  }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE' });
   
   // ボタンから呼ばれる口。中身は effects.ts が持っている。
   // 録画していないときに押しても鳴る（本番前に手応えを確かめられるように）。
@@ -67,6 +68,22 @@ function App() {
   // 元の形に合わせるほうを既定にして、そのことを画面で伝える（2026-08-10）
   const [shape, setShape] = useState<OutShape>('landscape');   // 横で使うほうが持ちやすい（伊波さんの判断）
   const [srcIsWide, setSrcIsWide] = useState(false);
+  // 映像の出どころ。動画ファイルか、その場のカメラか。
+  // canvas に描いてから録る作りなので、出どころを差し替えるだけで
+  // エフェクトも枠も透かしもそのまま乗る（2026-08-10）
+  const [camOn, setCamOn] = useState(false);
+  const [camFront, setCamFront] = useState(true);
+  // 動画そのものの音を録るかどうか。BGM入りの動画にアフレコするときは
+  // 消したい（2026-08-10、伊波さんの指示）
+  const [useSrcAudio, setUseSrcAudio] = useState(true);
+  // 形を自分で選んだかどうか。選んだあとに映像の向きで上書きすると、
+  // 9:16 を選んだのに 16:9 に戻る（2026-08-10、伊波さんの指摘）。
+  // 新しい映像を読み込んだときだけ、自動で合わせ直す
+  const shapePicked = useRef(false);
+  const pickShape = (v: OutShape) => { shapePicked.current = true; setShape(v); };
+  const camStreamRef = useRef<MediaStream | null>(null);
+  // 描画の係が毎フレーム読む。state を直接見ると古い値のままになる
+  const camOnRef = useRef(false);
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
   const [showSettings, setShowSettings] = useState(false);
@@ -115,7 +132,8 @@ function App() {
     return startStage({
       canvas: c,
       // video は毎回聞き直す。読み込む前は要素そのものが無い
-      read: () => ({ ...liveRef.current, video: videoRef.current }),
+      // カメラのときだけ画面いっぱいに広げる
+      read: () => ({ ...liveRef.current, video: videoRef.current, fill: camOnRef.current }),
     });
   }, []);
 
@@ -134,6 +152,8 @@ function App() {
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      stopCam();
+      shapePicked.current = false;           // 新しい動画なので、また自動で合わせる
       const url = URL.createObjectURL(file);
       setVideoSrc(url);
       setSrcIsWide(false);
@@ -153,6 +173,51 @@ function App() {
   // iOS が確実に持っている共有シート（Web Share）を先に試す形にした。
   // 共有シートから「ビデオを保存」でカメラロールへ入る。
   // 対応していない環境（PCのブラウザなど）は、今まで通りダウンロードする。
+  const stopCam = () => {
+    camStreamRef.current?.getTracks().forEach(t => t.stop());
+    camStreamRef.current = null;
+    const v = videoRef.current;
+    if (v) { v.srcObject = null; }
+    setCamOn(false);
+  };
+
+  const startCam = async (front: boolean) => {
+    try {
+      // 先に古いものを止める。止めずに取り直すと、機種によっては断られる
+      camStreamRef.current?.getTracks().forEach(t => t.stop());
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: front ? 'user' : 'environment' },
+        audio: false,                        // 声は録画のときにマイクから混ぜる
+      });
+      camStreamRef.current = stream;
+      shapePicked.current = false;           // 新しい映像なので、また自動で合わせる
+      setVideoSrc(null);                     // 動画ファイルとは同時に使わない
+      setCamFront(front);
+      setCamOn(true);
+      // ここで videoRef を触ってはいけない。カメラを入れるまで <video> は
+      // 画面に無く、srcObject を入れる先がまだ存在しない（2026-08-10）。
+      // 実際に繋ぐのは下の useEffect
+      const st = stream.getVideoTracks()[0]?.getSettings();
+      if (st?.width && st?.height) {
+        const wide = st.width > st.height;
+        setSrcIsWide(wide);
+        if (!shapePicked.current) setShape(wide ? 'landscape' : 'portrait');
+      }
+    } catch (e: any) {
+      alert(t('cam_fail') + ' ' + (e?.message ?? ''));
+    }
+  };
+
+  // <video> が画面に出てから、カメラの映像を繋ぐ
+  useEffect(() => {
+    camOnRef.current = camOn;
+    const v = videoRef.current;
+    if (!camOn || !v || !camStreamRef.current) return;
+    v.srcObject = camStreamRef.current;
+    v.muted = true;                          // 自分の声が返ってきて回るのを防ぐ
+    v.play().catch(() => { /* 再生できなくても絵は canvas に出る */ });
+  }, [camOn]);
+
   const save = async (blob: Blob, ext: string) => {
     const name = `tinycube_${Date.now()}.${ext}`;
     const file = new File([blob], name, { type: blob.type });
@@ -185,7 +250,7 @@ function App() {
   // 下見の開始・停止。録らないので、音は動画そのものの出力で鳴る
   const togglePreview = async () => {
     const v = videoRef.current;
-    if (!v || !videoSrc) { alert(t('alert_load_first')); return; }
+    if (!v || (!videoSrc && !camOn)) { alert(t('alert_load_first')); return; }
     if (isPreviewing) {
       v.pause();
       v.currentTime = 0;
@@ -217,7 +282,7 @@ function App() {
       return;
     }
 
-    if (!videoRef.current || !videoSrc) {
+    if (!videoRef.current || (!videoSrc && !camOn)) {
       alert(t('alert_load_first'));
       return;
     }
@@ -238,6 +303,7 @@ function App() {
         canvas: canvasRef.current ?? undefined,
         frame: liveRef.current.frame,
         shape,
+        srcAudio: useSrcAudio,
         watermark: 'tinyCUBE',
         onFinish: save,
         onError: (e) => alert(t('alert_rec_fail') + e.message),
@@ -317,10 +383,10 @@ function App() {
           {shape === 'landscape' && portraitDevice && (
             <div className="turn-hint">{t('turn_hint')}</div>
           )}
-          {videoSrc ? (
+          {(videoSrc || camOn) ? (
             <video
               ref={videoRef}
-              src={videoSrc}
+              src={videoSrc ?? undefined}
               className="video-player hidden-source"
               loop
               playsInline
@@ -329,7 +395,8 @@ function App() {
                 const v = e.currentTarget;
                 const wide = v.videoWidth > v.videoHeight;
                 setSrcIsWide(wide);
-                setShape(wide ? 'landscape' : 'portrait');   // 元の形に合わせる
+                // 自分で選んでいたら、それを尊重する
+                if (!shapePicked.current) setShape(wide ? 'landscape' : 'portrait');
               }}
               muted /* 録画を始めるときに recorder が解除する。動画の音もマイクと混ぜて録るため */
             />
@@ -500,13 +567,26 @@ function App() {
               {videoSrc ? t('setting_video_change') : t('setting_video_load')}
             </button>
 
+            <h3>{t('setting_camera')}</h3>
+            <div className="shape-switch">
+              <button className={camOn && camFront ? 'on' : ''} onClick={() => startCam(true)}>{t('cam_front')}</button>
+              <button className={camOn && !camFront ? 'on' : ''} onClick={() => startCam(false)}>{t('cam_back')}</button>
+              <button className={!camOn ? 'on' : ''} onClick={stopCam}>{t('cam_off')}</button>
+            </div>
+
+            <h3>{t('setting_srcaudio')}</h3>
+            <div className="shape-switch">
+              <button className={useSrcAudio ? 'on' : ''} onClick={() => setUseSrcAudio(true)}>{t('srcaudio_on')}</button>
+              <button className={!useSrcAudio ? 'on' : ''} onClick={() => setUseSrcAudio(false)}>{t('srcaudio_off')}</button>
+            </div>
+
             <h3>{t('setting_shape')}</h3>
             {srcIsWide && (
               <p className="sheet-note">{t('setting_shape_wide_note')}</p>
             )}
             <div className="shape-switch">
-              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => setShape('landscape')}>{t('setting_shape_land')}</button>
-              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => setShape('portrait')}>{t('setting_shape_port')}</button>
+              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
+              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
             </div>
 
             <h3>{t('setting_telop')}</h3>

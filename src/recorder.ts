@@ -28,13 +28,15 @@ export type RecordOptions = {
   shape?: OutShape;
   /** 画面に出している canvas。渡すとそれをそのまま録る */
   canvas?: HTMLCanvasElement;
+  /** 動画そのものの音を入れるか。false なら声とエフェクトだけ */
+  srcAudio?: boolean;
   /** 書き出しが終わったときに呼ばれる */
   onFinish: (blob: Blob, ext: string) => void;
   onError: (e: Error) => void;
 };
 
 import type { FrameAnchor, OutShape } from './frames';
-import { attachAudio, detachAudio, drawEffects } from './effects';
+import { attachAudio, detachAudio, drawEffects, audioContext } from './effects';
 
 /** 書き出しの形。読み込んだ動画が横長なら横で出す。
     16:9 の動画を無理に 9:16 へ詰めると、画面の6割が黒帯になる */
@@ -57,6 +59,8 @@ export type StageOptions = {
    *  最初に一度だけ受け取る形にすると、いつまでも動かない */
   read: () => {
     video: HTMLVideoElement | null;
+    /** true なら画面いっぱいに広げる（カメラ）。false は切らずに収める（動画） */
+    fill: boolean;
     shape: OutShape;
     frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
     watermark: string | null;
@@ -81,7 +85,14 @@ export function startStage(opts: StageOptions): () => void {
 
     const vw = video?.videoWidth ?? 0, vh = video?.videoHeight ?? 0;
     if (video && vw && vh) {
-      const scale = Math.min(OUT_W / vw, OUT_H / vh);
+      // カメラは画面いっぱいに広げる（はみ出した側を切る）。
+      // 黒帯を出すと、自撮りなのに画面の半分が黒くなって使えない
+      // （2026-08-10、伊波さんの指示）。
+      // 読み込んだ動画は切らずに全部見せる（元の作品を勝手に切らない）
+      const fill = read().fill;
+      const scale = fill
+        ? Math.max(OUT_W / vw, OUT_H / vh)
+        : Math.min(OUT_W / vw, OUT_H / vh);
       const w = vw * scale, h = vh * scale;
       g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
     }
@@ -140,7 +151,7 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
   // AudioContext と、動画に繋ぐ入口（MediaElementSource）は使い回す。
   // createMediaElementSource は 1つの video 要素につき1回しか呼べず、
   // 録画のたびに作ると2回目で必ず落ちる（2026-08-10 に実際そうなっていた）。
-  const actx = getContext();
+  const actx = audioContext() ?? getContext();
   // 眠っていたら起こす。ただし待たない。
   // resume() は「利用者が操作した」と見なされないと返ってこないことがあり、
   // await すると録画そのものが始まらなくなる（2026-08-10 に実際そうなった）。
@@ -167,7 +178,7 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
   video.muted = false;
   const src = getElementSource(actx, video);
   const videoGain = actx.createGain();
-  videoGain.gain.value = 0.8;
+  videoGain.gain.value = opts.srcAudio === false ? 0 : 0.8;
   src.connect(videoGain);
   videoGain.connect(dest);
   videoGain.connect(actx.destination);

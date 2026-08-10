@@ -3,7 +3,9 @@
      両手で持ったとき、どちらの親指も動かさずに届く（2026-08-10、伊波さんの指示）。
      縦でも横でも同じ考え方で、幅だけ変える */
   display: grid;
-  grid-template-columns: clamp(56px, 17%, 72px) 1fr clamp(56px, 17%, 72px);
+  /* 縦のときは柱を細く。真ん中の映す場所を広く取りたい
+     （2026-08-10、伊波さん「縦の時はボタン小さく」） */
+  grid-template-columns: clamp(40px, 12%, 52px) 1fr clamp(40px, 12%, 52px);
   grid-template-rows: auto 1fr auto;
   height: 100%;
   width: 100%;
@@ -18,8 +20,8 @@
 .effect-grid.effect-left, .effect-grid.effect-right {
   grid-template-columns: 1fr;
   align-content: start;
-  gap: 4px;
-  padding: 4px;
+  gap: 3px;
+  padding: 3px;
   overflow-y: auto;
   min-height: 0;
 }
