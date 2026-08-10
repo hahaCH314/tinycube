@@ -435,7 +435,6 @@ function App() {
         </div>
         <div className="head-btns">
           <button className="settings-btn" onClick={() => setShowGuide(true)}>{t('guide_btn')}</button>
-          <button className="settings-btn" onClick={() => setShowSettings(true)}>{t('settings_btn')}</button>
         </div>
       </header>
 
@@ -514,6 +513,31 @@ function App() {
           )}
         </div>
       </main>
+
+      {/* 中央に配置された設定ボタン */}
+      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
+        <button 
+          onClick={() => setShowSettings(true)}
+          style={{ 
+            background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', 
+            border: 'none', 
+            borderRadius: '24px', 
+            padding: '12px 24px', 
+            color: 'white', 
+            fontWeight: 'bold', 
+            fontSize: '14px',
+            boxShadow: '0 4px 12px rgba(236, 72, 153, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          <span style={{ fontSize: '18px' }}>✨</span>
+          フレームやカメラの設定を開く
+          <span style={{ fontSize: '18px' }}>⚙️</span>
+        </button>
+      </div>
 
         {/* クラス名の left / right は「どちらの塊か」を表すだけ。
             画面のどちら側に置くかは CSS で決めている。

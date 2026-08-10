@@ -118,6 +118,8 @@ type Mote = {
   x: number; y: number; r: number; vy: number; sway: number; life: number; age: number;
   /** 光の色。淡いピンクからオレンジのあいだで1つずつ変える */
   hue: number;
+  /** 手前の大きな玉か、奥の小さな玉か。小さいほうは輪郭を少し出す */
+  big: boolean;
 };
 let ambient: 'emotional' | null = null;
 let motes: Mote[] = [];
@@ -145,11 +147,14 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
   // 下から昇らせる作りだと、上がりきる前に消えて何も見えなかった
   // （2026-08-10、伊波さんの「出ない」「光のぼかしみたいなのがイイ」）。
   // 画面のどこにでも湧かせて、大きくぼかす
-  // 大きな光の丸を少なく。小さい粒をたくさん撒くと「ゴミ」に見える
-  // （2026-08-10、伊波さんの「光の丸はおおきいほうがいい。粒じゃなく」）
-  const want = 5;
+  // レンズの前にシャボン玉が浮いているイメージ（2026-08-10、伊波さんの指示）。
+  // 大きいものと小さいものを混ぜる。同じ大きさばかりだと奥行きが出ない
+  const want = 11;
   while (motes.length < want) {
-    const r = unit * (0.34 + Math.random() * 0.3);
+    const big = Math.random() < 0.45;
+    const r = big
+      ? unit * (0.30 + Math.random() * 0.34)     // 手前に大きく
+      : unit * (0.07 + Math.random() * 0.13);    // 奥に小さく
     motes.push({
       // 大きいので、中心が画面の外にあってもよい（一部だけ差し込む光になる）
       x: (Math.random() * 1.6 - 0.3) * W,
@@ -160,6 +165,7 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
       life: 4000 + Math.random() * 5000,
       // 340〜40度。ピンク寄りから橙寄りまで、丸ごとに散らす
       hue: (340 + Math.random() * 60) % 360,
+      big,
       // 最初の一群だけ、途中から始まったことにして一斉に消えないようにする
       age: motes.length < want && now - startedAt < 200 ? Math.random() * 3000 : 0,
     });
@@ -184,10 +190,19 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
     // 色は淡いピンク〜オレンジ。彩度を上げすぎると色被りに見えるので低めにする
     const h = m.hue;
     const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r);
-    grad.addColorStop(0,    `hsla(${h}, 90%, 88%, ${0.26 * a})`);
-    grad.addColorStop(0.25, `hsla(${h}, 85%, 78%, ${0.16 * a})`);
-    grad.addColorStop(0.6,  `hsla(${h}, 80%, 70%, ${0.07 * a})`);
-    grad.addColorStop(1,    `hsla(${h}, 80%, 68%, 0)`);
+    if (m.big) {
+      // 手前の玉。ふわっと大きく、輪郭は出さない
+      grad.addColorStop(0,    `hsla(${h}, 92%, 88%, ${0.40 * a})`);
+      grad.addColorStop(0.30, `hsla(${h}, 88%, 78%, ${0.26 * a})`);
+      grad.addColorStop(0.65, `hsla(${h}, 84%, 70%, ${0.12 * a})`);
+      grad.addColorStop(1,    `hsla(${h}, 84%, 68%, 0)`);
+    } else {
+      // 奥の玉。縁をわずかに強くすると、シャボン玉らしく見える
+      grad.addColorStop(0,    `hsla(${h}, 92%, 90%, ${0.30 * a})`);
+      grad.addColorStop(0.55, `hsla(${h}, 88%, 80%, ${0.18 * a})`);
+      grad.addColorStop(0.86, `hsla(${h}, 92%, 86%, ${0.34 * a})`);
+      grad.addColorStop(1,    `hsla(${h}, 90%, 80%, 0)`);
+    }
     g.fillStyle = grad;
     g.beginPath();
     g.arc(x, m.y, m.r, 0, Math.PI * 2);
@@ -212,7 +227,7 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
 
   // 全体にうっすら暖かい膜をかける。粒だけだと点の集まりに見える
   const veil = g.createRadialGradient(W * 0.5, H * 0.42, unit * 0.1, W * 0.5, H * 0.5, unit * 0.85);
-  veil.addColorStop(0, 'hsla(25, 90%, 85%, 0.05)');
+  veil.addColorStop(0, 'hsla(25, 90%, 85%, 0.09)');
   veil.addColorStop(1, 'hsla(340, 85%, 78%, 0)');
   g.fillStyle = veil;
   g.fillRect(0, 0, W, H);
