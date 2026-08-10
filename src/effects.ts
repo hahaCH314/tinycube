@@ -25,7 +25,7 @@ export type EffectId =
   | 'fanfare'       // 効果音（ジャーン）
   | 'telop';        // 文字を出す（中身は利用者が決める）
 
-type Live = { id: EffectId; start: number; dur: number; text?: string };
+type Live = { id: EffectId; start: number; dur: number; text?: string; dark?: boolean };
 
 const live: Live[] = [];
 
@@ -85,22 +85,23 @@ export function useCustomSounds(fn: (id: EffectId) => AudioBuffer | null) {
   getCustom = fn;
 }
 
-export function fireEffect(id: EffectId, text?: string) {
+export function fireEffect(id: EffectId, text?: string, dark?: boolean) {
   const dur = DUR[id] ?? 300;
   if (dur > 0) {
     // 同じものを連打したときは、前のを消してから出す。
     // 重ねると明滅が濁って、押した回数が分からなくなる
     const i = live.findIndex(e => e.id === id);
     if (i >= 0) live.splice(i, 1);
-    live.push({ id, start: performance.now(), dur, text });
+    live.push({ id, start: performance.now(), dur, text, dark });
   }
   playSoundFor(id);
 }
 
-/** 文字を出す。中身は利用者が設定で書き換えたもの */
-export function fireTelop(text: string) {
+/** 文字を出す。中身は利用者が設定で書き換えたもの。
+    dark を渡すと黒文字・白フチになる（明るい映像の上で読みやすい） */
+export function fireTelop(text: string, dark = false) {
   if (!text.trim()) return;                     // 空のまま押しても何も起きない
-  fireEffect('telop', text);
+  fireEffect('telop', text, dark);
 }
 
 /** 録画をやめたときに呼ぶ。出しっぱなしの効果を消す */
@@ -118,7 +119,7 @@ export function drawEffects(g: CanvasRenderingContext2D, W: number, H: number) {
     switch (e.id) {
       case 'flash':  drawFlash(g, W, H, t); break;
       case 'glitch': drawGlitch(g, W, H, t); break;
-      case 'telop': drawTelop(g, W, H, t, e.text ?? ''); break;
+      case 'telop': drawTelop(g, W, H, t, e.text ?? '', e.dark ?? false); break;
       default: break;
     }
   }
@@ -159,7 +160,7 @@ function drawGlitch(g: CanvasRenderingContext2D, W: number, H: number, t: number
 
 /** 文字。ぽんと出て、少し待って、消える。
     長い言葉を入れられても画面からはみ出さないよう、文字数で大きさを落とす */
-function drawTelop(g: CanvasRenderingContext2D, W: number, H: number, t: number, text: string) {
+function drawTelop(g: CanvasRenderingContext2D, W: number, H: number, t: number, text: string, dark: boolean) {
   const base = Math.min(W, H) * 0.16;
   const size = Math.round(Math.min(base, (W * 0.86) / Math.max(1, text.length)));
   // 0→0.15 で飛び出し、0.75→1 で消える
@@ -174,12 +175,13 @@ function drawTelop(g: CanvasRenderingContext2D, W: number, H: number, t: number,
   g.font = `900 ${size}px sans-serif`;
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  // 黒フチを厚めに。どんな映像の上でも読めるようにする
+  // フチを厚めに。どんな映像の上でも読めるようにする。
+  // 白文字は暗い映像に、黒文字は明るい映像に強い。中と外を入れ替えるだけ
   g.lineWidth = size * 0.16;
-  g.strokeStyle = '#000';
+  g.strokeStyle = dark ? '#fff' : '#000';
   g.lineJoin = 'round';
   g.strokeText(text, 0, 0);
-  g.fillStyle = '#fff';
+  g.fillStyle = dark ? '#111' : '#fff';
   g.fillText(text, 0, 0);
   g.restore();
 }

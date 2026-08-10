@@ -45,6 +45,9 @@ type I18nDict = {
   eff_buzz: string;
   turn_hint: string;
   promo_open: string;
+  setting_telopcolor: string;
+  telop_white: string;
+  telop_black: string;
   setting_sounds: string;
   sounds_note: string;
   sound_load: string;
@@ -133,6 +136,9 @@ const dictJa: I18nDict = {
   eff_buzz: '📢 ぶー',
   turn_hint: '📱↻ 16:9（横動画）は、横向きでの操作がおすすめです',
   promo_open: 'CMCUBE を見る →',
+  setting_telopcolor: '文字の色',
+  telop_white: '⬜ 白文字',
+  telop_black: '⬛ 黒文字',
   setting_sounds: '効果音の差し替え',
   sounds_note: '自分の音を入れられます。入れていないものは、こちらの音で鳴ります。',
   sound_load: '入れる',
@@ -218,6 +224,9 @@ const dictEn: I18nDict = {
   eff_buzz: '📢 Buzz',
   turn_hint: '📱↻ For 16:9, holding the phone sideways works best',
   promo_open: 'See CMCUBE →',
+  setting_telopcolor: 'Caption colour',
+  telop_white: '⬜ White',
+  telop_black: '⬛ Black',
   setting_sounds: 'Replace sounds',
   sounds_note: 'Load your own audio. Slots you leave empty use the built-in sound.',
   sound_load: 'Load',

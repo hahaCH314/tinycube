@@ -88,7 +88,15 @@ function App() {
   // 効果音の差し替え。入れてある音があればそちらを鳴らす
   const soundInputRef = useRef<HTMLInputElement>(null);
   const [soundSlot, setSoundSlot] = useState<EffectId | null>(null);
-  const [soundVer, setSoundVer] = useState(0);    // 入れ替えたら画面を描き直すための番号
+  const [soundVer, setSoundVer] = useState(0);
+  // 文字の色。白は暗い映像に、黒は明るい映像に強い
+  const [telopDark, setTelopDark] = useState(() => {
+    try { return localStorage.getItem('tinycube.telopDark') === '1'; } catch { return false; }
+  });
+  const pickTelopColor = (dark: boolean) => {
+    setTelopDark(dark);
+    try { localStorage.setItem('tinycube.telopDark', dark ? '1' : '0'); } catch { /* 保存できなくても動く */ }
+  };    // 入れ替えたら画面を描き直すための番号
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
   const [showSettings, setShowSettings] = useState(false);
@@ -488,7 +496,7 @@ function App() {
             <button
               key={i}
               className="effect-btn btn-telop"
-              onClick={() => fireTelop(text)}
+              onClick={() => fireTelop(text, telopDark)}
             >💬 {text}</button>
           ) : null)}
         </div>
@@ -654,6 +662,12 @@ function App() {
             <div className="shape-switch">
               <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
+            </div>
+
+            <h3>{t('setting_telopcolor')}</h3>
+            <div className="shape-switch">
+              <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
+              <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
             </div>
 
             <h3>{t('setting_telop')}</h3>
