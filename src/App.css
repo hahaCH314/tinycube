@@ -197,15 +197,15 @@
 
 /* 枠えらび。横に流して指で送る。縦の場所を食わないように1行で収める */
 .frame-picker {
-  display: flex;
+  /* 横一列に流していたが、43種になって端まで指で送らないと選べなくなった
+     （2026-08-10、伊波さんの指摘）。折り返して全部見えるようにする */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  overflow-x: auto;
   padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
 }
 .frame-tile {
-  flex: 0 0 auto;
-  width: 64px;
+  width: 100%;
   background: #0b1021;
   border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;

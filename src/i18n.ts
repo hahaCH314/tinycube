@@ -97,7 +97,7 @@ const dictJa: I18nDict = {
   guide_btn: '? 使い方',
   settings_btn: '⚙ 設定',
   
-  upload_hint: 'タップしてゲーム動画を読み込む',
+  upload_hint: 'タップして動画を読み込み',
   
   btn_preview: '▶ 試してみる（録画無し）',
   btn_preview_stop: '⏸ とめる',
@@ -161,7 +161,7 @@ const dictEn: I18nDict = {
   guide_btn: '? How to use',
   settings_btn: '⚙ Settings',
   
-  upload_hint: 'Tap to load a game video',
+  upload_hint: 'Tap to load a video',
   
   btn_preview: '▶ Preview (No recording)',
   btn_preview_stop: '⏸ Stop',
