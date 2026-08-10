@@ -788,9 +788,7 @@ function App() {
 
             <div className="frame-picker">
               <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
-              {/* いまの形に合うものを先に並べる。43種あるので、
-                  合わないものを探しながら送ることにならないように */}
-              {[...FRAMES].sort((a, b) => Number(fitsShape(b, shape)) - Number(fitsShape(a, shape))).map(f => (
+              {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
                 <button
                   key={f.id}
                   className={`frame-tile ${frameId === f.id ? 'on' : ''}`}
@@ -799,7 +797,6 @@ function App() {
                 >
                   <img src={f.file} alt={f.name} />
                   <span>{f.name}</span>
-                  {!fitsShape(f, shape) && <em className="crop-mark">{t('frame_crop')}</em>}
                 </button>
               ))}
             </div>

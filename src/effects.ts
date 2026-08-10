@@ -114,7 +114,11 @@ export function fireTelop(text: string, dark = false, random = false) {
 // ずっと出しておく演出。押した瞬間だけの一発ものとは別枠。
 // CMCUBE の「エモーショナル」（光の粒がふわっと漂う）を canvas で作り直したもの。
 // 中央に被せない縛りは CMCUBE の枠の話なので、ここでは画面全体に散らす
-type Mote = { x: number; y: number; r: number; vy: number; sway: number; life: number; age: number };
+type Mote = {
+  x: number; y: number; r: number; vy: number; sway: number; life: number; age: number;
+  /** 光の色。淡いピンクからオレンジのあいだで1つずつ変える */
+  hue: number;
+};
 let ambient: 'emotional' | null = null;
 let motes: Mote[] = [];
 let lastTick = 0;
@@ -154,6 +158,8 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
       vy: -(0.004 + Math.random() * 0.008) * H / 1000,
       sway: Math.random() * Math.PI * 2,
       life: 4000 + Math.random() * 5000,
+      // 340〜40度。ピンク寄りから橙寄りまで、丸ごとに散らす
+      hue: (340 + Math.random() * 60) % 360,
       // 最初の一群だけ、途中から始まったことにして一斉に消えないようにする
       age: motes.length < want && now - startedAt < 200 ? Math.random() * 3000 : 0,
     });
@@ -174,12 +180,14 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
     const t = m.age / m.life;
     const a = t < 0.25 ? t / 0.25 : t > 0.6 ? (1 - t) / 0.4 : 1;
 
-    // 中心をふわっと明るく、外へ長く伸ばす。輪郭が出ないよう途中を厚めに取る
+    // 中心をふわっと明るく、外へ長く伸ばす。輪郭が出ないよう途中を厚めに取る。
+    // 色は淡いピンク〜オレンジ。彩度を上げすぎると色被りに見えるので低めにする
+    const h = m.hue;
     const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r);
-    grad.addColorStop(0,    `rgba(255, 246, 230, ${0.26 * a})`);
-    grad.addColorStop(0.25, `rgba(255, 228, 212, ${0.15 * a})`);
-    grad.addColorStop(0.6,  `rgba(255, 206, 200, ${0.06 * a})`);
-    grad.addColorStop(1,    'rgba(255, 200, 195, 0)');
+    grad.addColorStop(0,    `hsla(${h}, 90%, 88%, ${0.26 * a})`);
+    grad.addColorStop(0.25, `hsla(${h}, 85%, 78%, ${0.16 * a})`);
+    grad.addColorStop(0.6,  `hsla(${h}, 80%, 70%, ${0.07 * a})`);
+    grad.addColorStop(1,    `hsla(${h}, 80%, 68%, 0)`);
     g.fillStyle = grad;
     g.beginPath();
     g.arc(x, m.y, m.r, 0, Math.PI * 2);
@@ -204,8 +212,8 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
 
   // 全体にうっすら暖かい膜をかける。粒だけだと点の集まりに見える
   const veil = g.createRadialGradient(W * 0.5, H * 0.42, unit * 0.1, W * 0.5, H * 0.5, unit * 0.85);
-  veil.addColorStop(0, 'rgba(255, 226, 210, 0.055)');
-  veil.addColorStop(1, 'rgba(255, 190, 190, 0)');
+  veil.addColorStop(0, 'hsla(25, 90%, 85%, 0.05)');
+  veil.addColorStop(1, 'hsla(340, 85%, 78%, 0)');
   g.fillStyle = veil;
   g.fillRect(0, 0, W, H);
   g.restore();
