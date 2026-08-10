@@ -143,12 +143,13 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
   // 画面のどこにでも湧かせて、大きくぼかす
   // 大きな光の丸を少なく。小さい粒をたくさん撒くと「ゴミ」に見える
   // （2026-08-10、伊波さんの「光の丸はおおきいほうがいい。粒じゃなく」）
-  const want = 9;
+  const want = 5;
   while (motes.length < want) {
-    const r = unit * (0.13 + Math.random() * 0.17);
+    const r = unit * (0.34 + Math.random() * 0.3);
     motes.push({
-      x: Math.random() * W,
-      y: Math.random() * H,
+      // 大きいので、中心が画面の外にあってもよい（一部だけ差し込む光になる）
+      x: (Math.random() * 1.6 - 0.3) * W,
+      y: (Math.random() * 1.6 - 0.3) * H,
       r,
       vy: -(0.004 + Math.random() * 0.008) * H / 1000,
       sway: Math.random() * Math.PI * 2,
