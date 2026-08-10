@@ -247,58 +247,71 @@ function App() {
 
       {/* 9:16 Preview Stage */}
       <main className="preview-stage" onClick={triggerFileInput}>
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          accept="video/*" 
-          onChange={handleVideoUpload} 
-          style={{ display: 'none' }} 
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept="video/*"
+          onChange={handleVideoUpload}
+          style={{ display: 'none' }}
         />
-        
-        {videoSrc ? (
-          <video 
-            ref={videoRef}
-            src={videoSrc}
-            className="video-player"
-            loop
-            playsInline
-            onEnded={() => setIsPreviewing(false)}
-            onLoadedMetadata={e => {
-              const v = e.currentTarget;
-              const wide = v.videoWidth > v.videoHeight;
-              setSrcIsWide(wide);
-              setShape(wide ? 'landscape' : 'portrait');   // 元の形に合わせる
-            }}
-            muted /* 録画を始めるときに recorder が解除する。動画の音もマイクと混ぜて録るため */
-          />
-        ) : (
-          <div className="video-placeholder">
-            <div className="upload-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
+
+        {/* 書き出す形と同じ枠を用意して、その中だけを見せる。
+            スマホの画面の形そのままに映していると、横（16:9）で書き出すときに
+            「見えているもの」と「出てくるもの」が別物になる（2026-08-10、伊波さんの指摘）。
+            中の並べ方も recorder.ts と同じにしてある（映像は contain、枠は cover） */}
+        <div
+          className="stage-box"
+          /* カスタムプロパティは文字列で渡す。数値だと React が落として
+             var() が既定値に落ちる */
+          style={{ '--ar': shape === 'portrait' ? '0.5625' : '1.7778' } as React.CSSProperties}
+        >
+          {videoSrc ? (
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              className="video-player"
+              loop
+              playsInline
+              onEnded={() => setIsPreviewing(false)}
+              onLoadedMetadata={e => {
+                const v = e.currentTarget;
+                const wide = v.videoWidth > v.videoHeight;
+                setSrcIsWide(wide);
+                setShape(wide ? 'landscape' : 'portrait');   // 元の形に合わせる
+              }}
+              muted /* 録画を始めるときに recorder が解除する。動画の音もマイクと混ぜて録るため */
+            />
+          ) : (
+            <div className="video-placeholder">
+              <div className="upload-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <p>{t('upload_hint')}</p>
             </div>
-            <p>{t('upload_hint')}</p>
-          </div>
-        )}
-        
-        {/* 枠のプレビュー。書き出しでは canvas に焼き込まれる。
-            ここは「どう見えるか」を確かめるためだけのもの */}
-        {frame && (
-          <img
-            src={frame.file}
-            alt=""
-            style={{
-              position: 'absolute', left: 0, width: '100%',
-              top: frame.anchor === 'top' ? 0 : undefined,
-              bottom: frame.anchor === 'bottom' ? 0 : undefined,
-              height: frame.anchor === 'full' ? '100%' : undefined,
-              pointerEvents: 'none',
-            }}
-          />
-        )}
+          )}
+
+          {/* 枠のプレビュー。書き出しでは canvas に焼き込まれる。
+              置き方は recorder.ts の drawFrame と揃えること。
+              wide と full は画面いっぱい（はみ出した側を切る）、
+              top と bottom は横幅いっぱいで上端／下端に寄せる。
+              以前は wide に位置指定が無く、20種の枠が見えていなかった */}
+          {frame && (
+            <img
+              src={frame.file}
+              alt=""
+              className="frame-overlay"
+              style={
+                frame.anchor === 'top' ? { top: 0, width: '100%', height: 'auto' }
+                : frame.anchor === 'bottom' ? { bottom: 0, width: '100%', height: 'auto' }
+                : { inset: 0, width: '100%', height: '100%', objectFit: 'cover' }
+              }
+            />
+          )}
+        </div>
       </main>
 
       {/* 録画中に指で押すところ。事前準備はここに置かない（PC版と同じ約束）。

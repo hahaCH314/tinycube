@@ -22,6 +22,22 @@ export type Frame = {
 };
 
 export const FRAMES: Frame[] = [
+  // --- 顔ハメ（9:16 で描いてあるので、縦で書き出すときにぴったり合う） ---
+  // CMCUBE ではカメラを穴にはめて使うもの。tinyCUBE では動画が穴から見える
+  { id: 'fh_02', name: '顔ハメ 1', file: './frames/02.webp', anchor: 'full' },
+  { id: 'fh_03', name: '顔ハメ 2', file: './frames/03.webp', anchor: 'full' },
+  { id: 'fh_05', name: '顔ハメ 3', file: './frames/05.webp', anchor: 'full' },
+  { id: 'fh_06', name: '顔ハメ 4', file: './frames/06.webp', anchor: 'full' },
+  { id: 'fh_07', name: '顔ハメ 5', file: './frames/07.webp', anchor: 'full' },
+  { id: 'fh_10', name: '顔ハメ 6', file: './frames/10.webp', anchor: 'full' },
+  { id: 'fh_11', name: '顔ハメ 7', file: './frames/11.webp', anchor: 'full' },
+  { id: 'fh_12', name: '顔ハメ 8', file: './frames/12.webp', anchor: 'full' },
+  { id: 'fh_13', name: '顔ハメ 9', file: './frames/13.webp', anchor: 'full' },
+  { id: 'fh_14', name: '顔ハメ 10', file: './frames/14.webp', anchor: 'full' },
+  { id: 'fh_16', name: '顔ハメ 11', file: './frames/16.webp', anchor: 'full' },
+  { id: 'fh_17', name: '顔ハメ 12', file: './frames/17.webp', anchor: 'full' },
+  { id: 'fh_18', name: '顔ハメ 13', file: './frames/18.webp', anchor: 'full' },
+
   // --- 16:9 の枠（横で書き出すときだけ出る） ---
   { id: 'green_garden', name: 'グリーンガーデン', file: './frames/green_garden.webp', anchor: 'wide' },
   { id: 'biotope',      name: 'ビオトープ',       file: './frames/biotope.webp',      anchor: 'wide' },

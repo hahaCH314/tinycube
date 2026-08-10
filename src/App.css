@@ -77,9 +77,11 @@
 /* プレビュー領域 (9:16) */
 .preview-stage {
   /* 残りを全部もらう。min-height:0 が無いと、flex の子は中身の高さより
-     縮まないので、下のデッキに押されて画面外へはみ出す */
+     縮まないので、下のデッキに押されて画面外へはみ出す。
+     container-type は .stage-box が cqw / cqh で大きさを聞くために要る */
   flex: 1 1 auto;
   min-height: 0;
+  container-type: size;
   position: relative;
   background-color: #000;
   display: flex;
@@ -533,3 +535,21 @@
   background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--text-muted); font-size: 0.8rem; cursor: pointer;
 }
+
+/* 書き出す形と同じ枠。中に見えているものが、そのまま動画になる。
+   height を先に決めて aspect-ratio で幅を出し、はみ出すときは max-width で
+   詰める（そのとき高さも比率に従って縮む） */
+.stage-box {
+  /* height:100% と aspect-ratio を併記すると、幅が max-width で詰められても
+     高さが残って比率が黙って無視される（横にしたとき 0.874 になっていた）。
+     入れ物の大きさを cqw / cqh で聞いて、幅を先に決める */
+  position: relative;
+  width: min(100cqw, calc(100cqh * var(--ar)));
+  aspect-ratio: var(--ar);
+  background: #000;
+  overflow: hidden;
+  border-radius: 4px;
+}
+.stage-box .video-player { width: 100%; height: 100%; }
+/* 枠は絵の上に。指の操作は下（動画の読み込み）へ通す */
+.frame-overlay { position: absolute; left: 0; pointer-events: none; }
