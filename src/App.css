@@ -1,0 +1,474 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* ヘッダー */
+.header {
+  /* 映す場所を1pxでも広く取りたいので、上下の余白は詰める（2026-08-10） */
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-cube {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 6px;
+  box-shadow: 0 0 10px var(--primary-glow);
+  transform: rotate(45deg);
+}
+
+.logo-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  background: linear-gradient(to right, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.record-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.record-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.record-btn.recording {
+  background: #ef4444;
+  color: white;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+/* プレビュー領域 (9:16) */
+.preview-stage {
+  /* 残りを全部もらう。min-height:0 が無いと、flex の子は中身の高さより
+     縮まないので、下のデッキに押されて画面外へはみ出す */
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  background-color: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.video-placeholder {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.upload-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px dashed var(--text-muted);
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  /* 横長の動画を cover にすると左右が切り落とされる。読み込んだものが
+     そのまま見えるほうが、書き出し（縦に収める）とも食い違わない */
+  object-fit: contain;
+  pointer-events: none; /* タップイベントを下のコンテナに流す */
+}
+
+/* Live Control Deck */
+.control-deck {
+  /* 高さを決め打ちにすると、中身が少ないときも35%を占め続けて
+     映す場所が狭くなる。中身なりの高さにして、上限だけ決める */
+  flex: 0 0 auto;
+  /* 中でスクロールさせない（2026-08-10、伊波さんの指示）。
+     押したいボタンが隠れていると、本番中に探すことになる */
+  overflow: visible;
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.deck-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.deck-tab {
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.deck-tab.active {
+  background: var(--primary-color);
+  color: #000;
+  box-shadow: 0 0 15px var(--primary-glow);
+}
+
+.stamp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.stamp-btn {
+  aspect-ratio: 1;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.stamp-btn:hover, .stamp-btn:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--primary-color);
+}
+
+.stamp-icon {
+  font-size: 1.8rem;
+}
+
+.stamp-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* 枠えらび。横に流して指で送る。縦の場所を食わないように1行で収める */
+.frame-picker {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.frame-tile {
+  flex: 0 0 auto;
+  width: 64px;
+  background: #0b1021;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+}
+.frame-tile.on { border-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+.frame-tile img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000; }
+.frame-tile span { display: block; padding: 3px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame-tile.none { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
+
+/* 会社の名乗り。tinyCUBE の下に小さく添える。
+   会社HP と同じで studio だけ色を変える */
+.logo-names { display: flex; flex-direction: column; line-height: 1.15; }
+.logo-studio {
+  font-size: 0.6rem;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.logo-studio span { color: var(--primary-color); }
+
+/* 横長の動画を読み込んだときだけ出る案内。
+   16:9 を 9:16 に詰めると画面の6割が黒帯になるので、そこを黙って通さない */
+.wide-guide {
+  background: rgba(0, 210, 255, 0.10);
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.75rem;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+.shape-switch { display: flex; gap: 6px; margin-top: 6px; }
+.shape-switch button {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: 0.7rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #0b1021;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.shape-switch button.on {
+  border-color: var(--primary-color);
+  color: var(--text-main);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
+/* 設定へ入る口。ヘッダーは名乗りと設定だけにして、
+   録画ボタンは親指の届く下端へ移した（2026-08-10） */
+.settings-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-main);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* 録画ボタン。録画中も同じ場所・同じ大きさで、押す先を探さずに済むようにする */
+.record-btn.big {
+  width: 100%;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.live-row { flex: 1; display: flex; align-items: center; justify-content: center; }
+.live-hint { color: var(--text-muted); font-size: 0.8rem; }
+
+/* -------------------------------------
+   エフェクトボタン (Glassmorphism & Neon)
+------------------------------------- */
+.effect-grid {
+  /* 正方形のボタンを敷き詰める（2026-08-10、伊波さんの指示）。
+     テロップが最大16個あるので、4列にして指で押せる大きさを保つ。
+     入りきらないぶんはデッキの中でスクロールする */
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.effect-btn {
+  /* 正方形。並べたときに目が揃って、押す場所を探さずに済む */
+  aspect-ratio: 1;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2px;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.52rem;
+  line-height: 1.2;
+  word-break: break-word;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.effect-btn:active {
+  transform: scale(0.92);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* カテゴリごとの色分け (CMCUBEに準拠) */
+.effect-btn.btn-burst {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: linear-gradient(180deg, rgba(239,68,68,0.1) 0%, rgba(15,23,42,0.6) 100%);
+  color: #fca5a5;
+}
+.effect-btn.btn-burst:active {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+.effect-btn.btn-sound {
+  border-color: rgba(250, 204, 21, 0.3);
+  background: linear-gradient(180deg, rgba(250,204,21,0.1) 0%, rgba(15,23,42,0.6) 100%);
+  color: #fde047;
+}
+.effect-btn.btn-sound:active {
+  background: rgba(250, 204, 21, 0.2);
+  border-color: #facc15;
+  box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
+}
+
+.effect-btn.btn-telop {
+  border-color: rgba(168, 85, 247, 0.3);
+  background: linear-gradient(180deg, rgba(168,85,247,0.1) 0%, rgba(15,23,42,0.6) 100%);
+  color: #d8b4fe;
+}
+.effect-btn.btn-telop:active {
+  background: rgba(168, 85, 247, 0.2);
+  border-color: #a855f7;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+
+/* 設定シート。下から出す（スマホで指が届く側） */
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: flex-end;
+}
+.sheet {
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--bg-dark);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px 16px 0 0;
+  padding: 14px 14px 24px;
+}
+.sheet-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 700; margin-bottom: 10px;
+}
+.sheet-head button {
+  background: none; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted);
+  border-radius: 16px; padding: 5px 12px; font-size: 0.75rem; cursor: pointer;
+}
+.sheet h3 { font-size: 0.75rem; color: var(--primary-color); margin: 14px 0 6px; letter-spacing: 1px; }
+.sheet-note { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.5; }
+.sheet-btn {
+  width: 100%; padding: 12px; border-radius: 10px;
+  background: rgba(0, 210, 255, 0.12); border: 1px solid rgba(0, 210, 255, 0.4);
+  color: var(--text-main); font-size: 0.85rem; cursor: pointer;
+}
+
+/* 形が合わない枠に出す印。黙って切ると「なぜか絵が違う」になる */
+.crop-mark {
+  display: block;
+  font-size: 0.55rem;
+  font-style: normal;
+  color: #fbbf24;
+  padding: 0 2px 3px;
+  white-space: nowrap;
+}
+
+.head-btns { display: flex; gap: 6px; }
+
+/* 使い方と注意。読ませるより触らせたいので短く保つこと */
+.sheet.guide { max-height: 92vh; }
+.guide-steps { margin: 0; padding-left: 20px; font-size: 0.78rem; line-height: 1.6; }
+.guide-steps li { margin-bottom: 10px; }
+.guide-steps b { color: var(--text-main); }
+.guide-warn {
+  margin: 14px 0;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.guide-warn h3 { color: #fca5a5; margin: 0 0 8px; font-size: 0.8rem; }
+.guide-warn ul { margin: 0; padding-left: 18px; font-size: 0.72rem; line-height: 1.6; color: var(--text-muted); }
+.guide-warn li { margin-bottom: 6px; }
+.guide-warn b { color: var(--text-main); }
+.guide-note { font-size: 0.7rem; color: var(--text-muted); line-height: 1.6; margin-top: 8px; }
+
+/* CMCUBE（PC版）の紹介。押し売りにならないよう、枠で囲んで本文と分ける */
+.promo {
+  margin: 16px 0 14px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: linear-gradient(160deg, rgba(168, 85, 247, 0.14), rgba(0, 210, 255, 0.06));
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.promo-head { display: flex; align-items: center; gap: 8px; font-size: 1rem; }
+.promo-badge {
+  font-size: 0.6rem; letter-spacing: 1px; font-weight: 700;
+  background: #a855f7; color: #fff; border-radius: 4px; padding: 2px 6px;
+}
+.promo-lead { font-size: 0.85rem; font-weight: 700; margin: 8px 0 6px; color: var(--text-main); }
+.promo-points { margin: 0; padding-left: 18px; font-size: 0.72rem; line-height: 1.7; color: var(--text-muted); }
+.promo-points b { color: var(--text-main); }
+.promo-foot { font-size: 0.68rem; color: var(--text-muted); margin-top: 8px; }
+.promo-foot b { color: #22d3ee; }
+
+/* テロップの言葉を書き換える欄。指で押せる高さにする */
+.telop-input {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 12px;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  background: #0b1021;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text-main);
+}
+.telop-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 8px var(--primary-glow); }
+.effect-btn:disabled { opacity: 0.4; }
+
+/* 言葉の書き換え欄は16個ある。1列だと縦に長すぎるので2列で並べる */
+.telop-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.telop-inputs .telop-input { margin-bottom: 0; padding: 10px; font-size: 0.85rem; }
+
+/* 下見。録画と間違えないよう、赤い録画ボタンとは別の色・別の高さにする */
+.preview-btn {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 6px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+  cursor: pointer;
+}
+.preview-btn:disabled { opacity: 0.35; }
