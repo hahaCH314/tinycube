@@ -553,3 +553,21 @@
 .stage-box .video-player { width: 100%; height: 100%; }
 /* 枠は絵の上に。指の操作は下（動画の読み込み）へ通す */
 .frame-overlay { position: absolute; left: 0; pointer-events: none; }
+
+/* 画面に出しているのは canvas。録画中もそうでないときも同じ絵で、
+   エフェクトを押せばその場で見える（2026-08-10）。
+   元の video は音と再生のために残すが、見せない */
+.stage-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.video-player.hidden-source {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}

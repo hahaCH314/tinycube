@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './App.css'
-import { startRecording, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, fitsShape, loadFrame } from './frames'
+import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
+import { FRAMES, fitsShape, loadFrame, type FrameAnchor } from './frames'
 import { fireEffect, fireTelop, type EffectId } from './effects'
 import { t, getLang, setLang } from './i18n'
 
@@ -14,6 +14,15 @@ function App() {
   
   // 録画関連のRef
   const recorderRef = useRef<RecordHandle | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // 描画の係が毎フレーム読むもの。React の state を直接読むと、
+  // 係が作られた時点の古い値を見続けることになる
+  const liveRef = useRef<{
+    video: HTMLVideoElement | null;
+    shape: OutShape;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
+    watermark: string | null;
+  }>({ video: null, shape: 'portrait', frame: null, watermark: 'tinyCUBE' });
   
   // ボタンから呼ばれる口。中身は effects.ts が持っている。
   // 録画していないときに押しても鳴る（本番前に手応えを確かめられるように）。
@@ -83,6 +92,29 @@ function App() {
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
   const frame = FRAMES.find(f => f.id === frameId) ?? null;
+
+  // 画面に出す係を1つだけ回す。録画していなくても同じ絵が出るので、
+  // エフェクトを押せばその場で見える
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c) return;
+    return startStage({
+      canvas: c,
+      // video は毎回聞き直す。読み込む前は要素そのものが無い
+      read: () => ({ ...liveRef.current, video: videoRef.current }),
+    });
+  }, []);
+
+  // 選んだ枠の絵を読み込んでおく。録画の直前に読むと間に合わない
+  useEffect(() => {
+    liveRef.current.shape = shape;
+    if (!frame) { liveRef.current.frame = null; return; }
+    let alive = true;
+    loadFrame(frame).then(img => {
+      if (alive) liveRef.current.frame = { img, anchor: frame.anchor };
+    }).catch(() => { /* 読めなければ枠なしで続ける */ });
+    return () => { alive = false; };
+  }, [frame, shape]);
 
   // 動画ファイルが選択されたとき
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,12 +217,12 @@ function App() {
     try {
       // 透かしは無料版の印。動画そのものに焼き込まれる。
       // 有料版にしたときは null を渡すだけで消える
-      // 枠は録画が始まる前に読み込みきる。間に合わないと、枠だけ
-      // 抜けた動画が出てしまう
-      const img = frame ? await loadFrame(frame) : null;
+      // 画面に出しているものをそのまま録る。別の絵を作らないので、
+      // 見えているものと出てくるものが必ず一致する
       recorderRef.current = await startRecording({
         video: videoRef.current,
-        frame: img && frame ? { img, anchor: frame.anchor } : null,
+        canvas: canvasRef.current ?? undefined,
+        frame: liveRef.current.frame,
         shape,
         watermark: 'tinyCUBE',
         onFinish: save,
@@ -265,11 +297,12 @@ function App() {
              var() が既定値に落ちる */
           style={{ '--ar': shape === 'portrait' ? '0.5625' : '1.7778' } as React.CSSProperties}
         >
+          <canvas ref={canvasRef} className="stage-canvas" />
           {videoSrc ? (
             <video
               ref={videoRef}
               src={videoSrc}
-              className="video-player"
+              className="video-player hidden-source"
               loop
               playsInline
               onEnded={() => setIsPreviewing(false)}

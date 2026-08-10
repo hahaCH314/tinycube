@@ -26,13 +26,15 @@ export type RecordOptions = {
   watermark: string | null;
   /** 書き出しの形。既定は縦 */
   shape?: OutShape;
+  /** 画面に出している canvas。渡すとそれをそのまま録る */
+  canvas?: HTMLCanvasElement;
   /** 書き出しが終わったときに呼ばれる */
   onFinish: (blob: Blob, ext: string) => void;
   onError: (e: Error) => void;
 };
 
 import type { FrameAnchor, OutShape } from './frames';
-import { attachAudio, detachAudio, drawEffects, clearEffects } from './effects';
+import { attachAudio, detachAudio, drawEffects } from './effects';
 
 /** 書き出しの形。読み込んだ動画が横長なら横で出す。
     16:9 の動画を無理に 9:16 へ詰めると、画面の6割が黒帯になる */
@@ -42,21 +44,75 @@ const SIZES: Record<OutShape, { w: number; h: number }> = {
   landscape: { w: 1920, h: 1080 },
 };
 
+/** 画面に出すもの。録画していなくてもずっと回す。
+ *
+ *  以前は録画中しか canvas が無く、エフェクトを押しても音だけ鳴って
+ *  何も見えなかった（2026-08-10、伊波さんの指摘「ただのうるさいキーボード」）。
+ *  見えているものが、そのまま録れるものになる。
+ */
+export type StageOptions = {
+  canvas: HTMLCanvasElement;
+  /** 呼ばれるたびに、いまの状態を返す。
+   *  video も毎回聞き直す。動画を読み込む前は要素そのものが無いので、
+   *  最初に一度だけ受け取る形にすると、いつまでも動かない */
+  read: () => {
+    video: HTMLVideoElement | null;
+    shape: OutShape;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
+    watermark: string | null;
+  };
+};
+
+export function startStage(opts: StageOptions): () => void {
+  const { canvas, read } = opts;
+  const g = canvas.getContext('2d');
+  if (!g) return () => { /* 描けないだけ。アプリは動く */ };
+
+  let running = true;
+  const draw = () => {
+    if (!running) return;
+    const { video, shape, frame, watermark } = read();
+    const { w: OUT_W, h: OUT_H } = SIZES[shape];
+    if (canvas.width !== OUT_W) canvas.width = OUT_W;
+    if (canvas.height !== OUT_H) canvas.height = OUT_H;
+
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, OUT_W, OUT_H);
+
+    const vw = video?.videoWidth ?? 0, vh = video?.videoHeight ?? 0;
+    if (video && vw && vh) {
+      const scale = Math.min(OUT_W / vw, OUT_H / vh);
+      const w = vw * scale, h = vh * scale;
+      g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
+    }
+
+    if (frame) drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H);
+    drawEffects(g, OUT_W, OUT_H);
+    if (watermark) {
+      drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
+    }
+    requestAnimationFrame(draw);
+  };
+  requestAnimationFrame(draw);
+  return () => { running = false; };
+}
+
 export async function startRecording(opts: RecordOptions): Promise<RecordHandle> {
   const { video, watermark, frame } = opts;
   const { w: OUT_W, h: OUT_H } = SIZES[opts.shape ?? 'portrait'];
 
-  const canvas = document.createElement('canvas');
-  canvas.width = OUT_W;
-  canvas.height = OUT_H;
+  // 画面に出しているものをそのまま録る。別の canvas を作らない
+  const canvas = opts.canvas ?? document.createElement('canvas');
   const g = canvas.getContext('2d');
   if (!g) throw new Error('canvas を用意できませんでした');
+  if (!opts.canvas) {
+    canvas.width = OUT_W;
+    canvas.height = OUT_H;
+  }
 
-  // 毎フレーム描く。requestVideoFrameCallback があるならそちらのほうが
-  // 動画のコマに合うが、Safari と Firefox に無いので rAF で回す
   let running = true;
   const draw = () => {
-    if (!running) return;
+    if (!running || opts.canvas) return;   // 画面側が回しているなら任せる
     g.fillStyle = '#000';
     g.fillRect(0, 0, OUT_W, OUT_H);
 
@@ -138,7 +194,6 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
     const actual = recorder.mimeType || type || 'video/webm';
     const ext = actual.includes('mp4') ? 'mp4' : 'webm';
     opts.onFinish(new Blob(chunks, { type: actual }), ext);
-    clearEffects();
     detachAudio();
     stream.getTracks().forEach(t => t.stop());
     micStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
