@@ -530,6 +530,12 @@ function App() {
                 <li>{t('guide_promo_p3')}</li>
                 <li>{t('guide_promo_p4')}</li>
               </ul>
+              <a
+                className="promo-link"
+                href="https://cmcubevercelapp.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >{t('promo_open')}</a>
               <p className="promo-foot">{t('guide_promo_foot')}</p>
             </div>
 

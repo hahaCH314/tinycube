@@ -44,6 +44,7 @@ type I18nDict = {
   eff_pon: string;
   eff_buzz: string;
   turn_hint: string;
+  promo_open: string;
   setting_camera: string;
   setting_srcaudio: string;
   srcaudio_on: string;
@@ -126,6 +127,7 @@ const dictJa: I18nDict = {
   eff_pon: '🫧 ぽん',
   eff_buzz: '📢 ぶー',
   turn_hint: '📱↻ 16:9（横動画）は、横向きでの操作がおすすめです',
+  promo_open: 'CMCUBE を見る →',
   setting_camera: 'カメラ',
   setting_srcaudio: '動画の音',
   srcaudio_on: '🔊 入れる',
@@ -205,6 +207,7 @@ const dictEn: I18nDict = {
   eff_pon: '🫧 Pon',
   eff_buzz: '📢 Buzz',
   turn_hint: '📱↻ For 16:9, holding the phone sideways works best',
+  promo_open: 'See CMCUBE →',
   setting_camera: 'Camera',
   setting_srcaudio: 'Video sound',
   srcaudio_on: '🔊 Keep',
