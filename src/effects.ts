@@ -118,9 +118,11 @@ type Mote = { x: number; y: number; r: number; vy: number; sway: number; life: n
 let ambient: 'emotional' | null = null;
 let motes: Mote[] = [];
 let lastTick = 0;
+let startedAt = 0;
 
 export function setAmbient(kind: 'emotional' | null) {
   ambient = kind;
+  startedAt = performance.now();
   if (!kind) motes = [];
 }
 export function getAmbient() {
@@ -133,18 +135,24 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
   lastTick = now;
   if (!ambient) return;
 
-  // 1秒あたりの数で出す。フレームの速さに左右されないようにする
-  const perSecond = 14;
-  if (Math.random() < (perSecond * dt) / 1000 && motes.length < 90) {
-    const r = (Math.random() * 0.004 + 0.0015) * Math.min(W, H) * 2;
+  const unit = Math.min(W, H);
+
+  // つけた瞬間から見えていてほしいので、足りない分は一気に足す。
+  // 下から昇らせる作りだと、上がりきる前に消えて何も見えなかった
+  // （2026-08-10、伊波さんの「出ない」「光のぼかしみたいなのがイイ」）。
+  // 画面のどこにでも湧かせて、大きくぼかす
+  const want = 26;
+  while (motes.length < want) {
+    const r = unit * (0.03 + Math.random() * 0.055);
     motes.push({
       x: Math.random() * W,
-      y: H + r,
+      y: Math.random() * H,
       r,
-      vy: -(0.012 + Math.random() * 0.02) * H / 1000,
+      vy: -(0.004 + Math.random() * 0.008) * H / 1000,
       sway: Math.random() * Math.PI * 2,
-      life: 5000 + Math.random() * 4000,
-      age: 0,
+      life: 4000 + Math.random() * 5000,
+      // 最初の一群だけ、途中から始まったことにして一斉に消えないようにする
+      age: motes.length < want && now - startedAt < 200 ? Math.random() * 3000 : 0,
     });
   }
 
@@ -156,23 +164,66 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
     m.age += dt;
     if (m.age > m.life) { motes.splice(i, 1); continue; }
     m.y += m.vy * dt;
-    m.sway += dt * 0.001;
-    const x = m.x + Math.sin(m.sway) * m.r * 3;
+    m.sway += dt * 0.0006;
+    const x = m.x + Math.sin(m.sway) * m.r * 0.6;
 
-    // 出るときと消えるときに、そっと現れて そっと消える
+    // そっと現れて、そっと消える
     const t = m.age / m.life;
-    const a = t < 0.15 ? t / 0.15 : t > 0.7 ? (1 - t) / 0.3 : 1;
+    const a = t < 0.25 ? t / 0.25 : t > 0.6 ? (1 - t) / 0.4 : 1;
 
-    const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r * 3);
-    grad.addColorStop(0, `rgba(255, 240, 220, ${0.55 * a})`);
-    grad.addColorStop(0.4, `rgba(255, 200, 190, ${0.22 * a})`);
-    grad.addColorStop(1, 'rgba(255, 190, 180, 0)');
+    const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r);
+    grad.addColorStop(0,    `rgba(255, 244, 225, ${0.30 * a})`);
+    grad.addColorStop(0.35, `rgba(255, 214, 205, ${0.14 * a})`);
+    grad.addColorStop(1,    'rgba(255, 200, 195, 0)');
     g.fillStyle = grad;
     g.beginPath();
-    g.arc(x, m.y, m.r * 3, 0, Math.PI * 2);
+    g.arc(x, m.y, m.r, 0, Math.PI * 2);
     g.fill();
   }
+
+  // フィルムの粒子。少しざらつかせると、のっぺりした映像が写真っぽくなる
+  // （2026-08-10、伊波さんの「画像が少し荒くなるとか」）。
+  // 毎フレーム作ると重いので、小さな模様を1枚作って敷き詰め、位置だけずらす
+  const grain = grainPattern(g);
+  if (grain) {
+    g.globalCompositeOperation = 'overlay';
+    g.globalAlpha = 0.22;
+    g.save();
+    g.translate(-Math.random() * 64, -Math.random() * 64);
+    g.fillStyle = grain;
+    g.fillRect(0, 0, W + 64, H + 64);
+    g.restore();
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'lighter';
+  }
+
+  // 全体にうっすら暖かい膜をかける。粒だけだと点の集まりに見える
+  const veil = g.createRadialGradient(W * 0.5, H * 0.42, unit * 0.1, W * 0.5, H * 0.5, unit * 0.85);
+  veil.addColorStop(0, 'rgba(255, 226, 210, 0.055)');
+  veil.addColorStop(1, 'rgba(255, 190, 190, 0)');
+  g.fillStyle = veil;
+  g.fillRect(0, 0, W, H);
   g.restore();
+}
+
+// ざらつきの模様。1枚だけ作って使い回す
+let grainTile: CanvasPattern | null = null;
+function grainPattern(g: CanvasRenderingContext2D): CanvasPattern | null {
+  if (grainTile) return grainTile;
+  const size = 64;
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const gg = c.getContext('2d');
+  if (!gg) return null;
+  const im = gg.createImageData(size, size);
+  for (let i = 0; i < im.data.length; i += 4) {
+    const v = 110 + Math.random() * 90;      // 中間の明るさを中心に散らす
+    im.data[i] = im.data[i + 1] = im.data[i + 2] = v;
+    im.data[i + 3] = 255;
+  }
+  gg.putImageData(im, 0, 0);
+  grainTile = g.createPattern(c, 'repeat');
+  return grainTile;
 }
 
 /** 録画をやめたときに呼ぶ。出しっぱなしの効果を消す */
