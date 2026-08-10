@@ -108,7 +108,13 @@ function App() {
   const [camFront, setCamFront] = useState(true);
   // 動画そのものの音を録るかどうか。BGM入りの動画にアフレコするときは
   // 消したい（2026-08-10、伊波さんの指示）
-  const [useSrcAudio, setUseSrcAudio] = useState(true);
+  const [useSrcAudio, setUseSrcAudio] = useState<'mix' | 'mic' | 'off'>(() => {
+    try { return (localStorage.getItem('tinycube.srcAudio') as 'mix' | 'mic' | 'off') || 'mic'; } catch { return 'mic'; }
+  });
+  const pickSrcAudio = (v: 'mix' | 'mic' | 'off') => {
+    setUseSrcAudio(v);
+    try { localStorage.setItem('tinycube.srcAudio', v); } catch { /* 保存できなくても動く */ }
+  };
   // 形を自分で選んだかどうか。選んだあとに映像の向きで上書きすると、
   // 9:16 を選んだのに 16:9 に戻る（2026-08-10、伊波さんの指摘）。
   // 新しい映像を読み込んだときだけ、自動で合わせ直す
@@ -672,9 +678,11 @@ function App() {
             </div>
 
             <h3>{t('setting_srcaudio')}</h3>
+            <p className="sheet-note">{t('srcaudio_note')}</p>
             <div className="shape-switch">
-              <button className={useSrcAudio ? 'on' : ''} onClick={() => setUseSrcAudio(true)}>{t('srcaudio_on')}</button>
-              <button className={!useSrcAudio ? 'on' : ''} onClick={() => setUseSrcAudio(false)}>{t('srcaudio_off')}</button>
+              <button className={useSrcAudio === 'mic' ? 'on' : ''} onClick={() => pickSrcAudio('mic')}>{t('srcaudio_mic')}</button>
+              <button className={useSrcAudio === 'mix' ? 'on' : ''} onClick={() => pickSrcAudio('mix')}>{t('srcaudio_mix')}</button>
+              <button className={useSrcAudio === 'off' ? 'on' : ''} onClick={() => pickSrcAudio('off')}>{t('srcaudio_off')}</button>
             </div>
 
             <h3>{t('setting_shape')}</h3>

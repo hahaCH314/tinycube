@@ -28,8 +28,15 @@ export type RecordOptions = {
   shape?: OutShape;
   /** 画面に出している canvas。渡すとそれをそのまま録る */
   canvas?: HTMLCanvasElement;
-  /** 動画そのものの音を入れるか。false なら声とエフェクトだけ */
-  srcAudio?: boolean;
+  /** 動画そのものの音の扱い。
+   *  'mix'    … 動画の音をそのまま録音に混ぜ、耳にも出す。イヤホン向け（高音質）
+   *  'mic'    … 混ぜない。スピーカーから出た音をマイクが拾う。イヤホン無し向け
+   *  'off'    … 動画の音を使わない。声とエフェクトだけ
+   *
+   *  スピーカーで 'mix' にすると、同じ音が「直接」と「マイク越し」で二重に入る
+   *  （2026-08-11、伊波さんの「二重奏」）。イヤホンなら二重にならないので、
+   *  どちらが良いかは環境次第。だから選んでもらう */
+  srcAudio?: 'mix' | 'mic' | 'off';
   /** 書き出しが終わったときに呼ばれる */
   onFinish: (blob: Blob, ext: string) => void;
   onError: (e: Error) => void;
@@ -161,7 +168,7 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
 
   try {
     const mic = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false },
       video: false,
     });
     const micGain = actx.createGain();
@@ -177,11 +184,14 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
   // 本人にも聞こえるように actx.destination へも繋ぎ直す
   video.muted = false;
   const src = getElementSource(actx, video);
+  const mode = opts.srcAudio ?? 'mic';
   const videoGain = actx.createGain();
-  videoGain.gain.value = opts.srcAudio === false ? 0 : 0.8;
+  videoGain.gain.value = mode === 'off' ? 0 : 0.8;
   src.connect(videoGain);
-  videoGain.connect(dest);
-  videoGain.connect(actx.destination);
+  // 耳へは 'off' 以外なら出す。そうしないと本人が動画を聞けない
+  if (mode !== 'off') videoGain.connect(actx.destination);
+  // 録音へ直接混ぜるのは 'mix' のときだけ。'mic' はマイク越しの一本にする
+  if (mode === 'mix') videoGain.connect(dest);
 
   // 効果音はここへ流し込む。自前で AudioContext を作ると動画に入らない
   attachAudio(actx, dest);

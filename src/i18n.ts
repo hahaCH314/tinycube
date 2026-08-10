@@ -58,7 +58,9 @@ type I18nDict = {
   sound_fail: string;
   setting_camera: string;
   setting_srcaudio: string;
-  srcaudio_on: string;
+  srcaudio_mic: string;
+  srcaudio_mix: string;
+  srcaudio_note: string;
   srcaudio_off: string;
   cam_front: string;
   cam_back: string;
@@ -153,7 +155,9 @@ const dictJa: I18nDict = {
   sound_fail: 'この音は読み込めませんでした。別のファイルを試してください。',
   setting_camera: 'カメラ',
   setting_srcaudio: '動画の音',
-  srcaudio_on: '🔊 入れる',
+  srcaudio_mic: '📱 スピーカー',
+  srcaudio_mix: '🎧 イヤホン',
+  srcaudio_note: 'イヤホンを使うなら「イヤホン」。そのままスピーカーで撮るなら「スピーカー」を選んでください。逆にすると、動画の音が二重に入るか、まったく入らなくなります。',
   srcaudio_off: '🔇 消す',
   cam_front: '📷 自分',
   cam_back: '🌄 外',
@@ -245,7 +249,9 @@ const dictEn: I18nDict = {
   sound_fail: 'That file could not be read. Try another one.',
   setting_camera: 'Camera',
   setting_srcaudio: 'Video sound',
-  srcaudio_on: '🔊 Keep',
+  srcaudio_mic: '📱 Speaker',
+  srcaudio_mix: '🎧 Earphones',
+  srcaudio_note: 'Pick Earphones if you are wearing them, Speaker if you are not. The wrong one makes the video sound double up, or vanish entirely.',
   srcaudio_off: '🔇 Mute',
   cam_front: '📷 Front',
   cam_back: '🌄 Back',
