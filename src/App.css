@@ -1,718 +1,318 @@
-.app-container {
-  /* ボタンは左右の端に1列ずつ。真ん中に映すものを置く。
-     両手で持ったとき、どちらの親指も動かさずに届く（2026-08-10、伊波さんの指示）。
-     縦でも横でも同じ考え方で、幅だけ変える */
-  display: grid;
-  /* 縦のときは柱を細く。真ん中の映す場所を広く取りたい
-     （2026-08-10、伊波さん「縦の時はボタン小さく」） */
-  grid-template-columns: clamp(40px, 12%, 52px) 1fr clamp(40px, 12%, 52px);
-  grid-template-rows: auto 1fr auto;
-  height: 100%;
-  width: 100%;
+:root {
+  --primary-color: #ff1493; /* ディープピンク */
+  --secondary-color: #00ffff; /* シアン（Y2Kアクセント） */
+  --accent-color: #ff69b4; /* ホットピンク */
+  --bg-main: #fff0f5; /* ラベンダーブラッシュ */
+  --text-main: #ff1493;
+  --text-muted: #c71585;
 }
-.header { grid-column: 1 / -1; grid-row: 1; }
-.preview-stage { grid-column: 2; grid-row: 2; }
-.effect-left  { grid-column: 3; grid-row: 2; }   /* 一発エフェクトと効果音は右へ */
-.effect-right { grid-column: 1; grid-row: 2; }   /* テロップ（文字）は左へ */
-.control-deck { grid-column: 1 / -1; grid-row: 3; }
 
-/* 柱の中は1列。上から詰めて、あふれる分だけ中で送れるようにする */
-.effect-grid.effect-left, .effect-grid.effect-right {
-  grid-template-columns: 1fr;
-  align-content: start;
-  gap: 3px;
-  padding: 3px;
-  overflow-y: auto;
-  min-height: 0;
+body {
+  margin: 0;
+  font-family: 'Rounded M+ 1c', 'Kosugi Maru', 'Hiragino Maru Gothic ProN', sans-serif; /* 丸文字っぽく */
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+* { box-sizing: border-box; }
+button { outline: none; border: none; font-family: inherit; }
+
+/* キラキラ・デコ文字用のミックスイン風クラス */
+.deco-text {
+  color: #ff1493;
+  font-weight: 900;
+  text-shadow: 
+    -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff,
+    -1px 0 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, 0 1px 0 #fff,
+    0 4px 6px rgba(255, 20, 147, 0.4); /* ぷっくり白フチ＋ピンク影 */
+}
+
+/* アクアボタン・ぷっくり立体感 */
+.emboss-btn {
+  background: linear-gradient(180deg, #ff9ce2 0%, #ff1493 100%);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 
+    inset 0 4px 6px rgba(255,255,255,0.8), /* 上のハイライト */
+    inset 0 -4px 6px rgba(139,0,139,0.5), /* 下のシャドウ */
+    0 4px 10px rgba(0,0,0,0.25); /* 外の影 */
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.app-container {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  background: #000;
+  overflow: hidden;
+  display: block;
 }
 
 /* ヘッダー */
 .header {
-  /* 映す場所を1pxでも広く取りたいので、上下の余白は詰める（2026-08-10） */
-  padding: 8px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 10;
+  position: absolute;
+  top: 0; left: 0; width: 100%;
+  padding: 16px 20px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  z-index: 20; pointer-events: none;
 }
+.header > * { pointer-events: auto; }
 
 .logo-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
 }
-
-.logo-cube {
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  border-radius: 6px;
-  box-shadow: 0 0 10px var(--primary-glow);
-  transform: rotate(45deg);
-}
-
 .logo-text {
   font-family: 'Outfit', sans-serif;
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-weight: 900;
+  font-size: 1.6rem;
   letter-spacing: 1px;
-  background: linear-gradient(to right, #fff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #00ffff; /* 水色とピンクのY2K配色 */
+  text-shadow: 
+    -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff,
+    4px 4px 0 #ff1493; /* ずれたネオン影 */
+  transform: rotate(-3deg); /* ちょっと斜めにするのが平成ギャル */
 }
 
-.record-btn {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-}
-
-.record-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
-}
-
-.record-btn.recording {
-  background: #ef4444;
-  color: white;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-}
-
-/* プレビュー領域 (9:16) */
+/* プレビュー領域 */
 .preview-stage {
-  /* 残りを全部もらう。min-height:0 が無いと、flex の子は中身の高さより
-     縮まないので、下のデッキに押されて画面外へはみ出す。
-     container-type は .stage-box が cqw / cqh で大きさを聞くために要る */
-  flex: 1 1 auto;
-  min-height: 0;
-  container-type: size;
-  position: relative;
+  position: absolute; inset: 0; width: 100%; height: 100%;
   background-color: #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
+  display: flex; justify-content: center; align-items: center; overflow: hidden;
 }
+.stage-box { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.stage-box .video-player { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.video-player.hidden-source { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.frame-overlay { position: absolute; left: 0; pointer-events: none; }
 
 .video-placeholder {
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  color: #ff1493;
+  font-size: 1.2rem;
+  font-weight: 900;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  pointer-events: none;
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
 }
-
 .upload-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--bg-card);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px dashed var(--text-muted);
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  display: flex; justify-content: center; align-items: center;
+  border: 4px dashed #ff1493;
+  box-shadow: 0 4px 15px rgba(255,20,147,0.5);
 }
 
-.video-player {
-  width: 100%;
-  height: 100%;
-  /* 横長の動画を cover にすると左右が切り落とされる。読み込んだものが
-     そのまま見えるほうが、書き出し（縦に収める）とも食い違わない */
-  object-fit: contain;
-  pointer-events: none; /* タップイベントを下のコンテナに流す */
+/* フローティングUIレイヤー */
+.ui-layer {
+  position: absolute; inset: 0; z-index: 10; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between;
 }
 
-/* Live Control Deck */
-.control-deck {
-  /* 高さを決め打ちにすると、中身が少ないときも35%を占め続けて
-     映す場所が狭くなる。中身なりの高さにして、上限だけ決める */
-  flex: 0 0 auto;
-  /* 中でスクロールさせない（2026-08-10、伊波さんの指示）。
-     押したいボタンが隠れていると、本番中に探すことになる */
-  overflow: visible;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* ツールバー (右側) */
+.side-toolbar {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 20px; pointer-events: auto; z-index: 20;
+}
+.tool-btn {
+  width: 52px; height: 52px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.tool-btn:active { transform: scale(0.85); }
+.tool-btn.active { filter: brightness(1.2); }
+
+/* 下部コントロール */
+.bottom-controls {
+  padding: 20px; padding-bottom: max(30px, env(safe-area-inset-bottom));
+  display: flex; justify-content: center; align-items: center;
+  pointer-events: auto; z-index: 20; position: absolute; bottom: 0; width: 100%;
 }
 
-.deck-tabs {
-  display: flex;
-  gap: 8px;
-}
-
-.deck-tab {
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.deck-tab.active {
-  background: var(--primary-color);
-  color: #000;
-  box-shadow: 0 0 15px var(--primary-glow);
-}
-
-.stamp-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  overflow-y: auto;
-  padding-bottom: 20px;
-}
-
-.stamp-btn {
-  aspect-ratio: 1;
-  background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-main);
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.stamp-btn:hover, .stamp-btn:active {
-  transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.1);
-  border-color: var(--primary-color);
-}
-
-.stamp-icon {
-  font-size: 1.8rem;
-}
-
-.stamp-label {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-/* 枠えらび。横に流して指で送る。縦の場所を食わないように1行で収める */
-.frame-picker {
-  /* 横一列に流していたが、43種になって端まで指で送らないと選べなくなった
-     （2026-08-10、伊波さんの指摘）。折り返して全部見えるようにする */
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding-bottom: 4px;
-}
-.frame-tile {
-  width: 100%;
-  background: #0b1021;
-  border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
+/* ド派手な録画ボタン（ジュエル風） */
+.record-btn-round {
+  width: 88px; height: 88px; border-radius: 50%;
+  border: 6px solid #fff;
+  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  display: flex; justify-content: center; align-items: center;
+  cursor: pointer;
+  box-shadow: 
+    0 8px 24px rgba(255, 20, 147, 0.6),
+    inset 0 4px 10px rgba(255,255,255,0.7),
+    inset 0 -4px 10px rgba(139,0,139,0.8);
   padding: 0;
-  overflow: hidden;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 0.65rem;
+  transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
 }
-.frame-tile.on { border-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
-.frame-tile img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000; }
-.frame-tile span { display: block; padding: 3px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.frame-tile.none { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
+/* キラキラ装飾 */
+.record-btn-round::before {
+  content: "✨";
+  position: absolute;
+  top: -10px; right: -10px;
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.record-btn-round:active { transform: scale(0.9); }
 
-/* 会社の名乗り。tinyCUBE の下に小さく添える。
-   会社HP と同じで studio だけ色を変える */
-.logo-names { display: flex; flex-direction: column; line-height: 1.15; }
-.logo-studio {
-  font-size: 0.6rem;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  font-weight: 600;
+.record-btn-round .record-inner {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(180deg, #fff 0%, #ff9ce2 100%);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.logo-studio span { color: var(--primary-color); }
+.record-btn-round.recording .record-inner {
+  border-radius: 12px; transform: scale(0.6); background: #fff;
+}
 
-/* 横長の動画を読み込んだときだけ出る案内。
-   16:9 を 9:16 に詰めると画面の6割が黒帯になるので、そこを黙って通さない */
-.wide-guide {
-  background: rgba(0, 210, 255, 0.10);
-  border: 1px solid rgba(0, 210, 255, 0.35);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 0.75rem;
-  color: var(--text-main);
-  line-height: 1.5;
-}
-.shape-switch { display: flex; gap: 6px; margin-top: 6px; }
-.shape-switch button {
-  flex: 1;
-  padding: 6px 4px;
-  font-size: 0.7rem;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: #0b1021;
-  color: var(--text-muted);
+.preview-btn-round {
+  position: absolute; right: 40px;
+  width: 52px; height: 52px;
+  font-size: 1.4rem;
+  display: flex; justify-content: center; align-items: center;
   cursor: pointer;
 }
-.shape-switch button.on {
-  border-color: var(--primary-color);
-  color: var(--text-main);
-  box-shadow: 0 0 8px var(--primary-glow);
-}
+.preview-btn-round:disabled { opacity: 0.5; filter: grayscale(100%); }
+.preview-btn-round:active:not(:disabled) { transform: scale(0.85); }
 
-/* 設定へ入る口。ヘッダーは名乗りと設定だけにして、
-   録画ボタンは親指の届く下端へ移した（2026-08-10） */
-.settings-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: var(--text-main);
-  border-radius: 20px;
-  padding: 7px 14px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-/* 録画ボタン。録画中も同じ場所・同じ大きさで、押す先を探さずに済むようにする */
-.record-btn.big {
-  width: 100%;
-  padding: 16px;
-  font-size: 1rem;
-  font-weight: 700;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-.live-row { flex: 1; display: flex; align-items: center; justify-content: center; }
-.live-hint { color: var(--text-muted); font-size: 0.8rem; }
-
-/* -------------------------------------
-   エフェクトボタン (Glassmorphism & Neon)
-------------------------------------- */
-.effect-grid {
-  /* 正方形のボタンを敷き詰める（2026-08-10、伊波さんの指示）。
-     テロップが最大16個あるので、4列にして指で押せる大きさを保つ。
-     入りきらないぶんはデッキの中でスクロールする */
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-  width: 100%;
-}
-
-.effect-btn {
-  /* 正方形。並べたときに目が揃って、押す場所を探さずに済む */
-  aspect-ratio: 1;
-  min-height: 0;
-  background: rgba(15, 23, 42, 0.4);
+/* BottomSheet (引き出し) - プリクラ機風のド派手パネル */
+.bottom-sheet {
+  position: absolute; bottom: 0; left: 0; width: 100%;
+  /* 豹柄やキラキラの代わりに、ド派手なグラデーションと白フチ */
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 2px;
-  color: var(--text-main);
-  font-weight: 700;
-  font-size: 0.52rem;
-  line-height: 1.2;
-  word-break: break-word;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 40px 40px 0 0;
+  border-top: 6px solid #ff1493;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: auto; z-index: 30;
+  display: flex; flex-direction: column; max-height: 60dvh;
+  box-shadow: 0 -10px 30px rgba(255, 20, 147, 0.4);
+}
+.bottom-sheet.open { transform: translateY(0); }
+
+.sheet-handle {
+  width: 100%; height: 40px; display: flex; justify-content: center; align-items: center; cursor: pointer;
+}
+.sheet-handle::after {
+  content: ""; display: block; width: 60px; height: 8px;
+  border-radius: 4px; background: #ff1493;
+}
+.sheet-content { padding: 0 16px 24px; overflow-y: auto; flex: 1; }
+
+/* BottomSheet内のエフェクトボタン - デコボコ立体ボタン */
+.effect-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+}
+.effect-btn {
+  aspect-ratio: 1;
+  background: linear-gradient(180deg, #fff 0%, #ffe4e1 100%);
+  border: 3px solid #ff69b4;
+  border-radius: 20px;
+  padding: 8px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 0 #ff1493, 0 10px 10px rgba(0,0,0,0.2); /* 分厚い下側の立体感（平成風） */
+  color: #ff1493;
+  transition: all 0.1s;
 }
-
 .effect-btn:active {
-  transform: scale(0.92);
-  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+  transform: translateY(6px);
+  box-shadow: 0 0 0 #ff1493, 0 4px 4px rgba(0,0,0,0.2); /* 押し込むギミック */
+}
+.effect-btn.on {
+  background: #ff1493;
+  color: #fff;
+  border-color: #fff;
+  box-shadow: 0 6px 0 #c71585, 0 10px 10px rgba(0,0,0,0.2);
 }
 
-/* カテゴリごとの色分け (CMCUBEに準拠) */
-.effect-btn.btn-burst {
-  border-color: rgba(239, 68, 68, 0.3);
-  background: linear-gradient(180deg, rgba(239,68,68,0.1) 0%, rgba(15,23,42,0.6) 100%);
-  color: #fca5a5;
-}
-.effect-btn.btn-burst:active {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-}
+.effect-btn.btn-burst { border-color: #ff1493; color: #ff1493; box-shadow: 0 6px 0 #c71585, 0 10px 10px rgba(0,0,0,0.2); }
+.effect-btn.btn-burst:active { box-shadow: 0 0 0 #c71585, 0 4px 4px rgba(0,0,0,0.2); }
+.effect-btn.btn-sound { border-color: #00ffff; color: #008b8b; box-shadow: 0 6px 0 #00ced1, 0 10px 10px rgba(0,0,0,0.2); background: linear-gradient(180deg, #fff, #e0ffff); }
+.effect-btn.btn-sound:active { box-shadow: 0 0 0 #00ced1, 0 4px 4px rgba(0,0,0,0.2); }
+.effect-btn.btn-telop { border-color: #9333ea; color: #7e22ce; box-shadow: 0 6px 0 #7e22ce, 0 10px 10px rgba(0,0,0,0.2); background: linear-gradient(180deg, #fff, #f3e8ff); }
+.effect-btn.btn-telop:active { box-shadow: 0 0 0 #7e22ce, 0 4px 4px rgba(0,0,0,0.2); }
 
-.effect-btn.btn-sound {
-  border-color: rgba(250, 204, 21, 0.3);
-  background: linear-gradient(180deg, rgba(250,204,21,0.1) 0%, rgba(15,23,42,0.6) 100%);
-  color: #fde047;
-}
-.effect-btn.btn-sound:active {
-  background: rgba(250, 204, 21, 0.2);
-  border-color: #facc15;
-  box-shadow: 0 0 15px rgba(250, 204, 21, 0.4);
-}
-
-.effect-btn.btn-telop {
-  border-color: rgba(168, 85, 247, 0.3);
-  background: linear-gradient(180deg, rgba(168,85,247,0.1) 0%, rgba(15,23,42,0.6) 100%);
-  color: #d8b4fe;
-}
-.effect-btn.btn-telop:active {
-  background: rgba(168, 85, 247, 0.2);
-  border-color: #a855f7;
-  box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
-}
-
-/* 設定シート。下から出す（スマホで指が届く側） */
+/* Modal Settings & Guide */
 .sheet-backdrop {
   position: fixed; inset: 0; z-index: 50;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(255, 20, 147, 0.4); backdrop-filter: blur(8px);
   display: flex; align-items: flex-end; justify-content: center;
 }
 .sheet {
-  width: 100%;
-  /* dvh を使う。vh はスマホのブラウザの上下バーを勘定に入れないので、
-     実際より高く見積もって下がはみ出す */
-  /* 横に広げすぎない。PC で開くと1行が長くなりすぎて、目が戻る場所を見失う。
-     読みやすい行の長さは、だいたい全角35〜45文字ぶん（2026-08-10） */
-  max-width: 480px;
-  max-height: 88dvh;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  background: var(--bg-dark);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px 16px 0 0;
-  padding: 14px 14px 24px;
+  width: 100%; max-width: 480px; max-height: 88dvh;
+  display: flex; flex-direction: column; overflow-y: auto;
+  background: #fff;
+  border-top: 6px solid #ff1493; border-radius: 40px 40px 0 0;
+  padding: 16px 16px 24px;
+  box-shadow: 0 -10px 40px rgba(255, 20, 147, 0.4);
 }
 .sheet-head {
-  display: flex; justify-content: space-between; align-items: center;
-  font-weight: 700; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
 }
 .sheet-head button {
-  background: none; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted);
-  border-radius: 16px; padding: 5px 12px; font-size: 0.75rem; cursor: pointer;
+  background: #ff1493; border: none; color: #fff; font-weight: 900;
+  border-radius: 20px; padding: 8px 18px; font-size: 0.9rem; cursor: pointer;
+  box-shadow: 0 4px 0 #c71585; transition: all 0.1s;
 }
-.sheet h3 { font-size: 0.75rem; color: var(--primary-color); margin: 14px 0 6px; letter-spacing: 1px; }
-.sheet-note { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; line-height: 1.5; }
-.sheet-btn {
-  width: 100%; padding: 12px; border-radius: 10px;
-  background: rgba(0, 210, 255, 0.12); border: 1px solid rgba(0, 210, 255, 0.4);
-  color: var(--text-main); font-size: 0.85rem; cursor: pointer;
-}
+.sheet-head button:active { transform: translateY(4px); box-shadow: 0 0 0 #c71585; }
 
-/* 縦のときは、左右に分けた2つの塊を続けて並べる（今までと同じ見え方） */
-.effect-left { margin-bottom: 6px; }
-
-/* 形が合わない枠に出す印。黙って切ると「なぜか絵が違う」になる */
-.crop-mark {
-  display: block;
-  font-size: 0.55rem;
-  font-style: normal;
-  color: #fbbf24;
-  padding: 0 2px 3px;
-  white-space: nowrap;
+.frame-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding-bottom: 4px; }
+.frame-tile {
+  width: 100%; background: #fff; border: 3px solid #ffb6c1; border-radius: 16px;
+  padding: 0; overflow: hidden; cursor: pointer; color: #ff1493; font-size: 0.75rem; font-weight: 900;
+  box-shadow: 0 4px 0 #ffb6c1; transition: all 0.1s;
 }
+.frame-tile:active { transform: translateY(4px); box-shadow: 0 0 0 #ffb6c1; }
+.frame-tile.on { border-color: #ff1493; box-shadow: 0 4px 0 #c71585; background: #fff0f5; }
+.frame-tile img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000; }
+.frame-tile span { display: block; padding: 6px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
 
-.head-btns { display: flex; gap: 6px; }
+.shape-switch { display: flex; gap: 12px; margin-top: 6px; }
+.shape-switch button {
+  flex: 1; padding: 12px; font-size: 1rem; font-weight: 900; border-radius: 20px;
+  border: 3px solid #ffb6c1; background: #fff; color: #ff1493; cursor: pointer;
+  box-shadow: 0 4px 0 #ffb6c1; transition: all 0.1s;
+}
+.shape-switch button:active { transform: translateY(4px); box-shadow: 0 0 0 #ffb6c1; }
+.shape-switch button.on { border-color: #ff1493; background: #ff1493; color: #fff; box-shadow: 0 4px 0 #c71585; }
 
-/* 使い方と注意。読ませるより触らせたいので短く保つこと */
-.sheet.guide { max-height: 90dvh; }
-/* 長い説明でも「確認しました」を押せるように、ボタンは下に貼り付ける。
-   読み終わるまでスクロールしないと押せない、という状態を作らない */
-.sheet.guide .sheet-btn {
-  position: sticky;
-  bottom: 0;
-  margin-top: 10px;
-  backdrop-filter: blur(8px);
-}
-.guide-steps { margin: 0; padding-left: 20px; font-size: 0.78rem; line-height: 1.6; }
-.guide-steps li { margin-bottom: 10px; }
-.guide-steps b { color: var(--text-main); }
-.guide-warn {
-  margin: 14px 0;
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  background: rgba(239, 68, 68, 0.08);
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-.guide-warn h3 { color: #fca5a5; margin: 0 0 8px; font-size: 0.8rem; }
-.guide-warn ul { margin: 0; padding-left: 18px; font-size: 0.72rem; line-height: 1.6; color: var(--text-muted); }
-.guide-warn li { margin-bottom: 6px; }
-.guide-warn b { color: var(--text-main); }
-.guide-note { font-size: 0.7rem; color: var(--text-muted); line-height: 1.6; margin-top: 8px; }
-
-/* CMCUBE（PC版）の紹介。押し売りにならないよう、枠で囲んで本文と分ける */
-.promo {
-  margin: 16px 0 14px;
-  border: 1px solid rgba(168, 85, 247, 0.45);
-  background: linear-gradient(160deg, rgba(168, 85, 247, 0.14), rgba(0, 210, 255, 0.06));
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-.promo-head { display: flex; align-items: center; gap: 8px; font-size: 1rem; }
-.promo-badge {
-  font-size: 0.6rem; letter-spacing: 1px; font-weight: 700;
-  background: #a855f7; color: #fff; border-radius: 4px; padding: 2px 6px;
-}
-.promo-lead { font-size: 0.85rem; font-weight: 700; margin: 8px 0 6px; color: var(--text-main); }
-.promo-points { margin: 0; padding-left: 18px; font-size: 0.72rem; line-height: 1.7; color: var(--text-muted); }
-.promo-points b { color: var(--text-main); }
-.promo-foot { font-size: 0.68rem; color: var(--text-muted); margin-top: 8px; }
-.promo-foot b { color: #22d3ee; }
-
-/* テロップの言葉を書き換える欄。指で押せる高さにする */
+.telop-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .telop-input {
-  width: 100%;
-  margin-bottom: 8px;
-  padding: 12px;
-  font-size: 0.95rem;
-  border-radius: 10px;
-  background: #0b1021;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: var(--text-main);
+  width: 100%; padding: 14px; font-size: 1rem; font-weight: 900; border-radius: 20px;
+  background: #fff; border: 3px solid #ff1493; color: #ff1493;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); outline: none;
 }
-.telop-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 8px var(--primary-glow); }
-.effect-btn:disabled { opacity: 0.4; }
+.telop-input:focus { border-color: #00ffff; box-shadow: 0 0 10px #00ffff, inset 0 2px 4px rgba(0,0,0,0.1); }
 
-/* 言葉の書き換え欄は16個ある。1列だと縦に長すぎるので2列で並べる */
-.telop-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.telop-inputs .telop-input { margin-bottom: 0; padding: 10px; font-size: 0.85rem; }
-
-/* 下見。録画と間違えないよう、赤い録画ボタンとは別の色・別の高さにする */
-.preview-btn {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 6px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-main);
-  cursor: pointer;
-}
-.preview-btn:disabled { opacity: 0.35; }
-
-/* 注意の細かい説明は畳む。初回に出るものが長すぎると、読まずに閉じられる。
-   見出しだけ並べて、気になった人が開ける形にする */
-.guide-warn details { margin-top: 2px; }
-.guide-warn summary {
-  cursor: pointer;
-  color: var(--primary-color);
-  font-size: 0.65rem;
-  list-style: none;
-}
-.guide-warn summary::-webkit-details-marker { display: none; }
-.guide-warn summary::before { content: '▸ '; }
-.guide-warn details[open] summary::before { content: '▾ '; }
-.guide-warn details > *:not(summary) { padding-top: 3px; }
-
-/* PC で開いた人への案内。塞がずに「このまま使う」を置く */
-.pc-notice {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  text-align: center;
-  padding: 24px;
-}
-.pc-cube {
-  width: 44px; height: 44px; border-radius: 10px; transform: rotate(45deg);
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  box-shadow: 0 0 22px var(--primary-glow);
-  margin-bottom: 12px;
-}
-.pc-notice h1 { font-size: 1.6rem; letter-spacing: 2px; margin: 0; }
-.pc-lead { font-size: 1rem; font-weight: 700; line-height: 1.7; }
-.pc-lead span, .pc-sub span { color: var(--text-muted); font-weight: 400; font-size: 0.85rem; }
-.pc-url {
-  font-family: monospace; font-size: 1.1rem; color: var(--primary-color);
-  border: 1px dashed rgba(0, 210, 255, 0.5); border-radius: 10px;
-  padding: 10px 18px; margin: 6px 0;
-}
-.pc-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
-.pc-continue {
-  margin-top: 14px; padding: 10px 20px; border-radius: 20px;
-  background: rgba(255, 255, 255, 0.07); border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-muted); font-size: 0.8rem; cursor: pointer;
-}
-
-/* 書き出す形と同じ枠。中に見えているものが、そのまま動画になる。
-   height を先に決めて aspect-ratio で幅を出し、はみ出すときは max-width で
-   詰める（そのとき高さも比率に従って縮む） */
-.stage-box {
-  /* height:100% と aspect-ratio を併記すると、幅が max-width で詰められても
-     高さが残って比率が黙って無視される（横にしたとき 0.874 になっていた）。
-     入れ物の大きさを cqw / cqh で聞いて、幅を先に決める */
-  position: relative;
-  width: min(100cqw, calc(100cqh * var(--ar)));
-  aspect-ratio: var(--ar);
-  background: #000;
-  overflow: hidden;
-  border-radius: 4px;
-}
-.stage-box .video-player { width: 100%; height: 100%; }
-/* 枠は絵の上に。指の操作は下（動画の読み込み）へ通す */
-.frame-overlay { position: absolute; left: 0; pointer-events: none; }
-
-/* 画面に出しているのは canvas。録画中もそうでないときも同じ絵で、
-   エフェクトを押せばその場で見える（2026-08-10）。
-   元の video は音と再生のために残すが、見せない */
-.stage-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.video-player.hidden-source {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* スマホを横に持ったとき。
-   縦のまま積むと映す場所がぺしゃんこになるので、横に並べ替える。
-   ボタンは右の列に集めて、両手で持ったときの親指の側へ置く
-   （2026-08-10、伊波さん「横型が使いやすいと思う」） */
-@media (orientation: landscape) and (max-height: 560px) {
-  /* 横に持ったとき。柱を太くして、ボタンを大きくする */
-  .app-container {
-    grid-template-columns: clamp(92px, 13%, 130px) 1fr clamp(92px, 13%, 130px);
-    grid-template-rows: auto 1fr auto;
-    height: 100dvh;
-  }
-  .header { padding: 3px 10px; }
-  .logo-cube { width: 16px; height: 16px; }
-  .logo-text { font-size: 0.9rem; }
-  .logo-studio { font-size: 0.48rem; }
-  .settings-btn { padding: 4px 10px; font-size: 0.7rem; }
-
-  /* 横は幅に余裕があるので2列にして、縦に長くならないようにする */
-  .effect-grid.effect-left, .effect-grid.effect-right { grid-template-columns: repeat(2, 1fr); }
-
-  .control-deck {
-    max-height: none;
-    padding: 4px 8px 6px;
-    gap: 4px;
-    flex-direction: row;
-    align-items: center;
-  }
-  .live-row { display: none; }
-  .preview-btn { margin-bottom: 0; padding: 8px; font-size: 0.7rem; width: 40%; }
-  .record-btn.big { padding: 8px; font-size: 0.85rem; }
-  .sheet { max-height: 94dvh; }
-}
-
-/* 縦に持ったまま横向きの動画を作ろうとしたときの案内。
-   映す場所の上に薄く重ねる（隠さない） */
-.turn-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 8px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  font-size: 0.62rem;
-  padding: 5px 10px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(0, 210, 255, 0.45);
-  color: var(--text-main);
-  pointer-events: none;
-}
-
-/* CMCUBE の製品ページへ。押せることが分かる形にする */
-.promo-link {
-  display: block;
-  margin-top: 10px;
-  padding: 9px;
-  text-align: center;
-  border-radius: 8px;
-  background: rgba(168, 85, 247, 0.22);
-  border: 1px solid rgba(168, 85, 247, 0.6);
-  color: var(--text-main);
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-/* 効果音の差し替え。1行に「試す・名前・入れる・戻す」を並べる */
-.sound-list { display: flex; flex-direction: column; gap: 6px; }
+.sound-list { display: flex; flex-direction: column; gap: 12px; }
 .sound-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 6px 8px;
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 3px solid #ffb6c1; border-radius: 20px; padding: 12px;
+  box-shadow: 0 4px 0 #ffb6c1;
 }
 .sound-try {
-  flex: 0 0 auto;
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  background: rgba(0, 210, 255, 0.15);
-  border: 1px solid rgba(0, 210, 255, 0.45);
-  color: var(--text-main);
-  font-size: 0.7rem;
-  cursor: pointer;
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%;
+  background: #00ffff; border: 3px solid #fff; color: #008b8b;
+  font-size: 1.2rem; cursor: pointer; font-weight: 900; box-shadow: 0 2px 0 #00ced1;
 }
-.sound-name {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.75rem;
-  color: var(--text-main);
-  overflow: hidden;
-}
-.sound-name em {
-  display: block;
-  font-style: normal;
-  font-size: 0.62rem;
-  color: var(--primary-color);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.sound-try:active { transform: translateY(2px); box-shadow: 0 0 0 #00ced1; }
+.sound-name { flex: 1; min-width: 0; font-size: 1rem; font-weight: 900; color: #ff1493; }
+.sound-name em { display: block; font-style: normal; font-size: 0.75rem; color: #ff69b4; }
 .sound-set {
-  flex: 0 0 auto;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.68rem;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: var(--text-muted);
-  cursor: pointer;
+  flex: 0 0 auto; padding: 8px 16px; border-radius: 16px; font-size: 0.9rem; font-weight: 900;
+  background: #ff1493; border: 3px solid #fff; color: #fff; cursor: pointer; box-shadow: 0 4px 0 #c71585;
 }
+.sound-set:active { transform: translateY(4px); box-shadow: 0 0 0 #c71585; }
 
-/* つけっぱなしの演出は、いま出ているかが分かるようにする */
-.effect-btn.on {
-  border-color: #f472b6;
-  box-shadow: 0 0 10px rgba(244, 114, 182, 0.6);
-  background: rgba(244, 114, 182, 0.18);
+.turn-hint {
+  position: absolute; left: 50%; bottom: 130px; transform: translateX(-50%);
+  font-size: 1rem; font-weight: 900; padding: 12px 24px; border-radius: 30px;
+  background: #ff1493; color: white; pointer-events: none;
+  border: 3px solid #fff; box-shadow: 0 4px 15px rgba(255, 20, 147, 0.6);
+  text-shadow: 1px 1px 0 #c71585;
 }

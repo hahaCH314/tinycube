@@ -9,6 +9,11 @@ import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRe
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
+  // フローティングUI用のタブ状態
+  const [activeTab, setActiveTab] = useState<'none' | 'effect' | 'telop'>('none');
+
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -150,9 +155,8 @@ function App() {
   const [pcOk, setPcOk] = useState(false);
   const onPC = typeof window !== 'undefined'
     && window.matchMedia('(min-width: 900px) and (pointer: fine)').matches;
-  // 「試してみる」。録画せずに動画だけ流す。一発撮りなので、本番前に中身と
-  // 長さを確かめられないと押すのが怖い（2026-08-10、伊波さんの指示）
-  const [isPreviewing, setIsPreviewing] = useState(false);
+  // 「試してみる」（録画せずに動画だけ流す）の状態は、いちばん上でまとめて
+  // 宣言している。一発撮りなので、本番前に中身と長さを確かめられないと押すのが怖い
   // 撮る前の注意。人の動画を読み込んで声を乗せる道具なので、
   // 権利と同意の話は最初に一度は目に入れてもらう（CMCUBE と同じ扱い）。
   // 一度読んだら出さない
@@ -421,24 +425,7 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Header */}
-      <header className="header">
-        {/* 会社の名乗りは3サイトで揃える（CUBICENGINEstudio）。
-            HP と同じく studio だけ色を変える。ロゴ画像は存在せず、
-            会社HPも文字で組んでいるので、ここも文字で合わせている */}
-        <div className="logo-container">
-          <div className="logo-cube"></div>
-          <div className="logo-names">
-            <span className="logo-text">tinyCUBE</span>
-            <span className="logo-studio">CUBICENGINE<span>studio</span></span>
-          </div>
-        </div>
-        <div className="head-btns">
-          <button className="settings-btn" onClick={() => setShowGuide(true)}>{t('guide_btn')}</button>
-        </div>
-      </header>
-
-      {/* 9:16 Preview Stage */}
+      {/* 映像領域（最背面で全画面） */}
       <main className="preview-stage" onClick={triggerFileInput}>
         <input
           type="file"
@@ -448,19 +435,11 @@ function App() {
           style={{ display: 'none' }}
         />
 
-        {/* 書き出す形と同じ枠を用意して、その中だけを見せる。
-            スマホの画面の形そのままに映していると、横（16:9）で書き出すときに
-            「見えているもの」と「出てくるもの」が別物になる（2026-08-10、伊波さんの指摘）。
-            中の並べ方も recorder.ts と同じにしてある（映像は contain、枠は cover） */}
         <div
           className="stage-box"
-          /* カスタムプロパティは文字列で渡す。数値だと React が落として
-             var() が既定値に落ちる */
           style={{ '--ar': shape === 'portrait' ? '0.5625' : '1.7778' } as React.CSSProperties}
         >
           <canvas ref={canvasRef} className="stage-canvas" />
-          {/* 縦に持ったまま横向きの動画を作ろうとすると、映す場所が細くなる。
-              持ち替えれば2倍以上広く使える（2026-08-10、伊波さんの指示） */}
           {shape === 'landscape' && portraitDevice && (
             <div className="turn-hint">{t('turn_hint')}</div>
           )}
@@ -476,10 +455,9 @@ function App() {
                 const v = e.currentTarget;
                 const wide = v.videoWidth > v.videoHeight;
                 setSrcIsWide(wide);
-                // 自分で選んでいたら、それを尊重する
                 if (!shapePicked.current) setShape(wide ? 'landscape' : 'portrait');
               }}
-              muted /* 録画を始めるときに recorder が解除する。動画の音もマイクと混ぜて録るため */
+              muted
             />
           ) : (
             <div className="video-placeholder">
@@ -494,11 +472,6 @@ function App() {
             </div>
           )}
 
-          {/* 枠のプレビュー。書き出しでは canvas に焼き込まれる。
-              置き方は recorder.ts の drawFrame と揃えること。
-              wide と full は画面いっぱい（はみ出した側を切る）、
-              top と bottom は横幅いっぱいで上端／下端に寄せる。
-              以前は wide に位置指定が無く、20種の枠が見えていなかった */}
           {frame && (
             <img
               src={frame.file}
@@ -514,88 +487,82 @@ function App() {
         </div>
       </main>
 
-      {/* 中央に配置された設定ボタン */}
-      <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0' }}>
-        <button 
-          onClick={() => setShowSettings(true)}
-          style={{ 
-            background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', 
-            border: 'none', 
-            borderRadius: '24px', 
-            padding: '12px 24px', 
-            color: 'white', 
-            fontWeight: 'bold', 
-            fontSize: '14px',
-            boxShadow: '0 4px 12px rgba(236, 72, 153, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer'
-          }}
-        >
-          <span style={{ fontSize: '18px' }}>✨</span>
-          フレームやカメラの設定を開く
-          <span style={{ fontSize: '18px' }}>⚙️</span>
-        </button>
-      </div>
+      {/* 手前に重なるフローティングUI */}
+      <div className="ui-layer">
+        <header className="header">
+          <div className="logo-container">
+            <span className="logo-text" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>tinyCUBE</span>
+          </div>
+        </header>
 
-        {/* クラス名の left / right は「どちらの塊か」を表すだけ。
-            画面のどちら側に置くかは CSS で決めている。
-            2026-08-10 に、右＝エフェクトと音、左＝文字 に入れ替えた */}
-        <div className="effect-grid effect-left">
-          {/* 一発エフェクト (Burst) */}
-          <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
-          <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
-          {/* こちらは押している間ずっと出る。押すたびに入切する */}
+        {/* 右側のツールバー（平成ギャル風アイコン） */}
+        <div className="side-toolbar">
+          <button className={`tool-btn ${activeTab === 'effect' ? 'active' : ''}`} onClick={() => setActiveTab(t => t === 'effect' ? 'none' : 'effect')}>
+            💖
+          </button>
+          <button className={`tool-btn ${activeTab === 'telop' ? 'active' : ''}`} onClick={() => setActiveTab(t => t === 'telop' ? 'none' : 'telop')}>
+            💬
+          </button>
+          <button className="tool-btn" onClick={() => setShowSettings(true)}>
+            🎀
+          </button>
+          <button className="tool-btn" onClick={() => setShowGuide(true)}>
+            ✌️
+          </button>
+        </div>
+
+        {/* 録画ボタン */}
+        <footer className="bottom-controls">
+          <button className="preview-btn-round" onClick={togglePreview} disabled={isRecording || !videoSrc}>
+            {isPreviewing ? '⏸' : '▶'}
+          </button>
           <button
-            className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`}
-            onClick={toggleAmbient}
-          >{t('eff_emotional')}</button>
-          
-          {/* 効果音 (Sound) */}
-          <button className="effect-btn btn-sound" onClick={() => fire('bam')}>{t('eff_bam')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('ding')}>{t('eff_ding')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('pon')}>{t('eff_pon')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>{t('eff_buzz')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('clap')}>{t('eff_clap')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('drum')}>{t('eff_drum')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('blip')}>{t('eff_blip')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('dread')}>{t('eff_dread')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('slash')}>{t('eff_slash')}</button>
-          <button className="effect-btn btn-sound" onClick={() => fire('fanfare')}>{t('eff_fanfare')}</button>
-          
-        </div>
+            className={`record-btn-round ${isRecording ? 'recording' : ''}`}
+            onClick={toggleRecording}
+          >
+            <div className="record-inner"></div>
+          </button>
+        </footer>
 
-        <div className="effect-grid effect-right">
-          {/* テロップ (Telop)。言葉は設定で書き換えられる */}
-          {telops.map((text, i) => text.trim() ? (
-            <button
-              key={i}
-              className="effect-btn btn-telop"
-              onClick={() => fireTelop(text, telopDark, telopRandom)}
-            >💬 {text}</button>
-          ) : null)}
-        </div>
+        {/* 下からスライドするパネル（BottomSheet） */}
+        <div className={`bottom-sheet ${activeTab !== 'none' ? 'open' : ''}`}>
+          <div className="sheet-handle" onClick={() => setActiveTab('none')}></div>
+          <div className="sheet-content">
+            {activeTab === 'effect' && (
+              <div className="effect-grid">
+                <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
+                <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
+                <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>{t('eff_emotional')}</button>
+                
+                <button className="effect-btn btn-sound" onClick={() => fire('bam')}>{t('eff_bam')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('ding')}>{t('eff_ding')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('pon')}>{t('eff_pon')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>{t('eff_buzz')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('clap')}>{t('eff_clap')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('drum')}>{t('eff_drum')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('blip')}>{t('eff_blip')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('dread')}>{t('eff_dread')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('slash')}>{t('eff_slash')}</button>
+                <button className="effect-btn btn-sound" onClick={() => fire('fanfare')}>{t('eff_fanfare')}</button>
+              </div>
+            )}
 
-      {/* 録画中に指で押すところ。事前準備はここに置かない（PC版と同じ約束）。
-          録画ボタンは親指が届く下端に、大きく置く */}
-      <footer className="control-deck">
-        {/* 試してみる。録画中は押せない（押すと二重に再生されて頭から狂う） */}
-        <button
-          className="preview-btn"
-          onClick={togglePreview}
-          disabled={isRecording || !videoSrc}
-        >
-          {isPreviewing ? t('btn_preview_stop') : t('btn_preview')}
-        </button>
-        <button
-          className={`record-btn big ${isRecording ? 'recording' : ''}`}
-          onClick={toggleRecording}
-        >
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'currentColor' }}></div>
-          {isRecording ? t('btn_stop') : t('btn_record')}
-        </button>
-      </footer>
+            {activeTab === 'telop' && (
+              <div className="effect-grid">
+                {telops.map((text, i) => text.trim() ? (
+                  <button
+                    key={i}
+                    className="effect-btn btn-telop"
+                    onClick={() => fireTelop(text, telopDark, telopRandom)}
+                  >
+                    💬 {text}
+                  </button>
+                ) : null)}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {showGuide && (
         <div className="sheet-backdrop" onClick={closeGuide}>

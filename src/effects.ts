@@ -163,8 +163,8 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
       vy: -(0.004 + Math.random() * 0.008) * H / 1000,
       sway: Math.random() * Math.PI * 2,
       life: 4000 + Math.random() * 5000,
-      // 340〜40度。ピンク寄りから橙寄りまで、丸ごとに散らす
-      hue: (340 + Math.random() * 60) % 360,
+      // 180〜320度。水色・青・紫・淡いピンク（シャボン玉らしいクリアな色）
+      hue: 180 + Math.random() * 140,
       big,
       // 最初の一群だけ、途中から始まったことにして一斉に消えないようにする
       age: motes.length < want && now - startedAt < 200 ? Math.random() * 3000 : 0,
@@ -187,21 +187,21 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
     const a = t < 0.25 ? t / 0.25 : t > 0.6 ? (1 - t) / 0.4 : 1;
 
     // 中心をふわっと明るく、外へ長く伸ばす。輪郭が出ないよう途中を厚めに取る。
-    // 色は淡いピンク〜オレンジ。彩度を上げすぎると色被りに見えるので低めにする
+    // 色は水色〜紫。赤色を避けて「録画マーク」に見間違われないようにする
     const h = m.hue;
     const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r);
     if (m.big) {
-      // 手前の玉。ふわっと大きく、輪郭は出さない
-      grad.addColorStop(0,    `hsla(${h}, 92%, 88%, ${0.40 * a})`);
-      grad.addColorStop(0.30, `hsla(${h}, 88%, 78%, ${0.26 * a})`);
-      grad.addColorStop(0.65, `hsla(${h}, 84%, 70%, ${0.12 * a})`);
-      grad.addColorStop(1,    `hsla(${h}, 84%, 68%, 0)`);
+      // 手前の玉。ふわっと大きく、中心はより白く光るように
+      grad.addColorStop(0,    `hsla(${h}, 85%, 95%, ${0.40 * a})`);
+      grad.addColorStop(0.30, `hsla(${h}, 80%, 85%, ${0.25 * a})`);
+      grad.addColorStop(0.65, `hsla(${h}, 75%, 75%, ${0.10 * a})`);
+      grad.addColorStop(1,    `hsla(${h}, 70%, 70%, 0)`);
     } else {
       // 奥の玉。縁をわずかに強くすると、シャボン玉らしく見える
-      grad.addColorStop(0,    `hsla(${h}, 92%, 90%, ${0.30 * a})`);
-      grad.addColorStop(0.55, `hsla(${h}, 88%, 80%, ${0.18 * a})`);
-      grad.addColorStop(0.86, `hsla(${h}, 92%, 86%, ${0.34 * a})`);
-      grad.addColorStop(1,    `hsla(${h}, 90%, 80%, 0)`);
+      grad.addColorStop(0,    `hsla(${h}, 85%, 95%, ${0.30 * a})`);
+      grad.addColorStop(0.55, `hsla(${h}, 80%, 85%, ${0.15 * a})`);
+      grad.addColorStop(0.86, `hsla(${h}, 85%, 90%, ${0.30 * a})`);
+      grad.addColorStop(1,    `hsla(${h}, 80%, 80%, 0)`);
     }
     g.fillStyle = grad;
     g.beginPath();
@@ -227,8 +227,8 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
 
   // 全体にうっすら暖かい膜をかける。粒だけだと点の集まりに見える
   const veil = g.createRadialGradient(W * 0.5, H * 0.42, unit * 0.1, W * 0.5, H * 0.5, unit * 0.85);
-  veil.addColorStop(0, 'hsla(25, 90%, 85%, 0.09)');
-  veil.addColorStop(1, 'hsla(340, 85%, 78%, 0)');
+  veil.addColorStop(0, 'hsla(220, 90%, 85%, 0.08)');
+  veil.addColorStop(1, 'hsla(280, 85%, 78%, 0)');
   g.fillStyle = veil;
   g.fillRect(0, 0, W, H);
   g.restore();
