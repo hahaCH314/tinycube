@@ -328,9 +328,18 @@ function App() {
             <div className="guide-warn">
               <h3>{t('guide_warn_title')}</h3>
               <ul>
-                <li><b>{t('guide_warn1_title')}</b> {t('guide_warn1_desc')}</li>
-                <li><b>{t('guide_warn2_title')}</b> {t('guide_warn2_desc')}</li>
-                <li><b>{t('guide_warn3_title')}</b> {t('guide_warn3_desc')}</li>
+                <li>
+                  <b>{t('guide_warn1_title')}</b>
+                  <details><summary>くわしく</summary>{t('guide_warn1_desc')}</details>
+                </li>
+                <li>
+                  <b>{t('guide_warn2_title')}</b>
+                  <details><summary>くわしく</summary>{t('guide_warn2_desc')}</details>
+                </li>
+                <li>
+                  <b>{t('guide_warn3_title')}</b>
+                  <details><summary>くわしく</summary>{t('guide_warn3_desc')}</details>
+                </li>
                 <li><b>{t('guide_warn4_title')}</b></li>
               </ul>
               <p className="guide-note">{t('guide_note1')}</p>
@@ -343,7 +352,7 @@ function App() {
                 <b>CMCUBE</b>
               </div>
               <p className="promo-lead">{t('guide_promo_lead')}</p>
-              <ul className="promo-points">
+              <ul className="promo-points promo-fold">
                 <li>{t('guide_promo_p1')}</li>
                 <li>{t('guide_promo_p2')}</li>
                 <li>{t('guide_promo_p3')}</li>
