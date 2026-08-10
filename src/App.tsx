@@ -2,9 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
 import { FRAMES, fitsShape, loadFrame, type FrameAnchor } from './frames'
-import { fireEffect, fireTelop, useCustomSounds, audioContext, type EffectId } from './effects'
+import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
 import { t, getLang, setLang } from './i18n'
+import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -65,6 +66,32 @@ function App() {
   };
 
   const [frameId, setFrameId] = useState<string | null>(null);
+  const [customFrames, setCustomFrames] = useState<CustomFrameRecord[]>([]);
+  useEffect(() => {
+    getCustomFrames().then(setCustomFrames).catch(console.error);
+  }, []);
+  const customFrameInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleCustomFrameUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result as string;
+      const id = `custom_${Date.now()}`;
+      try {
+        await saveCustomFrame(id, dataUrl);
+        const next = await getCustomFrames();
+        setCustomFrames(next);
+        setFrameId(id);
+      } catch (err) {
+        console.error('Failed to save custom frame:', err);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   // 読み込んだ動画が横長かどうか。16:9 を 9:16 へ詰めると画面の6割が黒帯になるので、
   // 元の形に合わせるほうを既定にして、そのことを画面で伝える（2026-08-10）
   const [shape, setShape] = useState<OutShape>('landscape');   // 横で使うほうが持ちやすい（伊波さんの判断）
@@ -94,6 +121,14 @@ function App() {
     try { return localStorage.getItem('tinycube.telopDark') === '1'; } catch { return false; }
   });
   // 出る場所。いつも真ん中か、ばらけさせるか
+  // ずっと出しておく演出。いまは「エモーショナル」だけ
+  const [ambientOn, setAmbientOn] = useState(false);
+  const toggleAmbient = () => {
+    const next = !ambientOn;
+    setAmbientOn(next);
+    setAmbient(next ? 'emotional' : null);
+  };
+
   const [telopRandom, setTelopRandom] = useState(() => {
     try { return localStorage.getItem('tinycube.telopRandom') === '1'; } catch { return false; }
   });
@@ -144,7 +179,10 @@ function App() {
   };
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
-  const frame = FRAMES.find(f => f.id === frameId) ?? null;
+  const builtinFrame = FRAMES.find(f => f.id === frameId) ?? null;
+  const customFrame = customFrames.find(f => f.id === frameId) ?? null;
+  const frame = builtinFrame || (customFrame ? { id: customFrame.id, name: 'マイフレーム', file: customFrame.dataUrl, anchor: 'wide' as FrameAnchor } : null);
+
 
   // 画面に出す係を1つだけ回す。録画していなくても同じ絵が出るので、
   // エフェクトを押せばその場で見える
@@ -484,6 +522,11 @@ function App() {
           {/* 一発エフェクト (Burst) */}
           <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
           <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
+          {/* こちらは押している間ずっと出る。押すたびに入切する */}
+          <button
+            className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`}
+            onClick={toggleAmbient}
+          >{t('eff_emotional')}</button>
           
           {/* 効果音 (Sound) */}
           <button className="effect-btn btn-sound" onClick={() => fire('bam')}>{t('eff_bam')}</button>
@@ -701,6 +744,48 @@ function App() {
             </div>
 
             <h3>{t('setting_frame')}</h3>
+            <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(168, 85, 247, 0.1)', borderLeft: '3px solid #a855f7', borderRadius: '4px' }}>
+              <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.4', color: '#e2e8f0' }}>
+                <strong>みんながクリエイター！✨</strong><br/>
+                ※AIと一緒に簡単に自作フレームが作れます<br/>
+                素敵なオリジナルフレームや、おもしろフレームなど、あなたが作った作品をSNSで見れるのを楽しみにしています♡
+              </p>
+            </div>
+            <div className="frame-picker" style={{ marginBottom: '12px' }}>
+              <button 
+                className="frame-tile"
+                onClick={() => customFrameInputRef.current?.click()}
+                style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)' }}
+              >
+                <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
+                <span style={{ color: '#a855f7' }}>マイフレーム追加</span>
+              </button>
+              <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
+              
+              {customFrames.map(cf => (
+                <button
+                  key={cf.id}
+                  className={`frame-tile ${frameId === cf.id ? 'on' : ''}`}
+                  onClick={() => setFrameId(cf.id)}
+                  style={{ position: 'relative' }}
+                >
+                  <img src={cf.dataUrl} alt="マイフレーム" />
+                  <span>マイフレーム</span>
+                  <div 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm('このフレームを削除しますか？')) {
+                        await deleteCustomFrame(cf.id);
+                        setCustomFrames(prev => prev.filter(p => p.id !== cf.id));
+                        if (frameId === cf.id) setFrameId(null);
+                      }
+                    }}
+                    style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >✕</div>
+                </button>
+              ))}
+            </div>
+
             <div className="frame-picker">
               <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
               {/* いまの形に合うものを先に並べる。43種あるので、

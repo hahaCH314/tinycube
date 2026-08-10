@@ -111,6 +111,70 @@ export function fireTelop(text: string, dark = false, random = false) {
   fireEffect('telop', text, dark, x, y);
 }
 
+// ずっと出しておく演出。押した瞬間だけの一発ものとは別枠。
+// CMCUBE の「エモーショナル」（光の粒がふわっと漂う）を canvas で作り直したもの。
+// 中央に被せない縛りは CMCUBE の枠の話なので、ここでは画面全体に散らす
+type Mote = { x: number; y: number; r: number; vy: number; sway: number; life: number; age: number };
+let ambient: 'emotional' | null = null;
+let motes: Mote[] = [];
+let lastTick = 0;
+
+export function setAmbient(kind: 'emotional' | null) {
+  ambient = kind;
+  if (!kind) motes = [];
+}
+export function getAmbient() {
+  return ambient;
+}
+
+function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
+  const now = performance.now();
+  const dt = lastTick ? Math.min(now - lastTick, 100) : 16;
+  lastTick = now;
+  if (!ambient) return;
+
+  // 1秒あたりの数で出す。フレームの速さに左右されないようにする
+  const perSecond = 14;
+  if (Math.random() < (perSecond * dt) / 1000 && motes.length < 90) {
+    const r = (Math.random() * 0.004 + 0.0015) * Math.min(W, H) * 2;
+    motes.push({
+      x: Math.random() * W,
+      y: H + r,
+      r,
+      vy: -(0.012 + Math.random() * 0.02) * H / 1000,
+      sway: Math.random() * Math.PI * 2,
+      life: 5000 + Math.random() * 4000,
+      age: 0,
+    });
+  }
+
+  g.save();
+  // 光を足す形で重ねる。暗い映像でも沈まない
+  g.globalCompositeOperation = 'lighter';
+  for (let i = motes.length - 1; i >= 0; i--) {
+    const m = motes[i];
+    m.age += dt;
+    if (m.age > m.life) { motes.splice(i, 1); continue; }
+    m.y += m.vy * dt;
+    m.sway += dt * 0.001;
+    const x = m.x + Math.sin(m.sway) * m.r * 3;
+
+    // 出るときと消えるときに、そっと現れて そっと消える
+    const t = m.age / m.life;
+    const a = t < 0.15 ? t / 0.15 : t > 0.7 ? (1 - t) / 0.3 : 1;
+
+    const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r * 3);
+    grad.addColorStop(0, `rgba(255, 240, 220, ${0.55 * a})`);
+    grad.addColorStop(0.4, `rgba(255, 200, 190, ${0.22 * a})`);
+    grad.addColorStop(1, 'rgba(255, 190, 180, 0)');
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(x, m.y, m.r * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.restore();
+}
+
 /** 録画をやめたときに呼ぶ。出しっぱなしの効果を消す */
 export function clearEffects() {
   live.length = 0;
@@ -118,6 +182,7 @@ export function clearEffects() {
 
 /** recorder の描画ループから毎フレーム呼ばれる */
 export function drawEffects(g: CanvasRenderingContext2D, W: number, H: number) {
+  drawAmbient(g, W, H);
   const now = performance.now();
   for (let i = live.length - 1; i >= 0; i--) {
     const e = live[i];

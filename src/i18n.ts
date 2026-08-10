@@ -64,6 +64,7 @@ type I18nDict = {
   cam_back: string;
   cam_off: string;
   cam_fail: string;
+  eff_emotional: string;
   eff_clap: string;
   eff_drum: string;
   eff_blip: string;
@@ -158,6 +159,7 @@ const dictJa: I18nDict = {
   cam_back: '🌄 外',
   cam_off: '⏹ 使わない',
   cam_fail: 'カメラを開けませんでした。許可の設定を確かめてください。',
+  eff_emotional: '🌸 エモい',
   eff_clap: '👏 拍手',
   eff_drum: '🥁 ドラム',
   eff_blip: '🔹 ぴこ',
@@ -249,6 +251,7 @@ const dictEn: I18nDict = {
   cam_back: '🌄 Back',
   cam_off: '⏹ Off',
   cam_fail: 'Could not open the camera. Check the permission settings.',
+  eff_emotional: '🌸 Dreamy',
   eff_clap: '👏 Clap',
   eff_drum: '🥁 Drum',
   eff_blip: '🔹 Blip',
