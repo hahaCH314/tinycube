@@ -509,6 +509,9 @@ function App() {
           <button className="tool-btn" onClick={() => setShowGuide(true)}>
             ✌️
           </button>
+          <button className="tool-btn discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">
+            👾
+          </button>
         </div>
 
         {/* 録画ボタン */}
@@ -578,14 +581,6 @@ function App() {
             <div className="guide-warn">
               <h3>{t('guide_warn_title')}</h3>
               <ul>
-                <li>
-                  <b>{t('guide_warn1_title')}</b>
-                  <details><summary>くわしく</summary>{t('guide_warn1_desc')}</details>
-                </li>
-                <li>
-                  <b>{t('guide_warn2_title')}</b>
-                  <details><summary>くわしく</summary>{t('guide_warn2_desc')}</details>
-                </li>
                 <li>
                   <b>{t('guide_warn3_title')}</b>
                   <details><summary>くわしく</summary>{t('guide_warn3_desc')}</details>
