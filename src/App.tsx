@@ -61,6 +61,12 @@ function App() {
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
   const [showSettings, setShowSettings] = useState(false);
+  // tinyCUBE はスマホで使うもの。PC で開いた人には、そう伝えてから通す。
+  // 塞がずに「このまま使う」を用意しているのは、確かめたい人を止めないため
+  // （2026-08-10、伊波さん「基本PCで開かないから」「スマホだけ」）
+  const [pcOk, setPcOk] = useState(false);
+  const onPC = typeof window !== 'undefined'
+    && window.matchMedia('(min-width: 900px) and (pointer: fine)').matches;
   // 「試してみる」。録画せずに動画だけ流す。一発撮りなので、本番前に中身と
   // 長さを確かめられないと押すのが怖い（2026-08-10、伊波さんの指示）
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -197,6 +203,27 @@ function App() {
       alert(t('alert_mic_fail') + err.message);
     }
   };
+
+  if (onPC && !pcOk) {
+    return (
+      <div className="pc-notice">
+        <div className="pc-cube"></div>
+        <h1>tinyCUBE</h1>
+        <p className="pc-lead">
+          スマホで使うアプリです。<br />
+          <span>Made for phones.</span>
+        </p>
+        <p className="pc-url">tinycube.vercel.app</p>
+        <p className="pc-sub">
+          スマホのブラウザでこの住所を開いてください。<br />
+          <span>Open this address on your phone.</span>
+        </p>
+        <button className="pc-continue" onClick={() => setPcOk(true)}>
+          このまま使う / Continue anyway
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
