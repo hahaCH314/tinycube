@@ -179,9 +179,11 @@ button { outline: none; border: none; font-family: inherit; }
 
 /* 左右のパネル（出しっぱなしのエフェクト・テロップ） */
 .side-panel {
+  /* 高さを画面いっぱいまで使う。70dvh だと13個中8個しか出ず、残りは
+     画面の外にあった（2026-08-11、伊波さんの指摘）。ボタンは全部見えていてほしい */
   position: absolute; top: 50%; transform: translateY(-50%);
-  height: 70dvh; max-height: 600px;
-  width: 72px; /* 1列に収まる幅 */
+  height: calc(100dvh - 96px); max-height: none;
+  width: 60px;
   pointer-events: auto; z-index: 20;
   display: flex; flex-direction: column;
 }
@@ -190,8 +192,8 @@ button { outline: none; border: none; font-family: inherit; }
 
 .panel-scroll {
   flex: 1; overflow-y: auto; overflow-x: hidden;
-  display: flex; flex-direction: column; gap: 10px;
-  padding: 4px;
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 2px;
   /* スクロールバーを隠す */
   -ms-overflow-style: none; scrollbar-width: none;
 }
@@ -199,25 +201,31 @@ button { outline: none; border: none; font-family: inherit; }
 
 /* パネル内のボタン */
 .effect-grid {
-  display: flex; flex-direction: column; gap: 10px; width: 100%;
+  display: flex; flex-direction: column; gap: 5px; width: 100%;
 }
 .effect-btn {
-  aspect-ratio: 1;
-  background: linear-gradient(180deg, #fff 0%, #ffe4e1 100%);
-  border: 3px solid #ff69b4;
-  border-radius: 20px;
-  padding: 8px;
-  font-size: 0.75rem;
+  /* 正方形だと13個が入りきらない。少し平たくして全部を画面に収める。
+     文字も「フラッシュ」が3行に折れていたので小さくする（2026-08-11） */
+  aspect-ratio: 1.35;
+  min-height: 0;
+  /* 白地に濃いピンクは可愛さに寄りすぎていた（2026-08-11、伊波さんの指摘）。
+     暗い地に色の縁を置く形へ。丸みと押し込みの手応えはそのまま残す */
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 2px;
+  font-size: 0.5rem;
+  line-height: 1.15;
   font-weight: 900;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   cursor: pointer;
-  box-shadow: 0 6px 0 #ff1493, 0 10px 10px rgba(0,0,0,0.2); /* 分厚い下側の立体感（平成風） */
-  color: #ff1493;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 5px 6px rgba(0, 0, 0, 0.35);
+  color: #e6f0fa;
   transition: all 0.1s;
 }
 .effect-btn:active {
-  transform: translateY(6px);
-  box-shadow: 0 0 0 #ff1493, 0 4px 4px rgba(0,0,0,0.2); /* 押し込むギミック */
+  transform: translateY(3px);
+  box-shadow: 0 0 0 rgba(0,0,0,0.6), 0 2px 3px rgba(0,0,0,0.35); /* 押し込むギミック */
 }
 .effect-btn.on {
   background: #ff1493;
@@ -226,12 +234,11 @@ button { outline: none; border: none; font-family: inherit; }
   box-shadow: 0 6px 0 #c71585, 0 10px 10px rgba(0,0,0,0.2);
 }
 
-.effect-btn.btn-burst { border-color: #ff1493; color: #ff1493; box-shadow: 0 6px 0 #c71585, 0 10px 10px rgba(0,0,0,0.2); }
-.effect-btn.btn-burst:active { box-shadow: 0 0 0 #c71585, 0 4px 4px rgba(0,0,0,0.2); }
-.effect-btn.btn-sound { border-color: #00ffff; color: #008b8b; box-shadow: 0 6px 0 #00ced1, 0 10px 10px rgba(0,0,0,0.2); background: linear-gradient(180deg, #fff, #e0ffff); }
-.effect-btn.btn-sound:active { box-shadow: 0 0 0 #00ced1, 0 4px 4px rgba(0,0,0,0.2); }
-.effect-btn.btn-telop { border-color: #9333ea; color: #7e22ce; box-shadow: 0 6px 0 #7e22ce, 0 10px 10px rgba(0,0,0,0.2); background: linear-gradient(180deg, #fff, #f3e8ff); }
-.effect-btn.btn-telop:active { box-shadow: 0 0 0 #7e22ce, 0 4px 4px rgba(0,0,0,0.2); }
+/* 役割ごとの色。縁と文字だけで分ける。地は暗いまま揃える。
+   CMCUBE と同じ考え方（一発＝赤、音＝水色、文字＝紫） */
+.effect-btn.btn-burst { border-color: #e11d48; color: #fecdd3; }
+.effect-btn.btn-sound { border-color: #22d3ee; color: #cffafe; }
+.effect-btn.btn-telop { border-color: #a855f7; color: #f0e3ff; }
 
 /* Modal Settings & Guide */
 .sheet-backdrop {
@@ -306,8 +313,10 @@ button { outline: none; border: none; font-family: inherit; }
 .sound-set:active { transform: translateY(4px); box-shadow: 0 0 0 #c71585; }
 
 .turn-hint {
-  position: absolute; left: 50%; bottom: 130px; transform: translateX(-50%);
-  font-size: 1rem; font-weight: 900; padding: 12px 24px; border-radius: 30px;
+  /* 映す場所を隠さない大きさにする。前は中央に大きく被っていた（2026-08-11） */
+  position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%);
+  max-width: 62vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 0.62rem; font-weight: 700; padding: 6px 12px; border-radius: 20px;
   background: #ff1493; color: white; pointer-events: none;
   border: 3px solid #fff; box-shadow: 0 4px 15px rgba(255, 20, 147, 0.6);
   text-shadow: 1px 1px 0 #c71585;

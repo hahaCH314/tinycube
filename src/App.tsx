@@ -494,8 +494,11 @@ function App() {
             <span className="logo-text" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>tinyCUBE</span>
           </div>
           <div className="header-tools">
-            <button className="tool-btn-small" onClick={() => setShowSettings(true)}>🎀</button>
-            <button className="tool-btn-small" onClick={() => setShowGuide(true)}>✌️</button>
+            {/* 絵文字だけだと何のボタンか分からない。リボンが設定、ピースが使い方
+                という組み合わせは、作った側にも伝わらなかった（2026-08-11）。
+                意味の通る絵に戻す */}
+            <button className="tool-btn-small" onClick={() => setShowSettings(true)} title="設定">⚙️</button>
+            <button className="tool-btn-small" onClick={() => setShowGuide(true)} title="使い方">❓</button>
             <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">👾</button>
           </div>
         </header>
