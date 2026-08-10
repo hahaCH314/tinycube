@@ -190,6 +190,9 @@ function noiseSource(ctx: AudioContext, seconds: number): AudioBufferSourceNode 
 
 /** 効果音。ファイルを持たずにその場で作る（読み込み待ちが無く、容量も増えない） */
 function playSoundFor(id: EffectId) {
+  // 文字を出すボタンは鳴らさない。押すたびに動画へ音が乗ってしまい、
+  // 効果音を自分で選ぶ意味が薄れる（2026-08-10、伊波さんの指示）
+  if (id === 'telop') return;
   const ctx = getCtx();
   if (!ctx) return;
   const now = ctx.currentTime;
@@ -239,7 +242,7 @@ function playSoundFor(id: EffectId) {
     gain.gain.setValueAtTime(0.5, now);
     gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
     osc.start(now); osc.stop(now + 0.24);
-  } else if (id === 'ding' || id === 'telop') {
+  } else if (id === 'ding') {
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(880, now);
     osc.frequency.exponentialRampToValueAtTime(1320, now + 0.08);
