@@ -25,7 +25,11 @@ export type EffectId =
   | 'fanfare'       // 効果音（ジャーン）
   | 'telop';        // 文字を出す（中身は利用者が決める）
 
-type Live = { id: EffectId; start: number; dur: number; text?: string; dark?: boolean };
+type Live = {
+  id: EffectId; start: number; dur: number; text?: string; dark?: boolean;
+  /** 出る場所。画面の幅・高さに対する割合（0.5, 0.5 が真ん中） */
+  x?: number; y?: number;
+};
 
 const live: Live[] = [];
 
@@ -85,23 +89,26 @@ export function useCustomSounds(fn: (id: EffectId) => AudioBuffer | null) {
   getCustom = fn;
 }
 
-export function fireEffect(id: EffectId, text?: string, dark?: boolean) {
+export function fireEffect(id: EffectId, text?: string, dark?: boolean, x?: number, y?: number) {
   const dur = DUR[id] ?? 300;
   if (dur > 0) {
     // 同じものを連打したときは、前のを消してから出す。
     // 重ねると明滅が濁って、押した回数が分からなくなる
     const i = live.findIndex(e => e.id === id);
     if (i >= 0) live.splice(i, 1);
-    live.push({ id, start: performance.now(), dur, text, dark });
+    live.push({ id, start: performance.now(), dur, text, dark, x, y });
   }
   playSoundFor(id);
 }
 
 /** 文字を出す。中身は利用者が設定で書き換えたもの。
     dark を渡すと黒文字・白フチになる（明るい映像の上で読みやすい） */
-export function fireTelop(text: string, dark = false) {
+export function fireTelop(text: string, dark = false, random = false) {
   if (!text.trim()) return;                     // 空のまま押しても何も起きない
-  fireEffect('telop', text, dark);
+  // ばらけさせるときも、端に寄せすぎると切れる。真ん中寄りの範囲に収める
+  const x = random ? 0.3 + Math.random() * 0.4 : 0.5;
+  const y = random ? 0.25 + Math.random() * 0.5 : 0.5;
+  fireEffect('telop', text, dark, x, y);
 }
 
 /** 録画をやめたときに呼ぶ。出しっぱなしの効果を消す */
@@ -119,7 +126,7 @@ export function drawEffects(g: CanvasRenderingContext2D, W: number, H: number) {
     switch (e.id) {
       case 'flash':  drawFlash(g, W, H, t); break;
       case 'glitch': drawGlitch(g, W, H, t); break;
-      case 'telop': drawTelop(g, W, H, t, e.text ?? '', e.dark ?? false); break;
+      case 'telop': drawTelop(g, W, H, t, e.text ?? '', e.dark ?? false, e.x ?? 0.5, e.y ?? 0.5); break;
       default: break;
     }
   }
@@ -160,7 +167,10 @@ function drawGlitch(g: CanvasRenderingContext2D, W: number, H: number, t: number
 
 /** 文字。ぽんと出て、少し待って、消える。
     長い言葉を入れられても画面からはみ出さないよう、文字数で大きさを落とす */
-function drawTelop(g: CanvasRenderingContext2D, W: number, H: number, t: number, text: string, dark: boolean) {
+function drawTelop(
+  g: CanvasRenderingContext2D, W: number, H: number, t: number,
+  text: string, dark: boolean, rx: number, ry: number,
+) {
   const base = Math.min(W, H) * 0.16;
   const size = Math.round(Math.min(base, (W * 0.86) / Math.max(1, text.length)));
   // 0→0.15 で飛び出し、0.75→1 で消える
@@ -170,7 +180,7 @@ function drawTelop(g: CanvasRenderingContext2D, W: number, H: number, t: number,
 
   g.save();
   g.globalAlpha = fade;
-  g.translate(W / 2, H / 2);
+  g.translate(W * rx, H * ry);
   g.scale(scale, scale);
   g.font = `900 ${size}px sans-serif`;
   g.textAlign = 'center';

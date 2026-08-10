@@ -93,6 +93,15 @@ function App() {
   const [telopDark, setTelopDark] = useState(() => {
     try { return localStorage.getItem('tinycube.telopDark') === '1'; } catch { return false; }
   });
+  // 出る場所。いつも真ん中か、ばらけさせるか
+  const [telopRandom, setTelopRandom] = useState(() => {
+    try { return localStorage.getItem('tinycube.telopRandom') === '1'; } catch { return false; }
+  });
+  const pickTelopPos = (random: boolean) => {
+    setTelopRandom(random);
+    try { localStorage.setItem('tinycube.telopRandom', random ? '1' : '0'); } catch { /* 保存できなくても動く */ }
+  };
+
   const pickTelopColor = (dark: boolean) => {
     setTelopDark(dark);
     try { localStorage.setItem('tinycube.telopDark', dark ? '1' : '0'); } catch { /* 保存できなくても動く */ }
@@ -496,7 +505,7 @@ function App() {
             <button
               key={i}
               className="effect-btn btn-telop"
-              onClick={() => fireTelop(text, telopDark)}
+              onClick={() => fireTelop(text, telopDark, telopRandom)}
             >💬 {text}</button>
           ) : null)}
         </div>
@@ -662,6 +671,12 @@ function App() {
             <div className="shape-switch">
               <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
+            </div>
+
+            <h3>{t('setting_teloppos')}</h3>
+            <div className="shape-switch">
+              <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
+              <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
             </div>
 
             <h3>{t('setting_telopcolor')}</h3>

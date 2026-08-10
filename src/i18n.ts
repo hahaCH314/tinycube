@@ -45,6 +45,9 @@ type I18nDict = {
   eff_buzz: string;
   turn_hint: string;
   promo_open: string;
+  setting_teloppos: string;
+  telop_center: string;
+  telop_random: string;
   setting_telopcolor: string;
   telop_white: string;
   telop_black: string;
@@ -136,6 +139,9 @@ const dictJa: I18nDict = {
   eff_buzz: '📢 ぶー',
   turn_hint: '📱↻ 16:9（横動画）は、横向きでの操作がおすすめです',
   promo_open: 'CMCUBE を見る →',
+  setting_teloppos: '文字の出る場所',
+  telop_center: '◎ まん中',
+  telop_random: '🎲 ばらける',
   setting_telopcolor: '文字の色',
   telop_white: '⬜ 白文字',
   telop_black: '⬛ 黒文字',
@@ -224,6 +230,9 @@ const dictEn: I18nDict = {
   eff_buzz: '📢 Buzz',
   turn_hint: '📱↻ For 16:9, holding the phone sideways works best',
   promo_open: 'See CMCUBE →',
+  setting_teloppos: 'Caption position',
+  telop_center: '◎ Centre',
+  telop_random: '🎲 Scattered',
   setting_telopcolor: 'Caption colour',
   telop_white: '⬜ White',
   telop_black: '⬛ Black',
