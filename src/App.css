@@ -661,3 +661,51 @@
   font-weight: 700;
   text-decoration: none;
 }
+
+/* 効果音の差し替え。1行に「試す・名前・入れる・戻す」を並べる */
+.sound-list { display: flex; flex-direction: column; gap: 6px; }
+.sound-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.sound-try {
+  flex: 0 0 auto;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: rgba(0, 210, 255, 0.15);
+  border: 1px solid rgba(0, 210, 255, 0.45);
+  color: var(--text-main);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.sound-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--text-main);
+  overflow: hidden;
+}
+.sound-name em {
+  display: block;
+  font-style: normal;
+  font-size: 0.62rem;
+  color: var(--primary-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sound-set {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-muted);
+  cursor: pointer;
+}

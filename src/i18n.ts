@@ -45,6 +45,11 @@ type I18nDict = {
   eff_buzz: string;
   turn_hint: string;
   promo_open: string;
+  setting_sounds: string;
+  sounds_note: string;
+  sound_load: string;
+  sound_change: string;
+  sound_fail: string;
   setting_camera: string;
   setting_srcaudio: string;
   srcaudio_on: string;
@@ -128,6 +133,11 @@ const dictJa: I18nDict = {
   eff_buzz: '📢 ぶー',
   turn_hint: '📱↻ 16:9（横動画）は、横向きでの操作がおすすめです',
   promo_open: 'CMCUBE を見る →',
+  setting_sounds: '効果音の差し替え',
+  sounds_note: '自分の音を入れられます。入れていないものは、こちらの音で鳴ります。',
+  sound_load: '入れる',
+  sound_change: '変える',
+  sound_fail: 'この音は読み込めませんでした。別のファイルを試してください。',
   setting_camera: 'カメラ',
   setting_srcaudio: '動画の音',
   srcaudio_on: '🔊 入れる',
@@ -208,6 +218,11 @@ const dictEn: I18nDict = {
   eff_buzz: '📢 Buzz',
   turn_hint: '📱↻ For 16:9, holding the phone sideways works best',
   promo_open: 'See CMCUBE →',
+  setting_sounds: 'Replace sounds',
+  sounds_note: 'Load your own audio. Slots you leave empty use the built-in sound.',
+  sound_load: 'Load',
+  sound_change: 'Change',
+  sound_fail: 'That file could not be read. Try another one.',
   setting_camera: 'Camera',
   setting_srcaudio: 'Video sound',
   srcaudio_on: '🔊 Keep',

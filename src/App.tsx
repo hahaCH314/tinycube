@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
 import { FRAMES, fitsShape, loadFrame, type FrameAnchor } from './frames'
-import { fireEffect, fireTelop, type EffectId } from './effects'
+import { fireEffect, fireTelop, useCustomSounds, audioContext, type EffectId } from './effects'
+import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
 import { t, getLang, setLang } from './i18n'
 
 function App() {
@@ -84,6 +85,10 @@ function App() {
   const camStreamRef = useRef<MediaStream | null>(null);
   // 描画の係が毎フレーム読む。state を直接見ると古い値のままになる
   const camOnRef = useRef(false);
+  // 効果音の差し替え。入れてある音があればそちらを鳴らす
+  const soundInputRef = useRef<HTMLInputElement>(null);
+  const [soundSlot, setSoundSlot] = useState<EffectId | null>(null);
+  const [soundVer, setSoundVer] = useState(0);    // 入れ替えたら画面を描き直すための番号
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
   const [showSettings, setShowSettings] = useState(false);
@@ -205,6 +210,28 @@ function App() {
       }
     } catch (e: any) {
       alert(t('cam_fail') + ' ' + (e?.message ?? ''));
+    }
+  };
+
+  // 入れてある効果音を読み直し、鳴らすときに使えるようにする
+  useEffect(() => {
+    useCustomSounds(customBuffer);
+    const ctx = audioContext();
+    if (ctx) loadSaved(ctx).then(() => setSoundVer(v => v + 1));
+  }, []);
+
+  const onSoundFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const slot = soundSlot;
+    e.target.value = '';
+    if (!file || !slot) return;
+    const ctx = audioContext();
+    if (!ctx) return;
+    try {
+      await setCustom(ctx, slot, file);
+      setSoundVer(v => v + 1);
+    } catch {
+      alert(t('sound_fail'));
     }
   };
 
@@ -572,6 +599,40 @@ function App() {
             <button className="sheet-btn" onClick={() => fileInputRef.current?.click()}>
               {videoSrc ? t('setting_video_change') : t('setting_video_load')}
             </button>
+
+            <h3>{t('setting_sounds')}</h3>
+            <p className="sheet-note">{t('sounds_note')}</p>
+            <div className="sound-list">
+              {SOUND_SLOTS.map(id => {
+                const name = customName(id);
+                return (
+                  <div key={id + soundVer} className="sound-row">
+                    <button className="sound-try" onClick={() => fireEffect(id)}>▶</button>
+                    <span className="sound-name">
+                      {t(('eff_' + id) as never)}
+                      {name && <em>{name}</em>}
+                    </span>
+                    <button
+                      className="sound-set"
+                      onClick={() => { setSoundSlot(id); soundInputRef.current?.click(); }}
+                    >{name ? t('sound_change') : t('sound_load')}</button>
+                    {name && (
+                      <button
+                        className="sound-set"
+                        onClick={async () => { await clearCustom(id); setSoundVer(v => v + 1); }}
+                      >↩</button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <input
+              type="file"
+              accept="audio/*"
+              ref={soundInputRef}
+              style={{ display: 'none' }}
+              onChange={onSoundFile}
+            />
 
             <h3>{t('setting_camera')}</h3>
             <div className="shape-switch">

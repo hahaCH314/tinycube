@@ -78,6 +78,13 @@ export function audioContext(): AudioContext | null {
   return getCtx();
 }
 
+// 利用者が入れた音があれば、そちらを鳴らす。
+// 差し替えの管理は sounds.ts が持つ（読み込み・保存・消去）
+let getCustom: ((id: EffectId) => AudioBuffer | null) | null = null;
+export function useCustomSounds(fn: (id: EffectId) => AudioBuffer | null) {
+  getCustom = fn;
+}
+
 export function fireEffect(id: EffectId, text?: string) {
   const dur = DUR[id] ?? 300;
   if (dur > 0) {
@@ -195,6 +202,22 @@ function playSoundFor(id: EffectId) {
   if (id === 'telop') return;
   const ctx = getCtx();
   if (!ctx) return;
+
+  // 入れてある音があれば、それをそのまま鳴らす。
+  // こちらで作った音は、既製の音源には敵わない（伊波さんの「音色がチープ」）
+  const mine = getCustom?.(id);
+  if (mine) {
+    const src = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    src.buffer = mine;
+    gain.gain.value = 0.9;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    if (recDest) gain.connect(recDest);
+    src.start();
+    return;
+  }
+
   const now = ctx.currentTime;
   // 耳にも届かせ、録画中なら動画にも入れる
   const outs: AudioNode[] = [ctx.destination];
