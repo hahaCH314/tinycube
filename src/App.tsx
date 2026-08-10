@@ -11,8 +11,8 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
-  // フローティングUI用のタブ状態
-  const [activeTab, setActiveTab] = useState<'none' | 'effect' | 'telop'>('none');
+  // フローティングUI用のタブ状態は、いまの作り（左右の柱にボタンを常に出す）では
+  // 使わなくなったので消した。ビルドが止まっていた（2026-08-11）
 
   const [videoSrc, setVideoSrc] = useState<string | null>(null);
   
@@ -493,26 +493,12 @@ function App() {
           <div className="logo-container">
             <span className="logo-text" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>tinyCUBE</span>
           </div>
+          <div className="header-tools">
+            <button className="tool-btn-small" onClick={() => setShowSettings(true)}>🎀</button>
+            <button className="tool-btn-small" onClick={() => setShowGuide(true)}>✌️</button>
+            <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">👾</button>
+          </div>
         </header>
-
-        {/* 右側のツールバー（平成ギャル風アイコン） */}
-        <div className="side-toolbar">
-          <button className={`tool-btn ${activeTab === 'effect' ? 'active' : ''}`} onClick={() => setActiveTab(t => t === 'effect' ? 'none' : 'effect')}>
-            💖
-          </button>
-          <button className={`tool-btn ${activeTab === 'telop' ? 'active' : ''}`} onClick={() => setActiveTab(t => t === 'telop' ? 'none' : 'telop')}>
-            💬
-          </button>
-          <button className="tool-btn" onClick={() => setShowSettings(true)}>
-            🎀
-          </button>
-          <button className="tool-btn" onClick={() => setShowGuide(true)}>
-            ✌️
-          </button>
-          <button className="tool-btn discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">
-            👾
-          </button>
-        </div>
 
         {/* 録画ボタン */}
         <footer className="bottom-controls">
@@ -527,42 +513,37 @@ function App() {
           </button>
         </footer>
 
-        {/* 下からスライドするパネル（BottomSheet） */}
-        <div className={`bottom-sheet ${activeTab !== 'none' ? 'open' : ''}`}>
-          <div className="sheet-handle" onClick={() => setActiveTab('none')}></div>
-          <div className="sheet-content">
-            {activeTab === 'effect' && (
-              <div className="effect-grid">
-                <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
-                <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
-                <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>{t('eff_emotional')}</button>
-                
-                <button className="effect-btn btn-sound" onClick={() => fire('bam')}>{t('eff_bam')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('ding')}>{t('eff_ding')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('pon')}>{t('eff_pon')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>{t('eff_buzz')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('clap')}>{t('eff_clap')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('drum')}>{t('eff_drum')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('blip')}>{t('eff_blip')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('dread')}>{t('eff_dread')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('slash')}>{t('eff_slash')}</button>
-                <button className="effect-btn btn-sound" onClick={() => fire('fanfare')}>{t('eff_fanfare')}</button>
-              </div>
-            )}
+        {/* 左側のエフェクトパネル */}
+        <div className="side-panel left">
+          <div className="panel-scroll">
+            <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
+            <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
+            <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>{t('eff_emotional')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('bam')}>{t('eff_bam')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('ding')}>{t('eff_ding')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('pon')}>{t('eff_pon')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>{t('eff_buzz')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('clap')}>{t('eff_clap')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('drum')}>{t('eff_drum')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('blip')}>{t('eff_blip')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('dread')}>{t('eff_dread')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('slash')}>{t('eff_slash')}</button>
+            <button className="effect-btn btn-sound" onClick={() => fire('fanfare')}>{t('eff_fanfare')}</button>
+          </div>
+        </div>
 
-            {activeTab === 'telop' && (
-              <div className="effect-grid">
-                {telops.map((text, i) => text.trim() ? (
-                  <button
-                    key={i}
-                    className="effect-btn btn-telop"
-                    onClick={() => fireTelop(text, telopDark, telopRandom)}
-                  >
-                    💬 {text}
-                  </button>
-                ) : null)}
-              </div>
-            )}
+        {/* 右側のテロップパネル */}
+        <div className="side-panel right">
+          <div className="panel-scroll">
+            {telops.map((text, i) => text.trim() ? (
+              <button
+                key={i}
+                className="effect-btn btn-telop"
+                onClick={() => fireTelop(text, telopDark, telopRandom)}
+              >
+                💬 {text}
+              </button>
+            ) : null)}
           </div>
         </div>
       </div>
