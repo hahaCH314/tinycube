@@ -33,6 +33,8 @@ type I18nDict = {
   btn_preview_stop: string;
   btn_record: string;
   btn_stop: string;
+  btn_photo: string;
+  guide_photo: string;
   btn_pause: string;
   btn_resume: string;
   paused_badge: string;
@@ -141,6 +143,8 @@ const dictJa: I18nDict = {
   btn_preview_stop: '⏸ とめる',
   btn_record: '● 録画スタート',
   btn_stop: '■ 停止',
+  btn_photo: '写真を撮る',
+  guide_photo: '📷 を押すと、そのときの画面がそのまま1枚の写真になります。枠もエフェクトも乗ったまま保存されます。',
   btn_pause: '一時停止',
   btn_resume: '録画を続ける',
   paused_badge: '⏸ 一時停止中（ここは動画に入りません）',
@@ -243,6 +247,8 @@ const dictEn: I18nDict = {
   btn_preview_stop: '⏸ Stop',
   btn_record: '● Start Recording',
   btn_stop: '■ Stop',
+  btn_photo: 'Take a photo',
+  guide_photo: 'Press 📷 to save the screen as a still image. Frames and effects are baked in, just as you see them.',
   btn_pause: 'Pause',
   btn_resume: 'Resume',
   paused_badge: '⏸ Paused — nothing here reaches the file',

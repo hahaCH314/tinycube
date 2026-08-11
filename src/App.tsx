@@ -417,6 +417,20 @@ function App() {
     setIsPreviewing(true);
   };
 
+  // 写真。canvas には映像・枠・エフェクト・透かしが全部乗っているので、
+  // そのまま1枚に書き出すだけでよい（2026-08-11、伊波さん「昔のプリクラ」）。
+  // 光らせるのは画面の上だけ。canvas に描くと写真そのものが白くなる
+  const [flash, setFlash] = useState(false);
+  const shoot = async () => {
+    const c = canvasRef.current;
+    if (!c) return;
+    if (!videoSrc && !camOn) { alert(t('alert_load_first')); return; }
+    setFlash(true);
+    setTimeout(() => setFlash(false), 220);
+    const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
+    if (blob) await save(blob, 'jpg');
+  };
+
   // 一時停止。録画も動画も両方止める。
   // 止めているあいだの絵と音は、まったくファイルに入らない
   const togglePause = () => {
@@ -598,6 +612,13 @@ function App() {
           <button className="preview-btn-round" onClick={togglePreview} disabled={isRecording || !videoSrc}>
             {isPreviewing ? '⏸' : '▶'}
           </button>
+          {/* 写真。押した瞬間の画面が、そのまま1枚になる */}
+          <button
+            className="photo-btn-round"
+            onClick={shoot}
+            disabled={!videoSrc && !camOn}
+            title={t('btn_photo')}
+          >📷</button>
           <button
             className={`record-btn-round ${isRecording ? 'recording' : ''} ${isPaused ? 'paused' : ''}`}
             onClick={toggleRecording}
@@ -616,6 +637,8 @@ function App() {
           </button>
         </footer>
         {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
+        {/* シャッターの光。CSS なので写真にも動画にも入らない */}
+        {flash && <div className="shutter-flash" />}
 
         {/* 左側のエフェクトパネル */}
         <div className="side-panel left" data-role="sound">
@@ -685,6 +708,7 @@ function App() {
               <li><b>{t('guide_step2_title')}</b><br />{t('guide_step2_desc')}</li>
               <li><b>{t('guide_step3_title')}</b><br />{t('guide_step3_desc')}</li>
             </ol>
+            <p className="guide-note">{t('guide_photo')}</p>
 
             <div className="guide-warn">
               <h3>{t('guide_warn_title')}</h3>

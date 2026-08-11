@@ -199,7 +199,8 @@
    ============================================================ */
 .bottom-controls {
   position: absolute;
-  bottom: 0; left: var(--rail-w); right: var(--rail-w);
+  /* ボタンが4つになったので端まで使う。柱より下なので重ならない */
+  bottom: 0; left: 0; right: 0;
   height: var(--foot-h);
   padding-bottom: max(18px, env(safe-area-inset-bottom));
   display: flex; justify-content: center; align-items: center;
@@ -240,7 +241,7 @@
 /* 録画ボタンは真ん中。試してみるボタンは、その左に添える。
    横に並べて全体を中央寄せにすると、録画ボタンが右にずれて見える */
 .preview-btn-round {
-  position: absolute; left: 2px;
+  position: absolute; left: max(8px, env(safe-area-inset-left));
   width: 40px; height: 40px; border-radius: 50%;
   font-size: 1rem; color: var(--cp-ink);
   display: flex; justify-content: center; align-items: center;
@@ -253,7 +254,7 @@
 
 /* 一時停止。録画ボタンの右に添える */
 .pause-btn-round {
-  position: absolute; right: 2px;
+  position: absolute; right: max(8px, env(safe-area-inset-right));
   width: 40px; height: 40px; border-radius: 50%;
   font-size: 0.8rem; font-weight: 900; color: #4a3200;
   display: flex; justify-content: center; align-items: center;
@@ -269,6 +270,31 @@
 @keyframes citypop-pause {
   0%, 100% { box-shadow: 0 0 14px rgba(255, 217, 100, 0.5); }
   50%      { box-shadow: 0 0 26px rgba(255, 217, 100, 1); }
+}
+
+/* 写真。押した瞬間の画面が、そのまま1枚になる */
+.photo-btn-round {
+  position: absolute; left: calc(max(8px, env(safe-area-inset-left)) + 48px);
+  width: 40px; height: 40px; border-radius: 50%;
+  font-size: 1rem;
+  display: flex; justify-content: center; align-items: center;
+  background: linear-gradient(145deg, #e6d2ff 0%, var(--cp-purple) 55%, #6f44c9 100%);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 14px rgba(149, 102, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.photo-btn-round:disabled { opacity: 0.3; filter: grayscale(85%); }
+.photo-btn-round:active:not(:disabled) { transform: scale(0.88); }
+
+/* シャッターの光。画面の上だけを光らせる。
+   canvas に描くと、その白が写真そのものに焼き付いてしまう */
+.shutter-flash {
+  position: absolute; inset: 0; z-index: 60;
+  background: #fff; pointer-events: none;
+  animation: citypop-shutter 0.22s ease-out forwards;
+}
+@keyframes citypop-shutter {
+  0%   { opacity: 0.85; }
+  100% { opacity: 0; }
 }
 
 /* 一時停止中だと分かる帯。上に出す（下は録画まわりで埋まっている） */
