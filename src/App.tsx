@@ -17,7 +17,7 @@ import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRe
 const RAIL_ICONS = [
   '1', '2',          // フラッシュ・グリッチ
   '🌴',              // エモい   … 南国の夕暮れの空気
-  '🚗',              // どんっ   … ぶつかる音
+  '🥁',              // どんっ   … 叩く音そのもの（車＝ぶつかる音は却下、2026-08-11）
   '🌟',              // きらっ   … ネオンスターが光る
   '🍹',              // ぽん     … 栓が抜ける
   '☎️',              // ぶー     … 話し中の音
