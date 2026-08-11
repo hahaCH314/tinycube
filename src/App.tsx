@@ -303,6 +303,7 @@ function App() {
       // video は毎回聞き直す。読み込む前は要素そのものが無い
       // カメラのときだけ画面いっぱいに広げる
       read: () => ({ ...liveRef.current, video: videoRef.current, fill: camOnRef.current }),
+      onTrouble: msg => setCamInfo(msg || null),
     });
   }, []);
 

@@ -66,6 +66,8 @@ const SIZES: Record<OutShape, { w: number; h: number }> = {
  */
 export type StageOptions = {
   canvas: HTMLCanvasElement;
+  /** 描画で困ったときに呼ばれる。黙って黒くなるのが一番たちが悪い */
+  onTrouble?: (msg: string) => void;
   /** 呼ばれるたびに、いまの状態を返す。
    *  video も毎回聞き直す。動画を読み込む前は要素そのものが無いので、
    *  最初に一度だけ受け取る形にすると、いつまでも動かない */
@@ -82,11 +84,32 @@ export type StageOptions = {
 export function startStage(opts: StageOptions): () => void {
   const { canvas, read } = opts;
   const g = canvas.getContext('2d');
-  if (!g) return () => { /* 描けないだけ。アプリは動く */ };
+  if (!g) { opts.onTrouble?.('canvas を用意できませんでした'); return () => {}; }
 
+  // 端末の余力が尽きると canvas の中身が失われ、以後まっ黒のままになる。
+  // 黙って黒くなると原因が何ひとつ分からないので、起きたことを伝える
+  canvas.addEventListener('contextlost', () => opts.onTrouble?.('描画が中断されました（contextlost）'));
+  canvas.addEventListener('contextrestored', () => opts.onTrouble?.(''));
+
+  // 枠は毎コマ拡大し直さず、書き出しの大きさで一度だけ作って使い回す。
+  // 1400px の絵を毎コマ 1080x1920 へ引き伸ばすのは、端末には重い（2026-08-11）
+  let baked: { img: HTMLImageElement; w: number; h: number; canvas: HTMLCanvasElement } | null = null;
+  const bakeFrame = (img: HTMLImageElement, anchor: FrameAnchor, W: number, H: number) => {
+    if (baked && baked.img === img && baked.w === W && baked.h === H) return baked.canvas;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const gg = c.getContext('2d');
+    if (!gg) return null;
+    drawFrame(gg, img, anchor, W, H);
+    baked = { img, w: W, h: H, canvas: c };
+    return c;
+  };
+
+  let told = false;
   let running = true;
   const draw = () => {
     if (!running) return;
+    try {
     const { video, shape, frame, watermark } = read();
     const { w: OUT_W, h: OUT_H } = SIZES[shape];
     if (canvas.width !== OUT_W) canvas.width = OUT_W;
@@ -109,7 +132,11 @@ export function startStage(opts: StageOptions): () => void {
       g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
     }
 
-    if (frame) drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H);
+    if (frame) {
+      const b = bakeFrame(frame.img, frame.anchor, OUT_W, OUT_H);
+      if (b) g.drawImage(b, 0, 0);
+      else drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H);
+    }
 
     // 顔ハメの穴は、絵そのものを透明に抜いてある（取り込みのときに処理）。
     // だから特別扱いは要らない。映像の上に枠を重ねるだけで、穴から中が見える
@@ -117,6 +144,10 @@ export function startStage(opts: StageOptions): () => void {
     drawEffects(g, OUT_W, OUT_H);
     if (watermark) {
       drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
+    }
+    } catch (e: any) {
+      // 一度だけ伝える。毎コマ出すと読めない
+      if (!told) { told = true; opts.onTrouble?.('描画でつまずきました: ' + (e?.name ?? '') + ' ' + (e?.message ?? '')); }
     }
     requestAnimationFrame(draw);
   };
