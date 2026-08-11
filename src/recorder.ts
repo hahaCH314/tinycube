@@ -76,7 +76,7 @@ export type StageOptions = {
     /** true なら画面いっぱいに広げる（カメラ）。false は切らずに収める（動画） */
     fill: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor; faceHole?: { x: number; y: number; w: number; h: number } } | null;
     watermark: string | null;
   };
 };
@@ -138,9 +138,27 @@ export function startStage(opts: StageOptions): () => void {
       else drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H);
     }
 
-    // 顔ハメの穴は、絵そのものを透明に抜いてある（取り込みのときに処理）。
-    // だから特別扱いは要らない。映像の上に枠を重ねるだけで、穴から中が見える
-    // （2026-08-11、伊波さん「全体を映した上にただフィルターおくだけ」）
+    // 顔ハメは、枠を描いたあとに、穴の形へ切り抜いたカメラをもう一度重ねる。
+    //
+    // 一度これを外して「穴を透明に抜いてあるから素通しで見えるはず」に
+    // したが、伊波さんの端末では透けずに黒いままだった。実機で動いていたのは
+    // こちらなので戻した（2026-08-11、伊波さん「1度映ったのはなぜ？」）。
+    // 絵の穴が透明でも黒でも、どちらでも成り立つ作りでもある
+    if (frame?.faceHole && video && vw && vh) {
+      const fh = frame.faceHole;
+      const cx = OUT_W * (fh.x + fh.w / 2) / 100;
+      const cy = OUT_H * (fh.y + fh.h / 2) / 100;
+      const rx = OUT_W * (fh.w / 2) / 100;
+      const ry = OUT_H * (fh.h / 2) / 100;
+      g.save();
+      g.beginPath();
+      g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      g.clip();
+      const s2 = Math.max(OUT_W / vw, OUT_H / vh);
+      const w2 = vw * s2, h2 = vh * s2;
+      g.drawImage(video, (OUT_W - w2) / 2, (OUT_H - h2) / 2, w2, h2);
+      g.restore();
+    }
     drawEffects(g, OUT_W, OUT_H);
     if (watermark) {
       drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
