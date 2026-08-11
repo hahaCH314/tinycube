@@ -1,354 +1,597 @@
+/* ============================================================
+   tinyCUBE — シティポップ（2026-08-11、伊波さんの指示）
+
+   守っている決まりは1つだけ。
+   「光やパーティクルは枠の中（左右の柱・上下の帯）で終わらせ、
+     中央の映像には絶対に被らせない」
+
+   そのために中央（.preview-stage）は overflow:hidden / isolation:isolate /
+   contain:paint で隔離し、左右の柱と上下の帯も自分の中で切り取る。
+   柱は映像の外側に置いてあるので、そもそも重ならない。
+
+   ※ここは「画面の飾り」で、録画されるのは canvas の中身だけ。
+     動画にも入れたいものは effects.ts / recorder.ts 側に書くこと
+   ============================================================ */
+
 :root {
-  --primary-color: #ff1493; /* ディープピンク */
-  --secondary-color: #00ffff; /* シアン（Y2Kアクセント） */
-  --accent-color: #ff69b4; /* ホットピンク */
-  --bg-main: #fff0f5; /* ラベンダーブラッシュ */
-  --text-main: #ff1493;
-  --text-muted: #c71585;
+  /* 左右の柱の幅。中央の映像はこのぶんだけ内側に入る */
+  --rail-w: clamp(60px, 19vw, 76px);
+  --head-h: 66px;
+  --foot-h: 116px;
 }
 
-body {
-  margin: 0;
-  font-family: 'Rounded M+ 1c', 'Kosugi Maru', 'Hiragino Maru Gothic ProN', sans-serif; /* 丸文字っぽく */
-  background-color: var(--bg-main);
-  color: var(--text-main);
-}
-
-* { box-sizing: border-box; }
-button { outline: none; border: none; font-family: inherit; }
-
-/* キラキラ・デコ文字用のミックスイン風クラス */
-.deco-text {
-  color: #ff1493;
-  font-weight: 900;
-  text-shadow: 
-    -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff,
-    -1px 0 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, 0 1px 0 #fff,
-    0 4px 6px rgba(255, 20, 147, 0.4); /* ぷっくり白フチ＋ピンク影 */
-}
-
-/* アクアボタン・ぷっくり立体感 */
-.emboss-btn {
-  background: linear-gradient(180deg, #ff9ce2 0%, #ff1493 100%);
-  border: 3px solid #fff;
-  border-radius: 50%;
-  box-shadow: 
-    inset 0 4px 6px rgba(255,255,255,0.8), /* 上のハイライト */
-    inset 0 -4px 6px rgba(139,0,139,0.5), /* 下のシャドウ */
-    0 4px 10px rgba(0,0,0,0.25); /* 外の影 */
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
+/* ============================================================
+   1. 全体
+   ============================================================ */
 .app-container {
   position: relative;
-  width: 100vw;
+  width: 100%;
   height: 100dvh;
-  background: #000;
   overflow: hidden;
   display: block;
 }
 
+/* ============================================================
+   2. 中央＝配信映像だけの場所（完全隔離）
+   ============================================================ */
+.preview-stage {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: var(--rail-w);
+  right: var(--rail-w);
+  width: auto;
+  height: auto;
+  background: #000;
+  border-radius: 12px;
+  /* 外側のエフェクトを侵入させない */
+  overflow: hidden;
+  isolation: isolate;
+  contain: paint;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* 中の箱が、この枠の縦横を直に読めるようにする */
+  container-type: size;
+  box-shadow:
+    0 0 0 2px rgba(102, 231, 255, 0.35),
+    0 0 24px rgba(149, 102, 255, 0.35);
+}
+
+/* 動画の形（--ar は App.tsx が渡す）を保ったまま、枠に入る最大の大きさにする。
+   max-width / max-height に任せると、flex に引き伸ばされて 16:9 が 2:1 になった
+   （2026-08-11、実測 2.014）。幅と高さの両方から出して、小さいほうを取る */
+.stage-box {
+  position: relative;
+  width: min(100cqw, calc(100cqh * var(--ar, 0.5625)));
+  height: min(100cqh, calc(100cqw / var(--ar, 0.5625)));
+  overflow: hidden;
+}
+
+.stage-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.video-player.hidden-source {
+  position: absolute; width: 1px; height: 1px;
+  opacity: 0; pointer-events: none;
+}
+.frame-overlay { position: absolute; left: 0; pointer-events: none; }
+
+.video-placeholder {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  color: var(--cp-cyan);
+  font-size: 0.82rem; font-weight: 800; text-align: center;
+  pointer-events: none;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+.upload-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: flex; justify-content: center; align-items: center;
+  border: 2px dashed var(--cp-cyan);
+  background: rgba(102, 231, 255, 0.08);
+  box-shadow: 0 0 18px rgba(102, 231, 255, 0.35);
+}
+
+.turn-hint {
+  /* 映す場所を隠さない大きさにする。前は中央に大きく被っていた（2026-08-11） */
+  /* 録画ボタンの上に置く。下端に貼ると、そのボタンと重なる（2026-08-11） */
+  position: absolute; left: 50%; bottom: calc(var(--foot-h) - 6px);
+  transform: translateX(-50%);
+  max-width: 92%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 0.56rem; font-weight: 700; padding: 5px 10px; border-radius: 20px;
+  background: rgba(16, 8, 43, 0.85); color: var(--cp-cyan);
+  border: 1px solid rgba(102, 231, 255, 0.5);
+  pointer-events: none;
+}
+
+/* ============================================================
+   3. 手前のUI層と、上下の帯
+   ============================================================ */
+.ui-layer {
+  position: absolute; inset: 0;
+  z-index: 20; pointer-events: none;
+}
+
+/* 上下の帯。光が横切るが、切り取ってあるので中央には届かない */
+.city-frame {
+  position: absolute;
+  left: 0; right: 0;
+  height: 10px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 30;
+  background: linear-gradient(90deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple));
+}
+.city-frame.top { top: 0; }
+.city-frame.bottom { bottom: 0; }
+.city-frame::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 20%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  animation: citypop-shimmer 4.5s linear infinite;
+}
+.city-frame.bottom::after { animation-delay: 2.2s; }
+
+@keyframes citypop-shimmer {
+  from { transform: translateX(-40%); }
+  to   { transform: translateX(180%); }
+}
+
+/* ============================================================
+   4. 上のバー
+   ============================================================ */
 .header {
   position: absolute;
-  top: 0; left: 0; width: 100%;
-  padding: 16px 20px;
-  display: flex; justify-content: space-between; align-items: flex-start;
+  top: 0; left: 0; right: 0;
+  height: var(--head-h);
+  padding: 14px 10px 0;
+  display: flex; justify-content: space-between; align-items: center;
   z-index: 40; pointer-events: none;
 }
 .header > * { pointer-events: auto; }
 
-.header-tools {
-  display: flex; gap: 12px;
-}
-.tool-btn-small {
-  width: 44px; height: 44px;
-  font-size: 1.2rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  border: 2px solid #ff1493;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(255, 20, 147, 0.4);
-  display: flex; justify-content: center; align-items: center;
-  transition: transform 0.1s;
-}
-.tool-btn-small:active { transform: scale(0.85); }
-
-.logo-container {
-  display: flex; align-items: center; gap: 8px;
-}
+.logo-container { display: flex; align-items: center; gap: 8px; }
 .logo-text {
   font-family: 'Outfit', sans-serif;
   font-weight: 900;
-  font-size: 1.6rem;
-  letter-spacing: 1px;
-  color: #00ffff; /* 水色とピンクのY2K配色 */
-  text-shadow: 
-    -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 2px 2px 0 #fff,
-    4px 4px 0 #ff1493; /* ずれたネオン影 */
-  transform: rotate(-3deg); /* ちょっと斜めにするのが平成ギャル */
+  font-style: italic;
+  font-size: 1.22rem;
+  letter-spacing: 0.5px;
+  color: var(--cp-cyan);
+  text-shadow: 2px 2px 0 var(--cp-pink), 0 0 14px rgba(102, 231, 255, 0.6);
 }
 
-/* プレビュー領域 */
-.preview-stage {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  background-color: #000;
-  display: flex; justify-content: center; align-items: center; overflow: hidden;
-}
-.stage-box { position: relative; width: 100%; height: 100%; overflow: hidden; }
-.stage-box .video-player { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.video-player.hidden-source { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.frame-overlay { position: absolute; left: 0; pointer-events: none; }
-
-.video-placeholder {
-  color: #ff1493;
-  font-size: 1.2rem;
-  font-weight: 900;
-  text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  pointer-events: none;
-  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
-}
-.upload-icon {
-  width: 64px; height: 64px; border-radius: 50%;
-  background: rgba(255,255,255,0.8);
+.header-tools { display: flex; gap: 8px; }
+.tool-btn-small {
+  width: 38px; height: 38px;
+  font-size: 1rem;
+  border-radius: 50%;
+  background: rgba(27, 15, 61, 0.9);
+  border: 2px solid rgba(102, 231, 255, 0.55);
+  color: #fff;
   display: flex; justify-content: center; align-items: center;
-  border: 4px dashed #ff1493;
-  box-shadow: 0 4px 15px rgba(255,20,147,0.5);
+  box-shadow: 0 0 10px rgba(102, 231, 255, 0.3);
+  transition: transform 0.1s;
 }
+.tool-btn-small:active { transform: scale(0.86); }
+.discord-btn { border-color: #8b93ff; box-shadow: 0 0 10px rgba(139, 147, 255, 0.45); }
 
-/* フローティングUIレイヤー */
-.ui-layer {
-  position: absolute; inset: 0; z-index: 10; pointer-events: none;
-  display: flex; flex-direction: column; justify-content: space-between;
-}
-
-/* 下部コントロール */
+/* ============================================================
+   5. 下のバー（試してみる／録画）
+   ============================================================ */
 .bottom-controls {
-  padding: 20px; padding-bottom: max(30px, env(safe-area-inset-bottom));
+  position: absolute;
+  bottom: 0; left: var(--rail-w); right: var(--rail-w);
+  height: var(--foot-h);
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
   display: flex; justify-content: center; align-items: center;
-  pointer-events: auto; z-index: 20; position: absolute; bottom: 0; width: 100%;
+  pointer-events: auto; z-index: 40;
 }
 
-/* ド派手な録画ボタン（ジュエル風） */
 .record-btn-round {
-  width: 88px; height: 88px; border-radius: 50%;
-  border: 6px solid #fff;
-  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  flex: 0 0 auto;
+  width: 78px; height: 78px; border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  background: radial-gradient(circle at 32% 28%, #ff8ec4 0%, var(--cp-pink) 45%, #b8226b 100%);
   display: flex; justify-content: center; align-items: center;
-  cursor: pointer;
-  box-shadow: 
-    0 8px 24px rgba(255, 20, 147, 0.6),
-    inset 0 4px 10px rgba(255,255,255,0.7),
-    inset 0 -4px 10px rgba(139,0,139,0.8);
   padding: 0;
+  box-shadow:
+    0 0 20px rgba(255, 79, 163, 0.65),
+    inset 0 3px 8px rgba(255, 255, 255, 0.5),
+    inset 0 -4px 10px rgba(90, 0, 50, 0.6);
   transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  position: relative;
-}
-/* キラキラ装飾 */
-.record-btn-round::before {
-  content: "✨";
-  position: absolute;
-  top: -10px; right: -10px;
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 .record-btn-round:active { transform: scale(0.9); }
-
 .record-btn-round .record-inner {
-  width: 48px; height: 48px; border-radius: 50%;
-  background: linear-gradient(180deg, #fff 0%, #ff9ce2 100%);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(180deg, #fff 0%, #ffd6ea 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .record-btn-round.recording .record-inner {
-  border-radius: 12px; transform: scale(0.6); background: #fff;
+  border-radius: 10px; transform: scale(0.6); background: #fff;
+}
+.record-btn-round.recording {
+  animation: citypop-rec 1.4s ease-in-out infinite;
+}
+@keyframes citypop-rec {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 79, 163, 0.65), inset 0 3px 8px rgba(255,255,255,0.5); }
+  50%      { box-shadow: 0 0 34px rgba(255, 79, 163, 1),    inset 0 3px 8px rgba(255,255,255,0.5); }
 }
 
+/* 録画ボタンは真ん中。試してみるボタンは、その左に添える。
+   横に並べて全体を中央寄せにすると、録画ボタンが右にずれて見える */
 .preview-btn-round {
-  position: absolute; right: 40px;
-  width: 52px; height: 52px;
-  font-size: 1.4rem;
+  position: absolute; left: 2px;
+  width: 48px; height: 48px; border-radius: 50%;
+  font-size: 1.2rem; color: var(--cp-ink);
   display: flex; justify-content: center; align-items: center;
-  cursor: pointer;
+  background: linear-gradient(145deg, #c2fbff 0%, var(--cp-cyan) 55%, #45bff0 100%);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 14px rgba(102, 231, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
-.preview-btn-round:disabled { opacity: 0.5; filter: grayscale(100%); }
-.preview-btn-round:active:not(:disabled) { transform: scale(0.85); }
+.preview-btn-round:disabled { opacity: 0.35; filter: grayscale(80%); }
+.preview-btn-round:active:not(:disabled) { transform: scale(0.88); }
 
-/* 左右のパネル（出しっぱなしのエフェクト・テロップ） */
+/* ============================================================
+   6. 左右の柱（ここでエフェクトを完結させる）
+   ============================================================ */
 .side-panel {
-  /* 高さを画面いっぱいまで使う。70dvh だと13個中8個しか出ず、残りは
-     画面の外にあった（2026-08-11、伊波さんの指摘）。ボタンは全部見えていてほしい */
-  position: absolute; top: 50%; transform: translateY(-50%);
-  height: calc(100dvh - 96px); max-height: none;
-  width: 60px;
-  pointer-events: auto; z-index: 20;
+  position: absolute;
+  top: var(--head-h);
+  bottom: var(--foot-h);
+  width: var(--rail-w);
+  padding: 4px;
   display: flex; flex-direction: column;
+  /* エフェクトを中央へ飛び出させない */
+  overflow: hidden;
+  pointer-events: auto; z-index: 25;
 }
-.side-panel.left { left: 12px; }
-.side-panel.right { right: 12px; }
+.side-panel.left { left: 0; }
+.side-panel.right { right: 0; }
 
 .panel-scroll {
-  flex: 1; overflow-y: auto; overflow-x: hidden;
-  display: flex; flex-direction: column; gap: 5px;
-  padding: 2px;
-  /* スクロールバーを隠す */
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  gap: clamp(3px, 0.7dvh, 10px);
+  /* 入りきらない機種だけ送れるようにする。重なるよりは送るほうがまし */
+  overflow-y: auto; overflow-x: hidden;
   -ms-overflow-style: none; scrollbar-width: none;
 }
 .panel-scroll::-webkit-scrollbar { display: none; }
 
-/* パネル内のボタン */
-.effect-grid {
-  display: flex; flex-direction: column; gap: 5px; width: 100%;
-}
+/* 柱の高さを等分する。flex なので、どれだけ増えても重ならない
+   （2026-08-11、伊波さん「ボタン被りがあったから気を付けて」） */
 .effect-btn {
-  /* 正方形だと13個が入りきらない。少し平たくして全部を画面に収める。
-     文字も「フラッシュ」が3行に折れていたので小さくする（2026-08-11） */
-  aspect-ratio: 1.35;
-  min-height: 0;
-  /* 白地に濃いピンクは可愛さに寄りすぎていた（2026-08-11、伊波さんの指摘）。
-     暗い地に色の縁を置く形へ。丸みと押し込みの手応えはそのまま残す */
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  border-radius: 12px;
+  flex: 1 1 0;
+  min-height: 26px;   /* 小さい画面でも送らずに全部入る高さ */
+  max-height: 62px;
+  width: 100%;
   padding: 2px;
-  font-size: 0.5rem;
-  line-height: 1.15;
-  font-weight: 900;
+  border-radius: 14px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.6), 0 5px 6px rgba(0, 0, 0, 0.35);
-  color: #e6f0fa;
-  transition: all 0.1s;
+  gap: 1px;
+  font-weight: 900;
+  transition: transform 0.1s, filter 0.1s;
 }
-.effect-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 0 0 rgba(0,0,0,0.6), 0 2px 3px rgba(0,0,0,0.35); /* 押し込むギミック */
+.effect-btn:active { transform: translateY(2px); filter: brightness(1.12); }
+
+/* 左＝効果音とエフェクト（水色）。右＝テロップ（紫） */
+.effect-btn.btn-sound,
+.effect-btn.btn-burst {
+  background: linear-gradient(145deg, #c2fbff 0%, #68e8ff 50%, #45bff0 100%);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: var(--cp-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -3px 0 rgba(20, 100, 150, 0.25),
+    0 0 10px rgba(102, 231, 255, 0.45);
+}
+.effect-btn.btn-telop {
+  background: linear-gradient(145deg, #cf92ff 0%, #9566ff 48%, #6f44c9 100%);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -3px 0 rgba(50, 20, 120, 0.28),
+    0 0 10px rgba(175, 100, 255, 0.45);
 }
 .effect-btn.on {
-  background: #ff1493;
-  color: #fff;
   border-color: #fff;
-  box-shadow: 0 6px 0 #c71585, 0 10px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 0 16px rgba(255, 79, 163, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-/* 役割ごとの色。縁と文字だけで分ける。地は暗いまま揃える。
-   CMCUBE と同じ考え方（一発＝赤、音＝水色、文字＝紫） */
-.effect-btn.btn-burst { border-color: #e11d48; color: #fecdd3; }
-.effect-btn.btn-sound { border-color: #22d3ee; color: #cffafe; }
-.effect-btn.btn-telop { border-color: #a855f7; color: #f0e3ff; }
+/* 絵柄と、その下の小さな言葉。
+   絵だけだと何のボタンか分からない（2026-08-11、伊波さんの指摘）ので、
+   言葉は必ず残す */
+.btn-icon {
+  font-size: 1.05rem; line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+.btn-icon svg { width: 15px; height: 13px; display: block; fill: currentColor; }
+.btn-label {
+  font-size: 0.46rem; line-height: 1.1; letter-spacing: -0.02em;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  opacity: 0.9;
+}
 
-/* Modal Settings & Guide */
+/* 番号だけのボタンは、斜体＋ピンクの影でシティポップらしく */
+.number-icon {
+  font-family: 'Outfit', 'Arial Rounded MT Bold', sans-serif;
+  font-size: 1.15rem; font-weight: 900; font-style: italic; line-height: 1;
+  text-shadow:
+    1px 1px 0 rgba(255, 255, 255, 0.7),
+    2px 2px 0 rgba(255, 79, 163, 0.6);
+}
+
+/* 横に持ったとき。柱が短くなるので2列にする。
+   言葉は消さない。テロップは言葉そのものがボタンの中身なので、
+   絵柄だけにすると「やば」と「最高」の区別がつかなくなる */
+@media (orientation: landscape) and (max-height: 560px) {
+  :root { --rail-w: 132px; --head-h: 52px; --foot-h: 92px; }
+  /* 横だと映像が safe area いっぱいまで広がって、録画ボタンが映像に重なる。
+     下を footer のぶんだけ空けて、映像の上に何も置かないようにする */
+  .preview-stage { bottom: var(--foot-h); }
+  .panel-scroll {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+    gap: 4px;
+  }
+  .effect-btn { max-height: none; }
+  .record-btn-round { width: 68px; height: 68px; }
+  .record-btn-round .record-inner { width: 34px; height: 34px; }
+  .btn-icon { font-size: 0.8rem; }
+  .btn-icon svg { width: 12px; height: 10px; }
+  .number-icon { font-size: 0.9rem; }
+  .btn-label { font-size: 0.42rem; }
+}
+
+/* ============================================================
+   7. シート（設定・使い方）
+   ============================================================ */
 .sheet-backdrop {
   position: fixed; inset: 0; z-index: 50;
-  background: rgba(255, 20, 147, 0.4); backdrop-filter: blur(8px);
+  background: rgba(16, 8, 43, 0.72);
+  backdrop-filter: blur(8px);
   display: flex; align-items: flex-end; justify-content: center;
 }
 .sheet {
-  width: 100%; max-width: 480px; max-height: 88dvh;
+  width: 100%; max-width: 500px; max-height: 90dvh;
   display: flex; flex-direction: column; overflow-y: auto;
-  background: #fff;
-  border-top: 6px solid #ff1493; border-radius: 40px 40px 0 0;
-  padding: 16px 16px 24px;
-  box-shadow: 0 -10px 40px rgba(255, 20, 147, 0.4);
+  background: linear-gradient(180deg, #241350 0%, var(--cp-navy) 100%);
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(90deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple)) 1;
+  border-radius: 24px 24px 0 0;
+  padding: 16px 16px 28px;
+  color: var(--text-main);
+  box-shadow: 0 -12px 40px rgba(149, 102, 255, 0.35);
+}
+.sheet h3 {
+  margin: 20px 0 6px;
+  font-size: 0.9rem; font-weight: 900;
+  color: var(--cp-cyan);
+  letter-spacing: 0.04em;
 }
 .sheet-head {
-  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+  font-size: 1.05rem; font-weight: 900;
+  color: #fff;
 }
 .sheet-head button {
-  background: #ff1493; border: none; color: #fff; font-weight: 900;
-  border-radius: 20px; padding: 8px 18px; font-size: 0.9rem; cursor: pointer;
-  box-shadow: 0 4px 0 #c71585; transition: all 0.1s;
+  background: var(--cp-pink); color: #fff; font-weight: 900;
+  border-radius: 18px; padding: 8px 18px; font-size: 0.85rem;
+  box-shadow: 0 3px 0 #a8195e;
+  transition: all 0.1s;
 }
-.sheet-head button:active { transform: translateY(4px); box-shadow: 0 0 0 #c71585; }
+.sheet-head button:active { transform: translateY(3px); box-shadow: 0 0 0 #a8195e; }
 
-.frame-picker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding-bottom: 4px; }
-.frame-tile {
-  width: 100%; background: #fff; border: 3px solid #ffb6c1; border-radius: 16px;
-  padding: 0; overflow: hidden; cursor: pointer; color: #ff1493; font-size: 0.75rem; font-weight: 900;
-  box-shadow: 0 4px 0 #ffb6c1; transition: all 0.1s;
+.sheet-btn {
+  width: 100%; padding: 14px; margin-top: 8px;
+  border-radius: 18px; font-size: 0.95rem; font-weight: 900;
+  background: linear-gradient(145deg, #c2fbff 0%, var(--cp-cyan) 55%, #45bff0 100%);
+  color: var(--cp-ink);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 4px 0 rgba(31, 168, 216, 0.9);
+  transition: all 0.1s;
 }
-.frame-tile:active { transform: translateY(4px); box-shadow: 0 0 0 #ffb6c1; }
-.frame-tile.on { border-color: #ff1493; box-shadow: 0 4px 0 #c71585; background: #fff0f5; }
-.frame-tile img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000; }
-.frame-tile span { display: block; padding: 6px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.sheet-btn:active { transform: translateY(4px); box-shadow: 0 0 0 rgba(31, 168, 216, 0.9); }
 
-.shape-switch { display: flex; gap: 12px; margin-top: 6px; }
+.sheet-note {
+  margin: 4px 0 8px;
+  font-size: 0.72rem; line-height: 1.55; color: var(--text-muted);
+}
+
+/* 設定の切り替えボタン */
+.shape-switch { display: flex; gap: 8px; margin-top: 6px; }
 .shape-switch button {
-  flex: 1; padding: 12px; font-size: 1rem; font-weight: 900; border-radius: 20px;
-  border: 3px solid #ffb6c1; background: #fff; color: #ff1493; cursor: pointer;
-  box-shadow: 0 4px 0 #ffb6c1; transition: all 0.1s;
+  flex: 1; padding: 11px 4px; font-size: 0.8rem; font-weight: 900;
+  border-radius: 16px;
+  border: 2px solid rgba(102, 231, 255, 0.4);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  transition: all 0.1s;
 }
-.shape-switch button:active { transform: translateY(4px); box-shadow: 0 0 0 #ffb6c1; }
-.shape-switch button.on { border-color: #ff1493; background: #ff1493; color: #fff; box-shadow: 0 4px 0 #c71585; }
+.shape-switch button.on {
+  border-color: #fff;
+  background: linear-gradient(145deg, #cf92ff 0%, var(--cp-purple) 55%, #6f44c9 100%);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(149, 102, 255, 0.6);
+}
+.shape-switch button:active { transform: translateY(2px); }
 
-.telop-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.telop-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .telop-input {
-  width: 100%; padding: 14px; font-size: 1rem; font-weight: 900; border-radius: 20px;
-  background: #fff; border: 3px solid #ff1493; color: #ff1493;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); outline: none;
+  width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 800;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(149, 102, 255, 0.55);
+  color: #fff; outline: none;
 }
-.telop-input:focus { border-color: #00ffff; box-shadow: 0 0 10px #00ffff, inset 0 2px 4px rgba(0,0,0,0.1); }
+.telop-input:focus {
+  border-color: var(--cp-cyan);
+  box-shadow: 0 0 12px rgba(102, 231, 255, 0.55);
+}
 
-.sound-list { display: flex; flex-direction: column; gap: 12px; }
+.sound-list { display: flex; flex-direction: column; gap: 8px; }
 .sound-row {
   display: flex; align-items: center; gap: 10px;
-  background: #fff; border: 3px solid #ffb6c1; border-radius: 20px; padding: 12px;
-  box-shadow: 0 4px 0 #ffb6c1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(102, 231, 255, 0.3);
+  border-radius: 16px; padding: 8px 10px;
 }
 .sound-try {
-  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%;
-  background: #00ffff; border: 3px solid #fff; color: #008b8b;
-  font-size: 1.2rem; cursor: pointer; font-weight: 900; box-shadow: 0 2px 0 #00ced1;
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(145deg, #c2fbff, #45bff0);
+  color: var(--cp-ink); font-size: 1rem; font-weight: 900;
+  border: 2px solid rgba(255, 255, 255, 0.8);
 }
-.sound-try:active { transform: translateY(2px); box-shadow: 0 0 0 #00ced1; }
-.sound-name { flex: 1; min-width: 0; font-size: 1rem; font-weight: 900; color: #ff1493; }
-.sound-name em { display: block; font-style: normal; font-size: 0.75rem; color: #ff69b4; }
+.sound-try:active { transform: translateY(2px); }
+.sound-name { flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 800; color: #fff; }
+.sound-name em { display: block; font-style: normal; font-size: 0.68rem; color: var(--cp-cyan); }
 .sound-set {
-  flex: 0 0 auto; padding: 8px 16px; border-radius: 16px; font-size: 0.9rem; font-weight: 900;
-  background: #ff1493; border: 3px solid #fff; color: #fff; cursor: pointer; box-shadow: 0 4px 0 #c71585;
+  flex: 0 0 auto; padding: 8px 14px; border-radius: 14px;
+  font-size: 0.78rem; font-weight: 900;
+  background: var(--cp-purple); color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.5);
 }
-.sound-set:active { transform: translateY(4px); box-shadow: 0 0 0 #c71585; }
+.sound-set:active { transform: translateY(2px); }
 
-.turn-hint {
-  /* 映す場所を隠さない大きさにする。前は中央に大きく被っていた（2026-08-11） */
-  position: absolute; left: 50%; bottom: 96px; transform: translateX(-50%);
-  max-width: 62vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  font-size: 0.62rem; font-weight: 700; padding: 6px 12px; border-radius: 20px;
-  background: #ff1493; color: white; pointer-events: none;
-  border: 3px solid #fff; box-shadow: 0 4px 15px rgba(255, 20, 147, 0.6);
-  text-shadow: 1px 1px 0 #c71585;
+.frame-picker {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding-bottom: 4px;
+}
+.frame-tile {
+  width: 100%; padding: 0; overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(102, 231, 255, 0.35);
+  border-radius: 12px;
+  color: var(--text-main); font-size: 0.62rem; font-weight: 800;
+  transition: all 0.1s;
+}
+.frame-tile.on {
+  border-color: var(--cp-pink);
+  box-shadow: 0 0 14px rgba(255, 79, 163, 0.65);
+}
+.frame-tile:active { transform: translateY(2px); }
+.frame-tile img {
+  width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000;
+}
+.frame-tile span {
+  display: block; padding: 5px 3px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.frame-tile.none { min-height: 54px; }
+
+/* ============================================================
+   8. 使い方（ガイド）
+   ============================================================ */
+.guide-steps {
+  margin: 8px 0 16px; padding-left: 22px;
+  display: flex; flex-direction: column; gap: 10px;
+  font-size: 0.82rem; line-height: 1.6;
+}
+.guide-steps b { color: var(--cp-cyan); }
+
+.guide-warn {
+  background: rgba(255, 79, 163, 0.1);
+  border: 2px solid rgba(255, 79, 163, 0.45);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.guide-warn h3 { margin: 0 0 8px; color: var(--cp-pink); font-size: 0.86rem; }
+.guide-warn ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.guide-warn li { font-size: 0.8rem; line-height: 1.55; }
+.guide-warn details { margin-top: 4px; }
+.guide-warn summary {
+  cursor: pointer; font-size: 0.72rem; color: var(--cp-cyan); font-weight: 700;
+}
+.guide-note {
+  margin-top: 10px; font-size: 0.68rem; line-height: 1.55; color: var(--text-muted);
 }
 
-/* Discord宣伝用ボタン・バナー */
-.discord-btn {
-  background: #5865F2; /* Discordの青紫 */
+/* CMCUBE の案内 */
+.promo {
+  background: linear-gradient(160deg, rgba(102, 231, 255, 0.12), rgba(149, 102, 255, 0.16));
+  border: 2px solid rgba(102, 231, 255, 0.4);
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.promo-head { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 900; color: #fff; }
+.promo-badge {
+  font-size: 0.62rem; font-weight: 900; padding: 3px 8px; border-radius: 10px;
+  background: var(--cp-pink); color: #fff;
+}
+.promo-lead { margin: 8px 0 6px; font-size: 0.86rem; font-weight: 800; color: var(--cp-cyan); }
+.promo-points { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+.promo-points li { font-size: 0.74rem; line-height: 1.5; color: var(--text-main); }
+.promo-link {
+  display: block; margin-top: 12px; padding: 12px;
+  text-align: center; text-decoration: none;
+  font-size: 0.88rem; font-weight: 900;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #cf92ff 0%, var(--cp-purple) 55%, #6f44c9 100%);
   color: #fff;
-  border-color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 16px rgba(149, 102, 255, 0.5);
 }
-.discord-btn:active {
-  background: #4752c4;
-}
+.promo-foot { margin-top: 8px; font-size: 0.66rem; color: var(--text-muted); text-align: center; }
+
 .discord-banner {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #5865F2, #a855f7);
-  border-radius: 20px;
-  color: white;
-  font-weight: 900;
-  font-size: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-top: 20px;
+  width: 100%; padding: 14px; margin-top: 16px;
+  background: linear-gradient(135deg, #5865F2, var(--cp-purple));
+  border-radius: 16px; color: #fff; font-weight: 900; font-size: 0.9rem;
+  display: flex; justify-content: center; align-items: center; gap: 8px;
   text-decoration: none;
-  box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
-  border: 3px solid #fff;
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid rgba(255, 255, 255, 0.5);
 }
-.discord-banner:active {
-  transform: scale(0.95);
+
+/* ============================================================
+   9. PC で開いた人への案内
+   ============================================================ */
+.pc-notice {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  gap: 14px; padding: 32px; text-align: center;
+  background:
+    radial-gradient(120% 70% at 50% 0%, #2a1358 0%, transparent 60%),
+    var(--cp-navy);
 }
+.pc-cube {
+  width: 62px; height: 62px; border-radius: 14px;
+  background: linear-gradient(145deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple));
+  box-shadow: 0 0 30px rgba(149, 102, 255, 0.7);
+  transform: rotate(-12deg);
+}
+.pc-notice h1 {
+  font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 900; font-style: italic;
+  color: var(--cp-cyan);
+  text-shadow: 3px 3px 0 var(--cp-pink);
+}
+.pc-lead { font-size: 1rem; font-weight: 800; line-height: 1.7; }
+.pc-lead span { color: var(--text-muted); font-size: 0.85rem; }
+.pc-url {
+  font-family: 'Outfit', monospace; font-size: 1.1rem; font-weight: 700;
+  padding: 10px 18px; border-radius: 14px;
+  background: rgba(102, 231, 255, 0.12);
+  border: 2px solid rgba(102, 231, 255, 0.5);
+  color: var(--cp-cyan);
+}
+.pc-sub { font-size: 0.8rem; line-height: 1.7; color: var(--text-muted); }
+.pc-continue {
+  margin-top: 10px; padding: 12px 26px; border-radius: 18px;
+  font-size: 0.85rem; font-weight: 900;
+  background: transparent; color: var(--text-muted);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+}
+.pc-continue:active { transform: translateY(2px); }

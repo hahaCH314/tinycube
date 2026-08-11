@@ -1,14 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700;900&display=swap');
 
+/* シティポップの土台。濃紺の上に、水色・ピンク・紫のネオンを置く
+   （2026-08-11、伊波さんの指示） */
 :root {
-  --primary-color: #ec4899;
-  --primary-glow: rgba(236, 72, 153, 0.4);
-  --secondary-color: #8b5cf6;
-  --bg-dark: #fdf2f8; /* パステルピンク背景 */
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --text-main: #334155;
-  --text-muted: #64748b;
-  --border-color: rgba(236, 72, 153, 0.2);
+  --cp-cyan: #66e7ff;
+  --cp-cyan-deep: #1fa8d8;
+  --cp-pink: #ff4fa3;
+  --cp-purple: #9566ff;
+  --cp-yellow: #ffd964;
+  --cp-navy: #10082b;
+  --cp-navy-2: #1b0f3d;
+  --cp-ink: #0b3a55;          /* 水色のボタンに乗せる濃い文字 */
+
+  --primary-color: var(--cp-pink);
+  --secondary-color: var(--cp-purple);
+  --text-main: #eaf4ff;
+  --text-muted: #a7b6d6;
 }
 
 * {
@@ -22,7 +29,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-dark);
+  background-color: var(--cp-navy);
   color: var(--text-main);
   height: 100vh;
   width: 100vw;
@@ -41,8 +48,12 @@ body {
   max-width: 500px;
   margin: 0 auto;
   position: relative;
-  box-shadow: 0 0 50px rgba(236, 72, 153, 0.15);
-  background: radial-gradient(circle at top right, #ffffff, var(--bg-dark));
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(149, 102, 255, 0.25);
+  background:
+    radial-gradient(120% 70% at 50% 0%, #2a1358 0%, transparent 60%),
+    radial-gradient(120% 60% at 50% 100%, #3a1150 0%, transparent 55%),
+    var(--cp-navy);
 }
 
 /* 横に持ったときは端まで使う */

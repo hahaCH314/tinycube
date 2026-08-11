@@ -351,6 +351,129 @@ function noiseSource(ctx: AudioContext, seconds: number): AudioBufferSourceNode 
   return src;
 }
 
+// ---- 80年代の音づくり（2026-08-11、伊波さんの指示） ----------------------
+//
+// 波形をそのまま鳴らすと、どうしてもピコピコした電子音になる。
+// 当時の機材に近づける要素は3つあって、どれも安く作れる。
+//
+//   1. 少しずらした同じ音を2つ重ねる（アナログの発振器は揃わなかった）
+//   2. 上の周波数を落とす（テープとアナログ回路の丸み）
+//   3. 短いディレイを薄く掛ける（当時のレコードはほぼ全部これが乗っている）
+//
+// 3 は音ごとに作らず、鳴らすたびに1本の出口へまとめて通す。
+
+/** その一発ぶんの出口。耳と録画の両方へ同じものを流す
+ *  （別々の AudioContext にすると、鳴っても動画に入らない） */
+function bus80s(ctx: AudioContext): GainNode {
+  const input = ctx.createGain();
+
+  // アナログの丸み。上のほうを少し削る
+  const tone = ctx.createBiquadFilter();
+  tone.type = 'lowpass';
+  tone.frequency.value = 7600;
+
+  // 薄いディレイ。返りは高音から先に減らす（テープのエコーと同じ癖）
+  const delay = ctx.createDelay(1.0);
+  delay.delayTime.value = 0.16;
+  const damp = ctx.createBiquadFilter();
+  damp.type = 'lowpass';
+  damp.frequency.value = 3000;
+  const feedback = ctx.createGain();
+  feedback.gain.value = 0.24;
+  const wet = ctx.createGain();
+  wet.gain.value = 0.28;
+
+  input.connect(tone);
+  tone.connect(delay);
+  delay.connect(damp);
+  damp.connect(feedback);
+  feedback.connect(delay);
+  delay.connect(wet);
+
+  const outs: AudioNode[] = [ctx.destination];
+  if (recDest) outs.push(recDest);
+  for (const o of outs) { tone.connect(o); wet.connect(o); }
+  return input;
+}
+
+type Env = {
+  /** 立ち上がり。0 に近いほど硬い音になる */
+  attack?: number;
+  /** そのまま伸ばす時間 */
+  hold?: number;
+  /** 消えるまでの時間 */
+  release: number;
+  level: number;
+};
+
+/** 音程のある一声。detune を渡すと、同じ音を少しずらして重ねられる */
+function voice(
+  ctx: AudioContext, out: AudioNode, type: OscillatorType,
+  hz: number, now: number, env: Env,
+  opts: { detune?: number; to?: number; glide?: number; delay?: number } = {},
+) {
+  const t0 = now + (opts.delay ?? 0);
+  const a = env.attack ?? 0.004;
+  const hold = env.hold ?? 0;
+  const end = t0 + a + hold + env.release;
+
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.detune.value = opts.detune ?? 0;
+  o.frequency.setValueAtTime(hz, t0);
+  if (opts.to) o.frequency.exponentialRampToValueAtTime(opts.to, t0 + (opts.glide ?? env.release));
+
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(env.level, t0 + a);
+  g.gain.setValueAtTime(env.level, t0 + a + hold);
+  g.gain.exponentialRampToValueAtTime(0.0001, end);
+
+  o.connect(g);
+  g.connect(out);
+  o.start(t0);
+  o.stop(end + 0.05);
+}
+
+/** アナログシンセらしく、同じ音を少しずらして2つ重ねる */
+function fat(
+  ctx: AudioContext, out: AudioNode, type: OscillatorType,
+  hz: number, now: number, env: Env,
+  opts: { to?: number; glide?: number; delay?: number; spread?: number } = {},
+) {
+  const { spread = 9, ...rest } = opts;
+  const half = { ...env, level: env.level * 0.6 };
+  voice(ctx, out, type, hz, now, half, { ...rest, detune: -spread });
+  voice(ctx, out, type, hz, now, half, { ...rest, detune: spread });
+}
+
+/** 音程を持たない音。削り方で叩き物にも金物にもなる */
+function hit(
+  ctx: AudioContext, out: AudioNode, now: number, seconds: number,
+  filter: BiquadFilterType, freq: number, q: number, env: Env,
+  opts: { to?: number; delay?: number } = {},
+) {
+  const t0 = now + (opts.delay ?? 0);
+  const a = env.attack ?? 0.002;
+  const end = t0 + a + (env.hold ?? 0) + env.release;
+
+  const src = noiseSource(ctx, seconds);
+  const f = ctx.createBiquadFilter();
+  const g = ctx.createGain();
+  f.type = filter;
+  f.frequency.setValueAtTime(freq, t0);
+  if (opts.to) f.frequency.exponentialRampToValueAtTime(opts.to, end);
+  f.Q.value = q;
+
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(env.level, t0 + a);
+  g.gain.setValueAtTime(env.level, t0 + a + (env.hold ?? 0));
+  g.gain.exponentialRampToValueAtTime(0.0001, end);
+
+  src.connect(f); f.connect(g); g.connect(out);
+  src.start(t0); src.stop(end + 0.05);
+}
+
 /** 効果音。ファイルを持たずにその場で作る（読み込み待ちが無く、容量も増えない） */
 function playSoundFor(id: EffectId) {
   // 文字を出すボタンは鳴らさない。押すたびに動画へ音が乗ってしまい、
@@ -376,119 +499,101 @@ function playSoundFor(id: EffectId) {
 
   const now = ctx.currentTime;
   // 耳にも届かせ、録画中なら動画にも入れる
-  const outs: AudioNode[] = [ctx.destination];
-  if (recDest) outs.push(recDest);
-  const dest = { connect: (n: AudioNode) => { for (const o of outs) n.connect(o); } };
+  const out = bus80s(ctx);
 
-  // 音程を持たない音は、ざらざらした音のもとを削って作る
-  if (id === 'clap' || id === 'drum') {
-    const src = noiseSource(ctx, id === 'clap' ? 0.5 : 0.9);
-    const filt = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    filt.type = 'bandpass';
-    filt.frequency.value = id === 'clap' ? 1400 : 180;
-    filt.Q.value = id === 'clap' ? 0.8 : 1.2;
-    src.connect(filt); filt.connect(gain);
-    dest.connect(gain);
-    if (id === 'clap') {
-      // ぱらぱらと重なる手のひら。4回に分けて叩く
-      gain.gain.setValueAtTime(0.0001, now);
-      for (let i = 0; i < 4; i++) {
-        const t = now + i * 0.055;
-        gain.gain.exponentialRampToValueAtTime(0.35 - i * 0.05, t + 0.008);
-        gain.gain.exponentialRampToValueAtTime(0.02, t + 0.05);
+  switch (id) {
+    case 'bam':
+      // どんっ。80年代のドラムマシンのタム。高いところから一気に落とす
+      voice(ctx, out, 'sine', 210, now, { release: 0.30, level: 0.55 }, { to: 52, glide: 0.22 });
+      hit(ctx, out, now, 0.12, 'lowpass', 2200, 0.7, { release: 0.06, level: 0.30 }, { to: 400 });
+      break;
+
+    case 'ding':
+      // きらっ。FMシンセのベル。5度上と2オクターブ上を薄く足すと金属に聞こえる
+      voice(ctx, out, 'triangle', 1046, now, { release: 0.70, level: 0.26 });
+      voice(ctx, out, 'triangle', 1568, now, { release: 0.50, level: 0.13 }, { detune: 7 });
+      voice(ctx, out, 'sine', 3136, now, { release: 0.22, level: 0.09 });
+      break;
+
+    case 'pon':
+      // ぽん。木琴のような短い音。硬い出だしに丸い胴を足す
+      voice(ctx, out, 'sine', 784, now, { attack: 0.002, release: 0.22, level: 0.34 });
+      voice(ctx, out, 'triangle', 1568, now, { attack: 0.001, release: 0.06, level: 0.14 });
+      break;
+
+    case 'buzz':
+      // ぶー。アナログのブラス。太い2声を下へ滑らせる
+      fat(ctx, out, 'sawtooth', 165, now, { attack: 0.01, hold: 0.12, release: 0.30, level: 0.34 },
+        { to: 98, glide: 0.40 });
+      break;
+
+    case 'clap':
+      // 拍手。当時のドラムマシンと同じで、細かく3回叩いてから余韻を残す
+      for (let i = 0; i < 3; i++) {
+        hit(ctx, out, now, 0.06, 'bandpass', 1050, 1.1,
+          { release: 0.035, level: 0.34 - i * 0.06 }, { delay: i * 0.012 });
       }
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
-    } else {
-      // だんだん強くなって、最後に止まる
-      gain.gain.setValueAtTime(0.05, now);
-      gain.gain.linearRampToValueAtTime(0.45, now + 0.75);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
-    }
-    src.start(now); src.stop(now + 1.0);
-    return;
-  }
+      hit(ctx, out, now, 0.40, 'bandpass', 1150, 0.9,
+        { attack: 0.006, release: 0.26, level: 0.22 }, { delay: 0.036 });
+      break;
 
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  dest.connect(gain);
+    case 'drum':
+      // ドラムロール。だんだん強く、最後に一発
+      for (let i = 0; i < 14; i++) {
+        hit(ctx, out, now, 0.05, 'bandpass', 220, 1.4,
+          { release: 0.045, level: 0.10 + i * 0.016 }, { delay: i * 0.055 });
+      }
+      voice(ctx, out, 'sine', 190, now, { release: 0.34, level: 0.5 },
+        { to: 55, glide: 0.24, delay: 0.80 });
+      break;
 
-  if (id === 'bam' || id === 'flash') {
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.18);
-    gain.gain.setValueAtTime(0.5, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
-    osc.start(now); osc.stop(now + 0.24);
-  } else if (id === 'ding') {
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(880, now);
-    osc.frequency.exponentialRampToValueAtTime(1320, now + 0.08);
-    gain.gain.setValueAtTime(0.28, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-    osc.start(now); osc.stop(now + 0.22);
-  } else if (id === 'pon') {
-    // 軽く跳ねる音。上へ滑らせると「ぽん」に聞こえる
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(420, now);
-    osc.frequency.exponentialRampToValueAtTime(900, now + 0.09);
-    gain.gain.setValueAtTime(0.32, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.16);
-    osc.start(now); osc.stop(now + 0.18);
-  } else if (id === 'buzz') {
-    // 外れの音。濁った矩形波を下へ滑らせる
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(110, now + 0.3);
-    gain.gain.setValueAtTime(0.26, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.34);
-    osc.start(now); osc.stop(now + 0.36);
-  } else if (id === 'blip') {
-    // 短くて硬い。テンポを刻むとき
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(1200, now);
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
-    osc.start(now); osc.stop(now + 0.08);
-  } else if (id === 'dread') {
-    // ずーん。低いところへ長く落とす
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(35, now + 1.1);
-    gain.gain.setValueAtTime(0.45, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
-    osc.start(now); osc.stop(now + 1.25);
-  } else if (id === 'slash') {
-    // しゃきーん。高いところから一気に上げて切る
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(1800, now);
-    osc.frequency.exponentialRampToValueAtTime(3600, now + 0.06);
-    gain.gain.setValueAtTime(0.22, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.28);
-    osc.start(now); osc.stop(now + 0.3);
-  } else if (id === 'fanfare') {
-    // ジャーン。3つの音を重ねて和音にする
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(523, now);      // ド
-    gain.gain.setValueAtTime(0.22, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.9);
-    osc.start(now); osc.stop(now + 0.95);
-    for (const hz of [659, 784]) {               // ミ・ソ
-      const o = ctx.createOscillator();
-      const g2 = ctx.createGain();
-      o.type = 'triangle';
-      o.frequency.setValueAtTime(hz, now);
-      g2.gain.setValueAtTime(0.16, now);
-      g2.gain.exponentialRampToValueAtTime(0.01, now + 0.9);
-      o.connect(g2); dest.connect(g2);
-      o.start(now); o.stop(now + 0.95);
-    }
-  } else if (id === 'glitch') {
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(90, now);
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-    osc.start(now); osc.stop(now + 0.27);
+    case 'blip':
+      // ぴこ。8ビットの残り香。2音を素早く上げる
+      voice(ctx, out, 'square', 1046, now, { attack: 0.001, release: 0.05, level: 0.16 });
+      voice(ctx, out, 'square', 1568, now, { attack: 0.001, release: 0.07, level: 0.14 },
+        { delay: 0.055 });
+      break;
+
+    case 'dread':
+      // ずーん。低いところへ長く落とす。太い2声を重ねて濁らせる
+      voice(ctx, out, 'sine', 120, now, { release: 1.30, level: 0.45 }, { to: 30, glide: 1.20 });
+      fat(ctx, out, 'sawtooth', 60, now, { attack: 0.05, release: 1.20, level: 0.20 },
+        { to: 22, glide: 1.10, spread: 14 });
+      break;
+
+    case 'slash':
+      // しゃきん。金属をこすった音。削る位置を一気に上へ動かす
+      hit(ctx, out, now, 0.30, 'highpass', 1800, 0.9,
+        { attack: 0.002, release: 0.24, level: 0.26 }, { to: 9000 });
+      voice(ctx, out, 'sawtooth', 1600, now, { attack: 0.001, release: 0.16, level: 0.10 },
+        { to: 4200, glide: 0.10 });
+      break;
+
+    case 'fanfare':
+      // ジャーン。シティポップのシンセブラス。9thを足した和音を一発で置く
+      // ド・ミ・ソ・シ・レ
+      [523, 659, 784, 988, 1175].forEach((hz, i) => {
+        fat(ctx, out, 'sawtooth', hz, now,
+          { attack: 0.02, hold: 0.14, release: 0.85, level: 0.20 - i * 0.02 });
+      });
+      break;
+
+    case 'flash':
+      // 光と一緒に鳴る音。下から一気に持ち上げて弾けさせる
+      hit(ctx, out, now, 0.24, 'highpass', 600, 0.8,
+        { attack: 0.10, release: 0.10, level: 0.20 }, { to: 8000 });
+      voice(ctx, out, 'triangle', 1568, now, { release: 0.45, level: 0.18 }, { delay: 0.10 });
+      break;
+
+    case 'glitch':
+      // テープが止まるときの音。音程ごと引きずり下ろす
+      fat(ctx, out, 'square', 260, now, { attack: 0.004, release: 0.34, level: 0.16 },
+        { to: 42, glide: 0.30, spread: 22 });
+      hit(ctx, out, now, 0.30, 'bandpass', 2400, 2.2,
+        { release: 0.26, level: 0.14 }, { to: 300 });
+      break;
+
+    default:
+      break;
   }
 }

@@ -7,6 +7,54 @@ import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffe
 import { t, getLang, setLang } from './i18n'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
+// ---- シティポップの絵柄（2026-08-11、伊波さんの指示） -------------------
+//
+// 左の柱は上から2つが番号、3つめからは80年代の小物を指示された順に並べる。
+// ただし絵だけにはしない。ヘッダーの絵文字が何のボタンか分からなかったのと
+// 同じことが起きる（2026-08-11）ので、小さな言葉を必ず下に置く。
+// 順番を変えたいときは、この並びを入れ替えるだけでよい
+const RAIL_ICONS = [
+  '1', '2',          // フラッシュ・グリッチ
+  '📼',              // カセット
+  '🌟',              // ネオンスター
+  '📻',              // ラジカセ
+  '💿',              // レコード
+  '✨',              // 弾ける星
+  '☎️',              // レトロ電話
+  '💗',              // ハート
+  '🚗',              // 車
+  '🌇',              // 夕日
+  '🌴',              // ヤシの木
+  '🍹',              // カクテル
+];
+
+// i18n の言葉には絵文字が付いている。絵柄はこちらで差し替えるので、言葉だけ取り出す
+const bare = (s: string) => s.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+
+/** 左の柱のボタンの中身。絵柄（または番号）と、その下の小さな言葉 */
+function RailFace({ i, label }: { i: number; label: string }) {
+  const icon = RAIL_ICONS[i] ?? '🎵';
+  const isNum = /^[0-9]$/.test(icon);
+  return (
+    <>
+      <span className={isNum ? 'number-icon' : 'btn-icon'}>{icon}</span>
+      <span className="btn-label">{bare(label)}</span>
+    </>
+  );
+}
+
+// テロップの絵柄。吹き出しと、コミック風のギザギザを交互に出す
+const BUBBLE = (
+  <svg viewBox="0 0 24 20" aria-hidden="true">
+    <path d="M4 1h16a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-9l-6 4v-4H4a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3z" />
+  </svg>
+);
+const ZIGZAG = (
+  <svg viewBox="0 0 24 20" aria-hidden="true">
+    <path d="M12 0l2.6 3.6L19 2l-.6 4.4 4.4.6-3.2 3 3.2 3-4.4.6.6 4.4-4.4-1.6L12 20l-2.6-3.6L5 18l.6-4.4L1.2 13l3.2-3-3.2-3 4.4-.6L5 2l4.4 1.6z" />
+  </svg>
+);
+
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -446,10 +494,7 @@ function App() {
           style={{ '--ar': shape === 'portrait' ? '0.5625' : '1.7778' } as React.CSSProperties}
         >
           <canvas ref={canvasRef} className="stage-canvas" />
-          {shape === 'landscape' && portraitDevice && (
-            <div className="turn-hint">{t('turn_hint')}</div>
-          )}
-          {(videoSrc || camOn) ? (
+          {(videoSrc || camOn) && (
             <video
               ref={videoRef}
               src={videoSrc ?? undefined}
@@ -465,17 +510,6 @@ function App() {
               }}
               muted
             />
-          ) : (
-            <div className="video-placeholder">
-              <div className="upload-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-              </div>
-              <p>{t('upload_hint')}</p>
-            </div>
           )}
 
           {frame && (
@@ -491,10 +525,32 @@ function App() {
             />
           )}
         </div>
+
+        {/* 案内は canvas の外に出す。canvas は動画の形ぴったりまで縮むので、
+            中に入れると 16:9 の細い帯の中で文字と注意書きが重なる（2026-08-11） */}
+        {!videoSrc && !camOn && (
+          <div className="video-placeholder">
+            <div className="upload-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <p>{t('upload_hint')}</p>
+          </div>
+        )}
+        {shape === 'landscape' && portraitDevice && (
+          <div className="turn-hint">{t('turn_hint')}</div>
+        )}
       </main>
 
       {/* 手前に重なるフローティングUI */}
       <div className="ui-layer">
+        {/* 上下の帯。光が横切るが、中央の映像には届かない（切り取ってある） */}
+        <div className="city-frame top" />
+        <div className="city-frame bottom" />
+
         <header className="header">
           <div className="logo-container">
             <span className="logo-text" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>tinyCUBE</span>
@@ -523,26 +579,28 @@ function App() {
         </footer>
 
         {/* 左側のエフェクトパネル */}
-        <div className="side-panel left">
+        <div className="side-panel left" data-role="sound">
           <div className="panel-scroll">
-            <button className="effect-btn btn-burst" onClick={() => fire('flash')}>{t('eff_flash')}</button>
-            <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>{t('eff_glitch')}</button>
-            <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>{t('eff_emotional')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('bam')}>{t('eff_bam')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('ding')}>{t('eff_ding')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('pon')}>{t('eff_pon')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('buzz')}>{t('eff_buzz')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('clap')}>{t('eff_clap')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('drum')}>{t('eff_drum')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('blip')}>{t('eff_blip')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('dread')}>{t('eff_dread')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('slash')}>{t('eff_slash')}</button>
-            <button className="effect-btn btn-sound" onClick={() => fire('fanfare')}>{t('eff_fanfare')}</button>
+            <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
+              <RailFace i={0} label={t('eff_flash')} />
+            </button>
+            <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>
+              <RailFace i={1} label={t('eff_glitch')} />
+            </button>
+            <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>
+              <RailFace i={2} label={t('eff_emotional')} />
+            </button>
+            {(['bam', 'ding', 'pon', 'buzz', 'clap', 'drum', 'blip', 'dread', 'slash', 'fanfare'] as const)
+              .map((id, n) => (
+                <button key={id} className="effect-btn btn-sound" onClick={() => fire(id)}>
+                  <RailFace i={n + 3} label={t(('eff_' + id) as never)} />
+                </button>
+              ))}
           </div>
         </div>
 
         {/* 右側のテロップパネル */}
-        <div className="side-panel right">
+        <div className="side-panel right" data-role="telop">
           <div className="panel-scroll">
             {telops.map((text, i) => text.trim() ? (
               <button
@@ -550,7 +608,13 @@ function App() {
                 className="effect-btn btn-telop"
                 onClick={() => fireTelop(text, telopDark, telopRandom)}
               >
-                💬 {text}
+                {/* 先頭3つは番号で出す。押す場所を体で覚えられるように。
+                    4つめからは吹き出しとギザギザを交互に
+                    （2026-08-11、伊波さんの指示） */}
+                {i < 3
+                  ? <span className="number-icon">{i + 1}</span>
+                  : <span className="btn-icon">{i % 2 === 1 ? BUBBLE : ZIGZAG}</span>}
+                <span className="btn-label">{text}</span>
               </button>
             ) : null)}
           </div>
