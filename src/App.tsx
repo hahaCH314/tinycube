@@ -87,7 +87,8 @@ function App() {
     shape: OutShape;
     frame: { img: HTMLImageElement; anchor: FrameAnchor; faceHole?: { x: number; y: number; w: number; h: number } } | null;
     watermark: string | null;
-  }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE' });
+    mirror: boolean;
+  }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE', mirror: false });
   
   // ボタンから呼ばれる口。中身は effects.ts が持っている。
   // 録画していないときに押しても鳴る（本番前に手応えを確かめられるように）。
@@ -404,6 +405,8 @@ function App() {
   // <video> が画面に出てから、カメラの映像を繋ぐ
   useEffect(() => {
     camOnRef.current = camOn;
+    // 自撮りのときだけ鏡にする。外カメラは見たままでよい
+    liveRef.current.mirror = camOn && camFront;
     const v = videoRef.current;
     if (!camOn || !v || !camStreamRef.current) return;
     v.srcObject = camStreamRef.current;
@@ -422,7 +425,7 @@ function App() {
       }
     }, 2500);
     return () => clearTimeout(check);
-  }, [camOn, camVer]);
+  }, [camOn, camVer, camFront]);
 
   const save = async (blob: Blob, ext: string) => {
     const name = `tinycube_${Date.now()}.${ext}`;

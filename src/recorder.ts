@@ -75,6 +75,10 @@ export type StageOptions = {
     video: HTMLVideoElement | null;
     /** true なら画面いっぱいに広げる（カメラ）。false は切らずに収める（動画） */
     fill: boolean;
+    /** 左右を反転して鏡にする。自撮りのとき。
+     *  鏡になっていないと、右に動いたつもりが画面では左へ動くので、
+     *  顔ハメの穴に顔を合わせられない（2026-08-11、伊波さん「合わせにくい」） */
+    mirror?: boolean;
     shape: OutShape;
     frame: { img: HTMLImageElement; anchor: FrameAnchor; faceHole?: { x: number; y: number; w: number; h: number } } | null;
     watermark: string | null;
@@ -110,7 +114,7 @@ export function startStage(opts: StageOptions): () => void {
   const draw = () => {
     if (!running) return;
     try {
-    const { video, shape, frame, watermark } = read();
+    const { video, shape, frame, watermark, mirror } = read();
     const { w: OUT_W, h: OUT_H } = SIZES[shape];
     if (canvas.width !== OUT_W) canvas.width = OUT_W;
     if (canvas.height !== OUT_H) canvas.height = OUT_H;
@@ -129,7 +133,10 @@ export function startStage(opts: StageOptions): () => void {
         ? Math.max(OUT_W / vw, OUT_H / vh)
         : Math.min(OUT_W / vw, OUT_H / vh);
       const w = vw * scale, h = vh * scale;
+      g.save();
+      if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
       g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
+      g.restore();
     }
 
     if (frame) {
@@ -160,7 +167,10 @@ export function startStage(opts: StageOptions): () => void {
       // 「インカメラは近すぎて見えない」）
       const s2 = Math.max((rx * 2) / vw, (ry * 2) / vh);
       const w2 = vw * s2, h2 = vh * s2;
-      g.drawImage(video, cx - w2 / 2, cy - h2 / 2, w2, h2);
+      // 切り抜きは元の向きで作り、そのあとで鏡にする
+      if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
+      const dx = mirror ? OUT_W - cx : cx;
+      g.drawImage(video, dx - w2 / 2, cy - h2 / 2, w2, h2);
       g.restore();
     }
     drawEffects(g, OUT_W, OUT_H);
