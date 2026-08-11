@@ -19,6 +19,10 @@ export type Frame = {
   name: string;
   file: string;
   anchor: FrameAnchor;
+  /** 顔ハメ枠の穴の位置（キャンバス全体に対する%）。
+   *  穴は透明ではなく黒く塗ってあるので、カメラは枠より後から重ね描く必要がある。
+   *  x, y は左上の座標、w, h は幅・高さ（いずれも %） */
+  faceHole?: { x: number; y: number; w: number; h: number };
   /** 有料の枠。いまは印だけで、どこも参照していない。
    *  50枚たまったところで鍵をかける予定（2026-08-11、伊波さん）。
    *  先に印を付けておけば、鍵の作りは後からどれにでも差し替えられる */
@@ -27,20 +31,23 @@ export type Frame = {
 
 export const FRAMES: Frame[] = [
   // --- 顔ハメ（9:16 で描いてあるので、縦で書き出すときにぴったり合う） ---
-  // CMCUBE ではカメラを穴にはめて使うもの。tinyCUBE では動画が穴から見える
-  { id: 'fh_02', name: '顔ハメ 1', file: './frames/02.webp', anchor: 'full' },
-  { id: 'fh_03', name: '顔ハメ 2', file: './frames/03.webp', anchor: 'full' },
-  { id: 'fh_05', name: '顔ハメ 3', file: './frames/05.webp', anchor: 'full' },
-  { id: 'fh_06', name: '顔ハメ 4', file: './frames/06.webp', anchor: 'full' },
-  { id: 'fh_07', name: '顔ハメ 5', file: './frames/07.webp', anchor: 'full' },
-  { id: 'fh_10', name: '顔ハメ 6', file: './frames/10.webp', anchor: 'full' },
-  { id: 'fh_11', name: '顔ハメ 7', file: './frames/11.webp', anchor: 'full' },
-  { id: 'fh_12', name: '顔ハメ 8', file: './frames/12.webp', anchor: 'full' },
-  { id: 'fh_13', name: '顔ハメ 9', file: './frames/13.webp', anchor: 'full' },
-  { id: 'fh_14', name: '顔ハメ 10', file: './frames/14.webp', anchor: 'full' },
-  { id: 'fh_16', name: '顔ハメ 11', file: './frames/16.webp', anchor: 'full' },
-  { id: 'fh_17', name: '顔ハメ 12', file: './frames/17.webp', anchor: 'full' },
-  { id: 'fh_18', name: '顔ハメ 13', file: './frames/18.webp', anchor: 'full' },
+  // CMCUBE ではカメラを穴にはめて使うもの。tinyCUBE では動画が穴から見える。
+  // 穴は透明ではなく黒く塗ってある。フレームを先に描き、その上にカメラ映像を
+  // 穴の位置でクリッピングして重ねることで、穴からカメラだけが見える。
+  // faceHole の x,y,w,h は CMCUBE から実測した値（キャンバス全体に対する%）。
+  { id: 'fh_02', name: '顔ハメ 1',  file: './frames/02.webp', anchor: 'full', faceHole: { x: 42.6, y: 16.4, w: 25.3, h: 14.1 } },
+  { id: 'fh_03', name: '顔ハメ 2',  file: './frames/03.webp', anchor: 'full', faceHole: { x: 38.6, y: 15.4, w: 26.6, h: 15.0 } },
+  { id: 'fh_05', name: '顔ハメ 3',  file: './frames/05.webp', anchor: 'full', faceHole: { x: 37.0, y: 18.7, w: 30.1, h: 16.8 } },
+  { id: 'fh_06', name: '顔ハメ 4',  file: './frames/06.webp', anchor: 'full', faceHole: { x: 40.7, y: 22.7, w: 23.4, h: 14.5 } },
+  { id: 'fh_07', name: '顔ハメ 5',  file: './frames/07.webp', anchor: 'full', faceHole: { x: 38.5, y: 20.9, w: 25.3, h: 14.3 } },
+  { id: 'fh_10', name: '顔ハメ 6',  file: './frames/10.webp', anchor: 'full', faceHole: { x: 29.5, y: 21.5, w: 32.9, h: 18.1 } },
+  { id: 'fh_11', name: '顔ハメ 7',  file: './frames/11.webp', anchor: 'full', faceHole: { x: 33.3, y: 31.0, w: 33.4, h: 18.4 } },
+  { id: 'fh_12', name: '顔ハメ 8',  file: './frames/12.webp', anchor: 'full', faceHole: { x: 35.8, y: 25.9, w: 33.0, h: 19.1 } },
+  { id: 'fh_13', name: '顔ハメ 9',  file: './frames/13.webp', anchor: 'full', faceHole: { x: 36.1, y: 28.2, w: 31.1, h: 18.8 } },
+  { id: 'fh_14', name: '顔ハメ 10', file: './frames/14.webp', anchor: 'full', faceHole: { x: 38.6, y: 29.2, w: 27.1, h: 15.9 } },
+  { id: 'fh_16', name: '顔ハメ 11', file: './frames/16.webp', anchor: 'full', faceHole: { x: 31.5, y: 19.0, w: 34.9, h: 21.7 } },
+  { id: 'fh_17', name: '顔ハメ 12', file: './frames/17.webp', anchor: 'full', faceHole: { x: 39.3, y: 23.9, w: 22.3, h: 15.0 } },
+  { id: 'fh_18', name: '顔ハメ 13', file: './frames/18.webp', anchor: 'full', faceHole: { x: 43.0, y: 22.7, w: 25.5, h: 14.7 } },
 
   // --- 16:9 の枠（横で書き出すときだけ出る） ---
   { id: 'green_garden', name: 'グリーンガーデン', file: './frames/green_garden.webp', anchor: 'wide' },

@@ -85,7 +85,7 @@ function App() {
     video: HTMLVideoElement | null;
     fill: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor; faceHole?: { x: number; y: number; w: number; h: number } } | null;
     watermark: string | null;
   }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE' });
   
@@ -312,7 +312,7 @@ function App() {
     if (!frame || (builtinFrame && locked(builtinFrame))) { liveRef.current.frame = null; return; }
     let alive = true;
     loadFrame(frame).then(img => {
-      if (alive) liveRef.current.frame = { img, anchor: frame.anchor };
+      if (alive) liveRef.current.frame = { img, anchor: frame.anchor, faceHole: frame.faceHole };
     }).catch(() => { /* 読めなければ枠なしで続ける */ });
     return () => { alive = false; };
   }, [frame, shape]);
@@ -598,8 +598,8 @@ function App() {
               ref={videoRef}
               src={videoSrc ?? undefined}
               className="video-player hidden-source"
-              loop
               autoPlay
+              loop
               playsInline
               // 再生を断られたまま黙って黒画面になるのを防ぐ。
               // 準備ができた時点でもう一度たたく（2026-08-11）
