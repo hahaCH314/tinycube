@@ -218,10 +218,10 @@ function App() {
   const [keyInput, setKeyInput] = useState('');
   const [keyNG, setKeyNG] = useState(false);
   const unlockRef = useRef<HTMLDivElement>(null);
-  // 買うところ。BOOTH は日本、Ko-fi は英語圏（CMCUBE と同じ分け方）。
-  // 英語版の Ko-fi はまだ作っていないので、いまは両方 BOOTH へ送る。
-  // 当てずっぽうの URL を置くと、英語で来た人が 404 に落ちる（2026-08-11）
-  const buyUrl = 'https://cubicengine.booth.pm/items/8705410';
+  // 買うところ。BOOTH は日本、Ko-fi は英語圏。CMCUBE と同じ分け方（2026-08-11）
+  const buyUrl = getLang() === 'ja'
+    ? 'https://cubicengine.booth.pm/items/8705410'
+    : 'https://ko-fi.com/s/e4fc12b6e7';
   const submitKey = async () => {
     const ok = await tryUnlock(keyInput);
     setKeyNG(!ok);
