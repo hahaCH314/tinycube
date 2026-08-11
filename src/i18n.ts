@@ -73,6 +73,10 @@ type I18nDict = {
   eff_dread: string;
   eff_slash: string;
   eff_fanfare: string;
+  eff_my1: string;
+  eff_my2: string;
+  my_note: string;
+  my_empty: string;
 
   // Guide Sheet
   guide_title: string;
@@ -170,6 +174,10 @@ const dictJa: I18nDict = {
   eff_dread: '🌑 ずーん',
   eff_slash: '⚔️ しゃきん',
   eff_fanfare: '🎉 ジャーン',
+  eff_my1: 'マイ音1',
+  eff_my2: 'マイ音2',
+  my_note: 'マイ音1・2 は、あなたの音だけを入れる枠です。入れるまでは鳴りません。',
+  my_empty: '空',
 
   guide_title: 'tinyCUBE の使い方',
   guide_step1_title: '動画を読み込む',
@@ -264,6 +272,10 @@ const dictEn: I18nDict = {
   eff_dread: '🌑 Dread',
   eff_slash: '⚔️ Slash',
   eff_fanfare: '🎉 Fanfare',
+  eff_my1: 'My Sound 1',
+  eff_my2: 'My Sound 2',
+  my_note: 'My Sound 1 and 2 are slots for your own audio only. They stay silent until you load a file.',
+  my_empty: 'Empty',
 
   guide_title: 'How to use tinyCUBE',
   guide_step1_title: 'Load a video',

@@ -23,6 +23,10 @@ export type EffectId =
   | 'dread'         // 効果音（ずーん）
   | 'slash'         // 効果音（しゃきーん）
   | 'fanfare'       // 効果音（ジャーン）
+  // 自分の音を入れる枠。こちらの音は用意しない。
+  // 入れるまで押しても鳴らない（2026-08-11、伊波さん「音１，２がユーザーが追加できる機能」）
+  | 'my1'
+  | 'my2'
   | 'telop';        // 文字を出す（中身は利用者が決める）
 
 type Live = {
@@ -47,6 +51,8 @@ const DUR: Record<EffectId, number> = {
   dread: 0,
   slash: 0,
   fanfare: 0,
+  my1: 0,
+  my2: 0,
   telop: 1500,
 };
 

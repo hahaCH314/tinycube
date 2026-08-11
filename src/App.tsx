@@ -9,13 +9,15 @@ import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRe
 
 // ---- シティポップの絵柄（2026-08-11、伊波さんの指示） -------------------
 //
-// 左の柱は上から2つが番号、3つめからは80年代の小物。
-// 絵柄は指示された11個をそのまま使い、並びは音の意味に合わせた
-// （2026-08-11、伊波さん「意味合わせる」）。
-// ただし絵だけにはしない。ヘッダーの絵文字が何のボタンか分からなかったのと
-// 同じことが起きるので、小さな言葉を必ず下に置く
+// 左の柱。上2つの「1」「2」は、自分の音を入れる枠
+// （2026-08-11、伊波さん「音１，２がユーザーが追加できる機能」）。
+// 番号は「あなたが決める場所」の印で、覚えやすさのための番号ではない。
+// 3つめからは80年代の小物を、音の意味に合わせて並べる。
+// 絵だけにはしない。何のボタンか分からなくなるので、小さな言葉を必ず下に置く
 const RAIL_ICONS = [
-  '1', '2',          // フラッシュ・グリッチ
+  '1', '2',          // マイ音1・2（自分の音）
+  '🪩',              // フラッシュ … ミラーボールが弾ける
+  '📺',              // グリッチ … ブラウン管の乱れ
   '🌴',              // エモい   … 南国の夕暮れの空気
   '🥁',              // どんっ   … 叩く音そのもの（車＝ぶつかる音は却下、2026-08-11）
   '🌟',              // きらっ   … ネオンスターが光る
@@ -582,19 +584,33 @@ function App() {
         {/* 左側のエフェクトパネル */}
         <div className="side-panel left" data-role="sound">
           <div className="panel-scroll">
+            {/* 自分の音を入れる枠。入れるまでは押しても鳴らないので、
+                入っていないことが見て分かるようにしておく */}
+            {(['my1', 'my2'] as const).map((id, n) => {
+              const name = customName(id);
+              return (
+                <button
+                  key={id + soundVer}
+                  className={`effect-btn btn-mine ${name ? '' : 'empty'}`}
+                  onClick={() => fire(id)}
+                >
+                  <RailFace i={n} label={name ?? t('my_empty')} />
+                </button>
+              );
+            })}
             <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
-              <RailFace i={0} label={t('eff_flash')} />
+              <RailFace i={2} label={t('eff_flash')} />
             </button>
             <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>
-              <RailFace i={1} label={t('eff_glitch')} />
+              <RailFace i={3} label={t('eff_glitch')} />
             </button>
             <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>
-              <RailFace i={2} label={t('eff_emotional')} />
+              <RailFace i={4} label={t('eff_emotional')} />
             </button>
             {(['bam', 'ding', 'pon', 'buzz', 'clap', 'drum', 'blip', 'dread', 'slash', 'fanfare'] as const)
               .map((id, n) => (
                 <button key={id} className="effect-btn btn-sound" onClick={() => fire(id)}>
-                  <RailFace i={n + 3} label={t(('eff_' + id) as never)} />
+                  <RailFace i={n + 5} label={t(('eff_' + id) as never)} />
                 </button>
               ))}
           </div>
@@ -703,6 +719,7 @@ function App() {
 
             <h3>{t('setting_sounds')}</h3>
             <p className="sheet-note">{t('sounds_note')}</p>
+            <p className="sheet-note">{t('my_note')}</p>
             <div className="sound-list">
               {SOUND_SLOTS.map(id => {
                 const name = customName(id);

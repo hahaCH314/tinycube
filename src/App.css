@@ -7,14 +7,15 @@
 
    そのために中央（.preview-stage）は overflow:hidden / isolation:isolate /
    contain:paint で隔離し、左右の柱と上下の帯も自分の中で切り取る。
-   柱は映像の外側に置いてあるので、そもそも重ならない。
+   ボタンそのものは映像の上に乗ってよい（2026-08-11、伊波さんの判断）。
+   被らせないのは、光・粒・流れる装飾のほう。
 
    ※ここは「画面の飾り」で、録画されるのは canvas の中身だけ。
      動画にも入れたいものは effects.ts / recorder.ts 側に書くこと
    ============================================================ */
 
 :root {
-  /* 左右の柱の幅。中央の映像はこのぶんだけ内側に入る */
+  /* 左右の柱の幅。柱は映像の上に重なる */
   --rail-w: clamp(60px, 19vw, 76px);
   --head-h: 66px;
   --foot-h: 116px;
@@ -36,10 +37,13 @@
    ============================================================ */
 .preview-stage {
   position: absolute;
+  /* 映像は画面いっぱいまで使う。柱は上に重ねる
+     （2026-08-11、伊波さん「ボタンは画像の上にあっていい」）。
+     内側に寄せていたときは、縦持ちで映像が 242px しか無かった */
   top: 10px;
   bottom: 10px;
-  left: var(--rail-w);
-  right: var(--rail-w);
+  left: 0;
+  right: 0;
   width: auto;
   height: auto;
   background: #000;
@@ -152,7 +156,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: var(--head-h);
-  padding: 14px 10px 0;
+  padding: 14px max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
   display: flex; justify-content: space-between; align-items: center;
   z-index: 40; pointer-events: none;
 }
@@ -255,8 +259,10 @@
   overflow: hidden;
   pointer-events: auto; z-index: 25;
 }
-.side-panel.left { left: 0; }
-.side-panel.right { right: 0; }
+/* 端にぴったり貼ると、角の丸みやノッチに食われて欠ける
+   （2026-08-11、伊波さん「画面はみだし」）。端末が申告する余白ぶん逃がす */
+.side-panel.left  { left:  max(6px, env(safe-area-inset-left)); }
+.side-panel.right { right: max(6px, env(safe-area-inset-right)); }
 
 .panel-scroll {
   flex: 1; min-height: 0;
@@ -272,7 +278,8 @@
    （2026-08-11、伊波さん「ボタン被りがあったから気を付けて」） */
 .effect-btn {
   flex: 1 1 0;
-  min-height: 26px;   /* 小さい画面でも送らずに全部入る高さ */
+  /* 小さい画面でも送らずに全部入る高さ。15個を縦に並べても収まる */
+  min-height: clamp(20px, 3dvh, 30px);
   max-height: 62px;
   width: 100%;
   padding: 2px;
@@ -284,9 +291,37 @@
 }
 .effect-btn:active { transform: translateY(2px); filter: brightness(1.12); }
 
-/* 左＝効果音とエフェクト（水色）。右＝テロップ（紫） */
-.effect-btn.btn-sound,
+/* 役割ごとに色を変える。CMCUBE と同じ分け方
+   （一発エフェクト＝ピンク、効果音＝水色、文字＝紫）。
+   エフェクトまで水色にしたら見分けがつかなくなった（2026-08-11、伊波さんの指摘） */
 .effect-btn.btn-burst {
+  background: linear-gradient(145deg, #ffb3d8 0%, var(--cp-pink) 50%, #c9256e 100%);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -3px 0 rgba(120, 10, 60, 0.3),
+    0 0 10px rgba(255, 79, 163, 0.5);
+}
+
+/* 自分の音の枠。入れるまでは点線で「まだ空」と分かるようにする */
+.effect-btn.btn-mine {
+  background: linear-gradient(145deg, #ffe9a8 0%, var(--cp-yellow) 50%, #e0a422 100%);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  color: #4a3200;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -3px 0 rgba(150, 105, 10, 0.28),
+    0 0 10px rgba(255, 217, 100, 0.45);
+}
+.effect-btn.btn-mine.empty {
+  background: rgba(255, 217, 100, 0.1);
+  border: 2px dashed rgba(255, 217, 100, 0.65);
+  color: var(--cp-yellow);
+  box-shadow: none;
+}
+
+.effect-btn.btn-sound {
   background: linear-gradient(145deg, #c2fbff 0%, #68e8ff 50%, #45bff0 100%);
   border: 2px solid rgba(255, 255, 255, 0.7);
   color: var(--cp-ink);
@@ -337,9 +372,6 @@
    絵柄だけにすると「やば」と「最高」の区別がつかなくなる */
 @media (orientation: landscape) and (max-height: 560px) {
   :root { --rail-w: 132px; --head-h: 52px; --foot-h: 92px; }
-  /* 横だと映像が safe area いっぱいまで広がって、録画ボタンが映像に重なる。
-     下を footer のぶんだけ空けて、映像の上に何も置かないようにする */
-  .preview-stage { bottom: var(--foot-h); }
   .panel-scroll {
     display: grid;
     grid-template-columns: 1fr 1fr;
