@@ -100,26 +100,30 @@ function App() {
   // 言葉は12個。一発エフェクト2つと効果音4つを足して、ちょうど18個になる。
   // デッキは6列なので 6×3 で隙間なく埋まる（2026-08-10、伊波さんの指示）。
   // 空にしたものはデッキに出ないので、使う人が減らすこともできる
-  const TELOP_SLOTS = 12;
-  const [telops, setTelops] = useState<string[]>(() => {
-    const base = [
-      '草', '神プレイ', 'うまい', 'やば',
-      'ナイス', '待って', 'えぇ…', 'ざわ…ざわ…',
-      '助けて', '最高', 'いま', 'は？',
-    ];
-    const filled = [...base, ...Array(TELOP_SLOTS - base.length).fill('')];
+  // 番号の付いた3つだけが、利用者の言葉。残りは決め打ちで動かさない
+  // （2026-08-11、伊波さん「入れ替えれる言葉は上の数字の3か所」）。
+  // 番号は「あなたが決める場所」の印なので、全部が変えられると意味が消える
+  const TELOP_MINE = 3;
+  const TELOP_FIXED = [
+    'やば', 'ナイス', '待って', 'えぇ…',
+    // 「助けて」は動画に大きく出ると怖い（2026-08-11、伊波さん）。
+    // 子どもが使うものなので替えた。推し色の枠にも書いてある言葉に揃える
+    'ざわ…ざわ…', '尊い', '最高', 'いま', 'は？',
+  ];
+  const [myTelops, setMyTelops] = useState<string[]>(() => {
+    const base = ['草', '神プレイ', 'うまい'];
     try {
       const saved = localStorage.getItem('tinycube.telops');
       if (saved) {
         const arr = JSON.parse(saved) as string[];
-        // 数が変わっても壊れないように、足りない分は空で埋める
-        return Array.from({ length: TELOP_SLOTS }, (_, i) => arr[i] ?? '');
+        return Array.from({ length: TELOP_MINE }, (_, i) => arr[i] ?? base[i]);
       }
     } catch { /* 壊れていたら既定に戻す */ }
-    return filled;
+    return base;
   });
+  const telops = [...myTelops, ...TELOP_FIXED];
   const setTelop = (i: number, text: string) => {
-    setTelops(prev => {
+    setMyTelops(prev => {
       const next = [...prev];
       next[i] = text;
       try { localStorage.setItem('tinycube.telops', JSON.stringify(next)); } catch { /* 保存できなくても動く */ }
@@ -881,7 +885,7 @@ function App() {
             <h3>{t('setting_telop')}</h3>
             <p className="sheet-note">{t('setting_telop_note')}</p>
             <div className="telop-inputs">
-              {telops.map((text, i) => (
+              {myTelops.map((text, i) => (
                 <input
                   key={i}
                   className="telop-input"

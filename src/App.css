@@ -21,6 +21,13 @@
      （2026-08-11、伊波さん「録画ボタンをちいさくして、動画の範囲広げよう」） */
   --head-h: 58px;
   --foot-h: 88px;
+  /* 柱に並ぶボタンの最大数（いまは左の15個）。
+     左右で数が違うと、同じ高さを分け合ったときにボタンの大きさが変わり、
+     段が横に揃わなくなる（2026-08-11、伊波さん「機能ボタンのズレ」）。
+     多いほうに合わせて高さを決め、少ないほうは下を余らせる。
+     左にボタンを足したら、この数も直すこと */
+  --rail-max: 15;
+  --rail-gap: clamp(3px, 0.7dvh, 10px);
 }
 
 /* ============================================================
@@ -241,7 +248,7 @@
 /* 録画ボタンは真ん中。試してみるボタンは、その左に添える。
    横に並べて全体を中央寄せにすると、録画ボタンが右にずれて見える */
 .preview-btn-round {
-  position: absolute; left: max(8px, env(safe-area-inset-left));
+  position: absolute; left: max(8px, calc(50% - 148px), env(safe-area-inset-left));
   width: 40px; height: 40px; border-radius: 50%;
   font-size: 1rem; color: var(--cp-ink);
   display: flex; justify-content: center; align-items: center;
@@ -254,7 +261,7 @@
 
 /* 一時停止。録画ボタンの右に添える */
 .pause-btn-round {
-  position: absolute; right: max(8px, env(safe-area-inset-right));
+  position: absolute; right: calc(50% - 92px);
   width: 40px; height: 40px; border-radius: 50%;
   font-size: 0.8rem; font-weight: 900; color: #4a3200;
   display: flex; justify-content: center; align-items: center;
@@ -273,8 +280,10 @@
 }
 
 /* 写真。押した瞬間の画面が、そのまま1枚になる */
+/* 写真と一時停止は、録画ボタンから同じだけ離す。
+   片方を画面の端に貼ると、左右で距離が違って傾いて見える（2026-08-11） */
 .photo-btn-round {
-  position: absolute; left: calc(max(8px, env(safe-area-inset-left)) + 48px);
+  position: absolute; left: calc(50% - 92px);
   width: 40px; height: 40px; border-radius: 50%;
   font-size: 1rem;
   display: flex; justify-content: center; align-items: center;
@@ -335,7 +344,9 @@
 .panel-scroll {
   flex: 1; min-height: 0;
   display: flex; flex-direction: column;
-  gap: clamp(3px, 0.7dvh, 10px);
+  gap: var(--rail-gap);
+  /* 上から詰める。真ん中に寄せると、数の少ない側の段が横にずれる */
+  justify-content: flex-start;
   /* 入りきらない機種だけ送れるようにする。重なるよりは送るほうがまし */
   overflow-y: auto; overflow-x: hidden;
   -ms-overflow-style: none; scrollbar-width: none;
@@ -345,9 +356,10 @@
 /* 柱の高さを等分する。flex なので、どれだけ増えても重ならない
    （2026-08-11、伊波さん「ボタン被りがあったから気を付けて」） */
 .effect-btn {
-  flex: 1 1 0;
-  /* 小さい画面でも送らずに全部入る高さ。15個を縦に並べても収まる */
-  min-height: clamp(20px, 3dvh, 30px);
+  /* 左右どちらの柱でも同じ高さにする。こうしないと段が揃わない */
+  flex: 0 0 auto;
+  height: calc((100% - (var(--rail-max) - 1) * var(--rail-gap)) / var(--rail-max));
+  min-height: 20px;
   max-height: 62px;
   width: 100%;
   padding: 2px;
