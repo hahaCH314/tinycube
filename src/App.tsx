@@ -189,6 +189,9 @@ function App() {
   // これが無いと <video> が古い（止めた）映像を指したままになり、真っ黒になる
   // （2026-08-11、伊波さん「インカメラは真っ黒、外は映る」）
   const [camVer, setCamVer] = useState(0);
+  // カメラが黒いままのとき、何が起きているかを画面に出す。
+  // 黙って黒いだけだと、こちらからは何一つ分からない（2026-08-11）
+  const [camInfo, setCamInfo] = useState<string | null>(null);
   // 描画の係が毎フレーム読む。state を直接見ると古い値のままになる
   const camOnRef = useRef(false);
   // 効果音の差し替え。入れてある音があればそちらを鳴らす
@@ -404,7 +407,20 @@ function App() {
     if (!camOn || !v || !camStreamRef.current) return;
     v.srcObject = camStreamRef.current;
     v.muted = true;                          // 自分の声が返ってきて回るのを防ぐ
-    v.play().catch(() => { /* 再生できなくても絵は canvas に出る */ });
+    v.play().catch(e => setCamInfo('再生を断られました: ' + (e?.name ?? '')));
+    // しばらくして絵が来ていなければ、その中身を画面に出す
+    setCamInfo(null);
+    const check = setTimeout(() => {
+      const t = camStreamRef.current?.getVideoTracks()[0];
+      if (!v.videoWidth || v.paused) {
+        setCamInfo(
+          `映像が届きません／サイズ ${v.videoWidth}x${v.videoHeight}`
+          + ` 状態 ${v.readyState} 停止 ${v.paused}`
+          + ` トラック ${t?.readyState ?? 'なし'} 有効 ${t?.enabled ?? '-'}`,
+        );
+      }
+    }, 2500);
+    return () => clearTimeout(check);
   }, [camOn, camVer]);
 
   const save = async (blob: Blob, ext: string) => {
@@ -619,6 +635,7 @@ function App() {
             <p>{t('upload_hint')}</p>
           </div>
         )}
+        {camInfo && <div className="cam-info">{camInfo}</div>}
         {shape === 'landscape' && portraitDevice && (
           <div className="turn-hint">{t('turn_hint')}</div>
         )}

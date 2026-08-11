@@ -133,6 +133,18 @@
   pointer-events: none;
 }
 
+/* カメラが黒いままのときに出る覚え書き。原因を画面から拾えるようにする */
+.cam-info {
+  position: absolute; left: 50%; top: calc(var(--head-h) + 8px);
+  transform: translateX(-50%);
+  max-width: calc(100% - var(--rail-w) * 2 - 16px);
+  z-index: 15; pointer-events: none;
+  font-size: 0.6rem; line-height: 1.45; text-align: center;
+  padding: 8px 10px; border-radius: 12px;
+  background: rgba(16, 8, 43, 0.92);
+  color: var(--cp-yellow); border: 1px solid var(--cp-yellow);
+}
+
 /* ============================================================
    3. 手前のUI層と、上下の帯
    ============================================================ */
