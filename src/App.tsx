@@ -160,7 +160,10 @@ function App() {
 
   // 読み込んだ動画が横長かどうか。16:9 を 9:16 へ詰めると画面の6割が黒帯になるので、
   // 元の形に合わせるほうを既定にして、そのことを画面で伝える（2026-08-10）
-  const [shape, setShape] = useState<OutShape>('landscape');   // 横で使うほうが持ちやすい（伊波さんの判断）
+  // スマホは縦に持っているので、開いた時点から縦にしておく
+  // （2026-08-11、伊波さん「スマホは縦に設定から開いてあったほうが親切」）。
+  // 動画を読み込んだら、その向きに合わせ直す
+  const [shape, setShape] = useState<OutShape>('portrait');
   const [srcIsWide, setSrcIsWide] = useState(false);
   // 映像の出どころ。動画ファイルか、その場のカメラか。
   // canvas に描いてから録る作りなので、出どころを差し替えるだけで
