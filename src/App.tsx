@@ -578,7 +578,11 @@ function App() {
               src={videoSrc ?? undefined}
               className="video-player hidden-source"
               loop
+              autoPlay
               playsInline
+              // 再生を断られたまま黙って黒画面になるのを防ぐ。
+              // 準備ができた時点でもう一度たたく（2026-08-11）
+              onCanPlay={e => { e.currentTarget.play().catch(() => { /* 次の機会に */ }); }}
               onEnded={() => setIsPreviewing(false)}
               onLoadedMetadata={e => {
                 const v = e.currentTarget;
