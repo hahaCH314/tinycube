@@ -15,6 +15,11 @@
 
 export type RecordHandle = {
   stop: () => void;
+  /** 止めているあいだは、そこがファイルに入らない（黒い間も無音も残らない） */
+  pause: () => void;
+  resume: () => void;
+  /** 一時停止できる環境か。古い Safari は持っていないことがある */
+  canPause: boolean;
   mimeType: string;
 };
 
@@ -226,7 +231,18 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
   };
 
   recorder.start();
-  return { stop: () => recorder.stop(), mimeType: recorder.mimeType };
+
+  // 一時停止。MediaRecorder が止まっているあいだのフレームと音は
+  // まったく記録されないので、その部分はファイルに存在しない。
+  // 古い Safari は pause を持っていないことがあるので、無ければ使えないと伝える
+  const canPause = typeof recorder.pause === 'function' && typeof recorder.resume === 'function';
+  return {
+    stop: () => recorder.stop(),
+    pause: () => { if (canPause && recorder.state === 'recording') recorder.pause(); },
+    resume: () => { if (canPause && recorder.state === 'paused') recorder.resume(); },
+    canPause,
+    mimeType: recorder.mimeType,
+  };
 }
 
 const micStreams: MediaStream[] = [];

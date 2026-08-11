@@ -33,6 +33,10 @@ type I18nDict = {
   btn_preview_stop: string;
   btn_record: string;
   btn_stop: string;
+  btn_pause: string;
+  btn_resume: string;
+  paused_badge: string;
+  pause_na: string;
 
   // Effects (Burst)
   eff_flash: string;
@@ -137,6 +141,10 @@ const dictJa: I18nDict = {
   btn_preview_stop: '⏸ とめる',
   btn_record: '● 録画スタート',
   btn_stop: '■ 停止',
+  btn_pause: '一時停止',
+  btn_resume: '録画を続ける',
+  paused_badge: '⏸ 一時停止中（ここは動画に入りません）',
+  pause_na: 'この端末では一時停止が使えません',
   
   eff_flash: '💥 フラッシュ',
   eff_glitch: '⚡ グリッチ',
@@ -144,7 +152,7 @@ const dictJa: I18nDict = {
   eff_ding: '✨ きらっ',
   eff_pon: '🫧 ぽん',
   eff_buzz: '📢 ぶー',
-  turn_hint: '📱↻ 16:9（横動画）は、横向きでの操作がおすすめです',
+  turn_hint: '📱↻ スマホを横向きにすると大きく映ります',
   promo_open: 'CMCUBE を見る →',
   setting_teloppos: '文字の出る場所',
   telop_center: '◎ まん中',
@@ -235,6 +243,10 @@ const dictEn: I18nDict = {
   btn_preview_stop: '⏸ Stop',
   btn_record: '● Start Recording',
   btn_stop: '■ Stop',
+  btn_pause: 'Pause',
+  btn_resume: 'Resume',
+  paused_badge: '⏸ Paused — nothing here reaches the file',
+  pause_na: 'Pause is not available on this device',
   
   eff_flash: '💥 Flash',
   eff_glitch: '⚡ Glitch',
@@ -242,7 +254,7 @@ const dictEn: I18nDict = {
   eff_ding: '✨ Ding',
   eff_pon: '🫧 Pon',
   eff_buzz: '📢 Buzz',
-  turn_hint: '📱↻ For 16:9, holding the phone sideways works best',
+  turn_hint: '📱↻ Turn your phone sideways for a bigger view',
   promo_open: 'See CMCUBE →',
   setting_teloppos: 'Caption position',
   telop_center: '◎ Centre',

@@ -14,29 +14,30 @@ import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRe
 // 番号は「あなたが決める場所」の印で、覚えやすさのための番号ではない。
 // 3つめからは80年代の小物を、音の意味に合わせて並べる。
 // 絵だけにはしない。何のボタンか分からなくなるので、小さな言葉を必ず下に置く
-const RAIL_ICONS = [
-  '1', '2',          // マイ音1・2（自分の音）
-  '🪩',              // フラッシュ … ミラーボールが弾ける
-  '📺',              // グリッチ … ブラウン管の乱れ
-  '🌴',              // エモい   … 南国の夕暮れの空気
-  '🥁',              // どんっ   … 叩く音そのもの（車＝ぶつかる音は却下、2026-08-11）
-  '🌟',              // きらっ   … ネオンスターが光る
-  '🍹',              // ぽん     … 栓が抜ける
-  '☎️',              // ぶー     … 話し中の音
-  '💗',              // 拍手     … 喝采
-  '📻',              // ドラム   … ラジカセ
-  '📼',              // ぴこ     … 小さな機械の音
-  '🌇',              // ずーん   … 日が沈む
-  '✨',              // しゃきん … 刃が閃く
-  '💿',              // ジャーン … レコードの一発
-];
+// 並び順を変えても絵柄がずれないよう、番号ではなくボタンの名前で引く
+const RAIL_ICONS: Record<string, string> = {
+  my1: '1', my2: '2',        // 自分の音を入れる枠
+  bam: '🥁',                 // どんっ   … 叩く音そのもの（車＝ぶつかる音は却下）
+  ding: '🌟',                // きらっ   … ネオンスターが光る
+  pon: '🍹',                 // ぽん     … 栓が抜ける
+  buzz: '☎️',                // ぶー     … 話し中の音
+  clap: '💗',                // 拍手     … 喝采
+  drum: '📻',                // ドラム   … ラジカセ
+  blip: '📼',                // ぴこ     … 小さな機械の音
+  dread: '🌇',               // ずーん   … 日が沈む
+  slash: '✨',               // しゃきん … 刃が閃く
+  fanfare: '💿',             // ジャーン … レコードの一発
+  flash: '🪩',               // フラッシュ … ミラーボールが弾ける
+  glitch: '📺',              // グリッチ … ブラウン管の乱れ
+  emotional: '🌴',           // エモい   … 南国の夕暮れの空気
+};
 
 // i18n の言葉には絵文字が付いている。絵柄はこちらで差し替えるので、言葉だけ取り出す
 const bare = (s: string) => s.replace(/^[^\p{L}\p{N}]+/u, '').trim();
 
 /** 左の柱のボタンの中身。絵柄（または番号）と、その下の小さな言葉 */
-function RailFace({ i, label }: { i: number; label: string }) {
-  const icon = RAIL_ICONS[i] ?? '🎵';
+function RailFace({ id, label }: { id: string; label: string }) {
+  const icon = RAIL_ICONS[id] ?? '🎵';
   const isNum = /^[0-9]$/.test(icon);
   return (
     <>
@@ -61,6 +62,10 @@ const ZIGZAG = (
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  // 一時停止。止めているあいだは動画も進めない。
+  // 録画側を止めるだけだと、再開したときに動画だけ先へ進んでいて話が飛ぶ
+  const [isPaused, setIsPaused] = useState(false);
+  const [canPause, setCanPause] = useState(true);
 
   // フローティングUI用のタブ状態は、いまの作り（左右の柱にボタンを常に出す）では
   // 使わなくなったので消した。ビルドが止まっていた（2026-08-11）
@@ -412,6 +417,23 @@ function App() {
     setIsPreviewing(true);
   };
 
+  // 一時停止。録画も動画も両方止める。
+  // 止めているあいだの絵と音は、まったくファイルに入らない
+  const togglePause = () => {
+    const rec = recorderRef.current;
+    const v = videoRef.current;
+    if (!rec || !isRecording || !rec.canPause) return;
+    if (isPaused) {
+      rec.resume();
+      v?.play().catch(() => { /* 動かなくても録画は続く */ });
+      setIsPaused(false);
+    } else {
+      rec.pause();
+      v?.pause();
+      setIsPaused(true);
+    }
+  };
+
   // 録画の開始・停止
   const toggleRecording = async () => {
     if (isRecording) {
@@ -422,6 +444,7 @@ function App() {
         videoRef.current.currentTime = 0;
       }
       setIsRecording(false);
+      setIsPaused(false);
       return;
     }
 
@@ -452,6 +475,8 @@ function App() {
         onError: (e) => alert(t('alert_rec_fail') + e.message),
       });
       await videoRef.current.play();
+      setCanPause(recorderRef.current.canPause);
+      setIsPaused(false);
       setIsRecording(true);
     } catch (err: any) {
       console.error(err);
@@ -574,19 +599,30 @@ function App() {
             {isPreviewing ? '⏸' : '▶'}
           </button>
           <button
-            className={`record-btn-round ${isRecording ? 'recording' : ''}`}
+            className={`record-btn-round ${isRecording ? 'recording' : ''} ${isPaused ? 'paused' : ''}`}
             onClick={toggleRecording}
+            title={isRecording ? t('btn_stop') : t('btn_record')}
           >
             <div className="record-inner"></div>
           </button>
+          {/* 一時停止。止めているあいだはファイルに入らない */}
+          <button
+            className={`pause-btn-round ${isPaused ? 'on' : ''}`}
+            onClick={togglePause}
+            disabled={!isRecording || !canPause}
+            title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
+          >
+            {isPaused ? '▶' : '❚❚'}
+          </button>
         </footer>
+        {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
 
         {/* 左側のエフェクトパネル */}
         <div className="side-panel left" data-role="sound">
           <div className="panel-scroll">
             {/* 自分の音を入れる枠。入れるまでは押しても鳴らないので、
                 入っていないことが見て分かるようにしておく */}
-            {(['my1', 'my2'] as const).map((id, n) => {
+            {(['my1', 'my2'] as const).map(id => {
               const name = customName(id);
               return (
                 <button
@@ -594,25 +630,26 @@ function App() {
                   className={`effect-btn btn-mine ${name ? '' : 'empty'}`}
                   onClick={() => fire(id)}
                 >
-                  <RailFace i={n} label={name ?? t('my_empty')} />
+                  <RailFace id={id} label={name ?? t('my_empty')} />
                 </button>
               );
             })}
-            <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
-              <RailFace i={2} label={t('eff_flash')} />
-            </button>
-            <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>
-              <RailFace i={3} label={t('eff_glitch')} />
-            </button>
-            <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>
-              <RailFace i={4} label={t('eff_emotional')} />
-            </button>
             {(['bam', 'ding', 'pon', 'buzz', 'clap', 'drum', 'blip', 'dread', 'slash', 'fanfare'] as const)
-              .map((id, n) => (
+              .map(id => (
                 <button key={id} className="effect-btn btn-sound" onClick={() => fire(id)}>
-                  <RailFace i={n + 5} label={t(('eff_' + id) as never)} />
+                  <RailFace id={id} label={t(('eff_' + id) as never)} />
                 </button>
               ))}
+            {/* エフェクト3個は柱の下（2026-08-11、伊波さんの指示） */}
+            <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
+              <RailFace id="flash" label={t('eff_flash')} />
+            </button>
+            <button className="effect-btn btn-burst" onClick={() => fire('glitch')}>
+              <RailFace id="glitch" label={t('eff_glitch')} />
+            </button>
+            <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>
+              <RailFace id="emotional" label={t('eff_emotional')} />
+            </button>
           </div>
         </div>
 
