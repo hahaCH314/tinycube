@@ -5,6 +5,7 @@ import { FRAMES, fitsShape, loadFrame, type FrameAnchor } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
 import { t, getLang, setLang } from './i18n'
+import { isUnlocked, tryUnlock, savedKey, relock } from './unlock'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
 // ---- シティポップの絵柄（2026-08-11、伊波さんの指示） -------------------
@@ -211,6 +212,32 @@ function App() {
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
   const [showSettings, setShowSettings] = useState(false);
+  // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
+  // （2026-08-11、伊波さん「両方」）
+  const [unlocked, setUnlocked] = useState(isUnlocked());
+  const [keyInput, setKeyInput] = useState('');
+  const [keyNG, setKeyNG] = useState(false);
+  const unlockRef = useRef<HTMLDivElement>(null);
+  // BOOTH は日本、Ko-fi は英語圏。CMCUBE と同じ分け方（2026-08-11）
+  const buyUrl = getLang() === 'ja'
+    ? 'https://cubicenginestudio.booth.pm/'
+    : 'https://ko-fi.com/cubicenginestudio/shop';
+  const submitKey = async () => {
+    const ok = await tryUnlock(keyInput);
+    setKeyNG(!ok);
+    if (ok) { setUnlocked(true); setKeyInput(''); }
+  };
+  // 鍵のかかったフレームを押したとき、買うところまで連れていく。
+  // 押しても何も起きないと、壊れているように見える
+  const showUnlock = () => {
+    unlockRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  // 透かしは無料版の印。解除したら消える。
+  // 画面に出している canvas をそのまま録るので、ここを変えれば動画も写真も変わる
+  useEffect(() => {
+    liveRef.current.watermark = unlocked ? null : 'tinyCUBE';
+  }, [unlocked]);
   // tinyCUBE はスマホで使うもの。PC で開いた人には、そう伝えてから通す。
   // 塞がずに「このまま使う」を用意しているのは、確かめたい人を止めないため
   // （2026-08-10、伊波さん「基本PCで開かないから」「スマホだけ」）
@@ -245,6 +272,8 @@ function App() {
   };
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
+  // 鍵のかかった枠は、解除するまで選べない。一覧には出す（何が入るか分かるように）
+  const locked = (f: { paid?: boolean }) => !!f.paid && !unlocked;
   const builtinFrame = FRAMES.find(f => f.id === frameId) ?? null;
   const customFrame = customFrames.find(f => f.id === frameId) ?? null;
   const frame = builtinFrame || (customFrame ? { id: customFrame.id, name: 'マイフレーム', file: customFrame.dataUrl, anchor: 'wide' as FrameAnchor } : null);
@@ -266,7 +295,7 @@ function App() {
   // 選んだ枠の絵を読み込んでおく。録画の直前に読むと間に合わない
   useEffect(() => {
     liveRef.current.shape = shape;
-    if (!frame) { liveRef.current.frame = null; return; }
+    if (!frame || (builtinFrame && locked(builtinFrame))) { liveRef.current.frame = null; return; }
     let alive = true;
     loadFrame(frame).then(img => {
       if (alive) liveRef.current.frame = { img, anchor: frame.anchor };
@@ -484,7 +513,7 @@ function App() {
         frame: liveRef.current.frame,
         shape,
         srcAudio: useSrcAudio,
-        watermark: 'tinyCUBE',
+        watermark: unlocked ? null : 'tinyCUBE',
         onFinish: save,
         onError: (e) => alert(t('alert_rec_fail') + e.message),
       });
@@ -865,6 +894,50 @@ function App() {
             </div>
 
             <h3>{t('setting_frame')}</h3>
+
+            {/* 買い切りの解除。枠の一覧のすぐ上に置く。
+                何が解けるのかを、鍵のかかった枠を見る直前に読めるように */}
+            <div className={`unlock-box ${unlocked ? 'done' : ''}`} ref={unlockRef}>
+              {unlocked ? (
+                <>
+                  <b className="unlock-done">{t('unlock_done')}</b>
+                  <p className="sheet-note">{t('unlock_done_note')}</p>
+                  {savedKey() && <p className="unlock-key">{savedKey()}</p>}
+                  <button
+                    className="unlock-relock"
+                    onClick={() => { relock(); setUnlocked(false); }}
+                  >{t('unlock_relock')}</button>
+                </>
+              ) : (
+                <>
+                  <b className="unlock-title">{t('unlock_title')}</b>
+                  <p className="sheet-note">{t('unlock_lead')}</p>
+                  <ul className="unlock-points">
+                    <li>{t('unlock_p1')}</li>
+                    <li>{t('unlock_p2')}</li>
+                  </ul>
+                  <a
+                    className="unlock-buy"
+                    href={buyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >{t('unlock_buy')}</a>
+                  <div className="unlock-row">
+                    <input
+                      className="unlock-input"
+                      value={keyInput}
+                      placeholder={t('unlock_place')}
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
+                    />
+                    <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
+                  </div>
+                  {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
+                </>
+              )}
+            </div>
             <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(168, 85, 247, 0.1)', borderLeft: '3px solid #a855f7', borderRadius: '4px' }}>
               <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.4', color: '#e2e8f0' }}>
                 <strong>みんながクリエイター！✨</strong><br/>
@@ -912,11 +985,12 @@ function App() {
               {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
                 <button
                   key={f.id}
-                  className={`frame-tile ${frameId === f.id ? 'on' : ''}`}
-                  onClick={() => setFrameId(f.id)}
-                  title={f.name}
+                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
+                  onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
+                  title={locked(f) ? t('locked_hint') : f.name}
                 >
                   <img src={f.file} alt={f.name} />
+                  {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
                   <span>{f.name}</span>
                 </button>
               ))}

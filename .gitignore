@@ -23,3 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 tools/frames-check.png
+tools/keys-*.csv

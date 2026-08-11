@@ -33,6 +33,21 @@ type I18nDict = {
   btn_preview_stop: string;
   btn_record: string;
   btn_stop: string;
+  unlock_title: string;
+  unlock_lead: string;
+  unlock_p1: string;
+  unlock_p2: string;
+  unlock_buy: string;
+  unlock_have: string;
+  unlock_place: string;
+  unlock_go: string;
+  unlock_ok: string;
+  unlock_ng: string;
+  unlock_done: string;
+  unlock_done_note: string;
+  unlock_relock: string;
+  frame_locked: string;
+  locked_hint: string;
   btn_photo: string;
   guide_photo: string;
   btn_pause: string;
@@ -143,6 +158,21 @@ const dictJa: I18nDict = {
   btn_preview_stop: '⏸ とめる',
   btn_record: '● 録画スタート',
   btn_stop: '■ 停止',
+  unlock_title: 'ぜんぶ使う（¥300・買い切り）',
+  unlock_lead: '一度きりの買い物で、次の2つが両方とも解けます。',
+  unlock_p1: '🖼 フレームが53枚ふえる（推し色・顔ハメなど）',
+  unlock_p2: '💧 動画と写真の右下に入る「tinyCUBE」の文字が消える',
+  unlock_buy: 'BOOTH で買う（¥300）',
+  unlock_have: 'キーを持っている',
+  unlock_place: 'TC-XXXX-XXXX-XXXX',
+  unlock_go: '解除する',
+  unlock_ok: '解除しました。ありがとうございます！',
+  unlock_ng: 'このキーは使えませんでした。打ち間違いがないか見てください。',
+  unlock_done: '✓ 解除ずみ',
+  unlock_done_note: 'キーは大切に取っておいてください。機種を変えたときや、ブラウザの記録を消したときに、もう一度必要になります。',
+  unlock_relock: 'この端末の解除をやめる',
+  frame_locked: '🔒',
+  locked_hint: 'このフレームは「ぜんぶ使う」に入っています。',
   btn_photo: '写真を撮る',
   guide_photo: '📷 を押すと、そのときの画面がそのまま1枚の写真になります。枠もエフェクトも乗ったまま保存されます。',
   btn_pause: '一時停止',
@@ -247,6 +277,21 @@ const dictEn: I18nDict = {
   btn_preview_stop: '⏸ Stop',
   btn_record: '● Start Recording',
   btn_stop: '■ Stop',
+  unlock_title: 'Unlock everything (¥300, one-time)',
+  unlock_lead: 'One purchase unlocks both of these.',
+  unlock_p1: '🖼 53 more frames (fan colours, face cut-outs and more)',
+  unlock_p2: '💧 The "tinyCUBE" mark on your videos and photos disappears',
+  unlock_buy: 'Buy on Ko-fi (¥300)',
+  unlock_have: 'I have a key',
+  unlock_place: 'TC-XXXX-XXXX-XXXX',
+  unlock_go: 'Unlock',
+  unlock_ok: 'Unlocked. Thank you!',
+  unlock_ng: 'That key did not work. Please check for typos.',
+  unlock_done: '✓ Unlocked',
+  unlock_done_note: 'Keep your key somewhere safe. You will need it again if you change phones or clear your browser data.',
+  unlock_relock: 'Remove the unlock from this device',
+  frame_locked: '🔒',
+  locked_hint: 'This frame is part of "Unlock everything".',
   btn_photo: 'Take a photo',
   guide_photo: 'Press 📷 to save the screen as a still image. Frames and effects are baked in, just as you see them.',
   btn_pause: 'Pause',
