@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "frames": "node tools/frames.mjs"
+    "frames": "node tools/frames.mjs",
+    "icons": "node tools/icons.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",
