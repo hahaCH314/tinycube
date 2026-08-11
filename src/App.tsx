@@ -599,18 +599,10 @@ function App() {
             />
           )}
 
-          {frame && (
-            <img
-              src={frame.file}
-              alt=""
-              className="frame-overlay"
-              style={
-                frame.anchor === 'top' ? { top: 0, width: '100%', height: 'auto' }
-                : frame.anchor === 'bottom' ? { bottom: 0, width: '100%', height: 'auto' }
-                : { inset: 0, width: '100%', height: '100%', objectFit: 'cover' }
-              }
-            />
-          )}
+          {/* 枠は canvas に焼いてある（recorder.ts の drawFrame）。
+              ここで DOM にもう一枚重ねると、同じ絵を二重に持つうえ、
+              端末によっては映像の上に乗って中が見えなくなる。
+              昔の名残だったので外した（2026-08-11） */}
         </div>
 
         {/* 案内は canvas の外に出す。canvas は動画の形ぴったりまで縮むので、
