@@ -77,9 +77,19 @@
    （2026-08-11、実測 2.014）。幅と高さの両方から出して、小さいほうを取る */
 .stage-box {
   position: relative;
+  overflow: hidden;
+
+  /* まずは、どの端末でも成り立つ書き方。
+     下の cq 単位を知らない端末では、こちらが残る。
+     知らない端末で下だけを書いていると、幅も高さも決まらず 0 になり、
+     画面が真っ暗になる（2026-08-11、伊波さん「スマホは真っ暗だよ」） */
+  width: 100%;
+  aspect-ratio: var(--ar, 0.5625);
+  max-height: 100%;
+
+  /* 対応している端末では、こちらが勝つ。入る大きさぴったりに収まる */
   width: min(100cqw, calc(100cqh * var(--ar, 0.5625)));
   height: min(100cqh, calc(100cqw / var(--ar, 0.5625)));
-  overflow: hidden;
 }
 
 .stage-canvas {
