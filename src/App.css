@@ -17,8 +17,10 @@
 :root {
   /* 左右の柱の幅。柱は映像の上に重なる */
   --rail-w: clamp(60px, 19vw, 76px);
-  --head-h: 66px;
-  --foot-h: 116px;
+  /* 上下の帯。小さいほど映像が見える面積が増える
+     （2026-08-11、伊波さん「録画ボタンをちいさくして、動画の範囲広げよう」） */
+  --head-h: 58px;
+  --foot-h: 88px;
 }
 
 /* ============================================================
@@ -206,8 +208,8 @@
 
 .record-btn-round {
   flex: 0 0 auto;
-  width: 78px; height: 78px; border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.9);
+  width: 60px; height: 60px; border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
   background: radial-gradient(circle at 32% 28%, #ff8ec4 0%, var(--cp-pink) 45%, #b8226b 100%);
   display: flex; justify-content: center; align-items: center;
   padding: 0;
@@ -219,7 +221,7 @@
 }
 .record-btn-round:active { transform: scale(0.9); }
 .record-btn-round .record-inner {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: 30px; height: 30px; border-radius: 50%;
   background: linear-gradient(180deg, #fff 0%, #ffd6ea 100%);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -239,8 +241,8 @@
    横に並べて全体を中央寄せにすると、録画ボタンが右にずれて見える */
 .preview-btn-round {
   position: absolute; left: 2px;
-  width: 48px; height: 48px; border-radius: 50%;
-  font-size: 1.2rem; color: var(--cp-ink);
+  width: 40px; height: 40px; border-radius: 50%;
+  font-size: 1rem; color: var(--cp-ink);
   display: flex; justify-content: center; align-items: center;
   background: linear-gradient(145deg, #c2fbff 0%, var(--cp-cyan) 55%, #45bff0 100%);
   border: 2px solid rgba(255, 255, 255, 0.8);
@@ -252,8 +254,8 @@
 /* 一時停止。録画ボタンの右に添える */
 .pause-btn-round {
   position: absolute; right: 2px;
-  width: 48px; height: 48px; border-radius: 50%;
-  font-size: 0.95rem; font-weight: 900; color: #4a3200;
+  width: 40px; height: 40px; border-radius: 50%;
+  font-size: 0.8rem; font-weight: 900; color: #4a3200;
   display: flex; justify-content: center; align-items: center;
   background: linear-gradient(145deg, #ffe9a8 0%, var(--cp-yellow) 55%, #e0a422 100%);
   border: 2px solid rgba(255, 255, 255, 0.8);
@@ -411,7 +413,7 @@
    言葉は消さない。テロップは言葉そのものがボタンの中身なので、
    絵柄だけにすると「やば」と「最高」の区別がつかなくなる */
 @media (orientation: landscape) and (max-height: 560px) {
-  :root { --rail-w: 132px; --head-h: 52px; --foot-h: 92px; }
+  :root { --rail-w: 132px; --head-h: 48px; --foot-h: 72px; }
   .panel-scroll {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -419,8 +421,8 @@
     gap: 4px;
   }
   .effect-btn { max-height: none; }
-  .record-btn-round { width: 68px; height: 68px; }
-  .record-btn-round .record-inner { width: 34px; height: 34px; }
+  .record-btn-round { width: 54px; height: 54px; }
+  .record-btn-round .record-inner { width: 26px; height: 26px; }
   .btn-icon { font-size: 0.8rem; }
   .btn-icon svg { width: 12px; height: 10px; }
   .number-icon { font-size: 0.9rem; }
