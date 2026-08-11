@@ -38,6 +38,10 @@ const CHROME = process.env.CHROME_PATH
 // 01.png のような連番だけのフォルダは、これを付けないと既にある枠と名前がぶつかる
 const argv = process.argv.slice(2);
 const PREFIX = (argv.find(a => a.startsWith('--prefix=')) || '').slice(9);
+// 抜く塊の最小の大きさ（画面に対する％）。既定 0.4。
+// 顔ハメのように、絵の中にも暗いところがある絵は上げる。
+// 下げすぎると飾りの影まで抜けて、そこから映像が透ける（2026-08-11）
+const MIN_PCT = Number((argv.find(a => a.startsWith('--min=')) || '--min=0.4').slice(6));
 const args = argv.filter(a => !a.startsWith('--'));
 if (!args.length) {
   console.error('使い方: npm run frames -- [--prefix=名前] <フォルダ|ファイル> ...');
@@ -180,7 +184,7 @@ for (let i = 0; i < inputs.length; i++) {
     }
 
     // 画面の 0.4% 以上ある塊だけ抜く
-    const min = N * 0.004;
+    const min = N * ${MIN_PCT / 100};
     const kill = sizes.map(s => s >= min);
     let cleared = 0;
     for (let i = 0; i < N; i++) {

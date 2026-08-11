@@ -74,7 +74,7 @@ export type StageOptions = {
     /** true なら画面いっぱいに広げる（カメラ）。false は切らずに収める（動画） */
     fill: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor; faceHole?: { x: number; y: number; w: number; h: number } } | null;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
     watermark: string | null;
   };
 };
@@ -111,25 +111,9 @@ export function startStage(opts: StageOptions): () => void {
 
     if (frame) drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H);
 
-    // 顔ハメフレームのときは、穴の位置にカメラ映像を楕円クリッピングで重ねる。
-    // フレームを先に描いてから重ねることで「穴だけからカメラが見える」見た目になる。
-    // 穴は透明ではなく黒い塗りつぶしなので、フレームより後に描かなければ隠れる。
-    if (frame?.faceHole && video && vw && vh) {
-      const fh = frame.faceHole;
-      const cx = OUT_W * (fh.x + fh.w / 2) / 100;
-      const cy = OUT_H * (fh.y + fh.h / 2) / 100;
-      const rx = OUT_W * (fh.w / 2) / 100;
-      const ry = OUT_H * (fh.h / 2) / 100;
-      g.save();
-      g.beginPath();
-      g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-      g.clip();
-      const scale = Math.max(OUT_W / vw, OUT_H / vh);
-      const w = vw * scale, h = vh * scale;
-      g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
-      g.restore();
-    }
-
+    // 顔ハメの穴は、絵そのものを透明に抜いてある（取り込みのときに処理）。
+    // だから特別扱いは要らない。映像の上に枠を重ねるだけで、穴から中が見える
+    // （2026-08-11、伊波さん「全体を映した上にただフィルターおくだけ」）
     drawEffects(g, OUT_W, OUT_H);
     if (watermark) {
       drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
