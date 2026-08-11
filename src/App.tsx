@@ -818,10 +818,13 @@ function App() {
             <p className="sheet-note">{t('sounds_note')}</p>
             <p className="sheet-note">{t('my_note')}</p>
             <div className="sound-list">
-              {SOUND_SLOTS.map(id => {
+              {SOUND_SLOTS.map((id, n) => {
                 const name = customName(id);
                 return (
                   <div key={id + soundVer} className="sound-row">
+                    {/* 柱のボタンと同じ番号・同じ色。どの欄がどのボタンか、
+                        見ただけで結びつくように（2026-08-11、伊波さん） */}
+                    <span className="slot-no mine">{n + 1}</span>
                     <button className="sound-try" onClick={() => fireEffect(id)}>▶</button>
                     <span className="sound-name">
                       {t(('eff_' + id) as never)}
@@ -889,14 +892,15 @@ function App() {
             <p className="sheet-note">{t('setting_telop_note')}</p>
             <div className="telop-inputs">
               {myTelops.map((text, i) => (
-                <input
-                  key={i}
-                  className="telop-input"
-                  value={text}
-                  maxLength={20}
-                  placeholder={`${i + 1}`}
-                  onChange={e => setTelop(i, e.target.value)}
-                />
+                <div className="telop-row" key={i}>
+                  <span className="slot-no telop">{i + 1}</span>
+                  <input
+                    className="telop-input"
+                    value={text}
+                    maxLength={20}
+                    onChange={e => setTelop(i, e.target.value)}
+                  />
+                </div>
               ))}
             </div>
 

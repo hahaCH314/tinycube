@@ -541,7 +541,31 @@
 }
 .shape-switch button:active { transform: translateY(2px); }
 
-.telop-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.telop-inputs { display: flex; flex-direction: column; gap: 10px; }
+.telop-row { display: flex; align-items: center; gap: 10px; }
+.telop-row .telop-input { flex: 1; min-width: 0; }
+
+/* 柱のボタンと同じ番号・同じ色。設定の欄と、押すボタンを見た目で結ぶ
+   （2026-08-11、伊波さん「設定画面の方もボタンと合わせる」） */
+.slot-no {
+  flex: 0 0 auto;
+  width: 34px; height: 34px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem; font-weight: 900; font-style: italic; line-height: 1;
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.6), 2px 2px 0 rgba(255, 79, 163, 0.5);
+}
+.slot-no.mine {
+  background: linear-gradient(145deg, #ffe9a8 0%, var(--cp-yellow) 55%, #e0a422 100%);
+  color: #4a3200;
+  box-shadow: 0 0 10px rgba(255, 217, 100, 0.45);
+}
+.slot-no.telop {
+  background: linear-gradient(145deg, #cf92ff 0%, var(--cp-purple) 48%, #6f44c9 100%);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(175, 100, 255, 0.45);
+}
 .telop-input {
   width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 800;
   border-radius: 16px;
