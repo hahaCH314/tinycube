@@ -185,6 +185,10 @@ function App() {
   const shapePicked = useRef(false);
   const pickShape = (v: OutShape) => { shapePicked.current = true; setShape(v); };
   const camStreamRef = useRef<MediaStream | null>(null);
+  // カメラを取り直すたびに増やす。前後を切り替えたときは camOn が true のままなので、
+  // これが無いと <video> が古い（止めた）映像を指したままになり、真っ黒になる
+  // （2026-08-11、伊波さん「インカメラは真っ黒、外は映る」）
+  const [camVer, setCamVer] = useState(0);
   // 描画の係が毎フレーム読む。state を直接見ると古い値のままになる
   const camOnRef = useRef(false);
   // 効果音の差し替え。入れてある音があればそちらを鳴らす
@@ -356,6 +360,7 @@ function App() {
       setVideoSrc(null);                     // 動画ファイルとは同時に使わない
       setCamFront(front);
       setCamOn(true);
+      setCamVer(v => v + 1);      // 繋ぎ直させる
       // ここで videoRef を触ってはいけない。カメラを入れるまで <video> は
       // 画面に無く、srcObject を入れる先がまだ存在しない（2026-08-10）。
       // 実際に繋ぐのは下の useEffect
@@ -400,7 +405,7 @@ function App() {
     v.srcObject = camStreamRef.current;
     v.muted = true;                          // 自分の声が返ってきて回るのを防ぐ
     v.play().catch(() => { /* 再生できなくても絵は canvas に出る */ });
-  }, [camOn]);
+  }, [camOn, camVer]);
 
   const save = async (blob: Blob, ext: string) => {
     const name = `tinycube_${Date.now()}.${ext}`;
