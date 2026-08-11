@@ -6,10 +6,10 @@
 //   wide   … 16:9 の枠。縦で使うと左右が欠ける
 //   top    … 上だけの飾り。横幅いっぱいに置けば縦でも横でも成立する
 //   bottom … 下だけの飾り。同上
-//   full   … 9:16 で描き下ろした枠。横で使うと上下が欠ける。まだ1枚も無い
+//   full   … 9:16 で描き下ろした枠。横で使うと上下が欠ける
 //
-// 縦の枠が揃ったら full を足す。1080x1920 で中央を黒く塗った PNG をもらえれば、
-// 抜いて WebP にしてここへ並べる。
+// 絵を足すときは npm run frames -- <フォルダ> を使う。黒を抜いて WebP にし、
+// ここへ貼る行まで出してくれる。出来は tools/frames-check.png で目で見ること。
 
 export type FrameAnchor = 'wide' | 'top' | 'bottom' | 'full';
 export type OutShape = 'portrait' | 'landscape';
@@ -19,6 +19,10 @@ export type Frame = {
   name: string;
   file: string;
   anchor: FrameAnchor;
+  /** 有料の枠。いまは印だけで、どこも参照していない。
+   *  50枚たまったところで鍵をかける予定（2026-08-11、伊波さん）。
+   *  先に印を付けておけば、鍵の作りは後からどれにでも差し替えられる */
+  paid?: boolean;
 };
 
 export const FRAMES: Frame[] = [
@@ -71,6 +75,38 @@ export const FRAMES: Frame[] = [
   { id: 'fishing_1',    name: '釣り 1',          file: './frames/fishing_1.webp',    anchor: 'bottom' },
   { id: 'fishing_2',    name: '釣り 2',          file: './frames/fishing_2.webp',    anchor: 'bottom' },
   { id: 'fishing_3',    name: '釣り 3',          file: './frames/fishing_3.webp',    anchor: 'bottom' },
+  // --- 推し色（2026-08-11 追加。有料の枠） ---
+  // 同じ絵を 16:9 と 9:16 の両方で描き下ろしてある。
+  // 一覧は形で絞られるので、名前は縦横で分けなくてよい
+  { id: 'oshi_red_w',     name: '推し・赤',       file: './frames/oshi_red_w.webp',     anchor: 'wide', paid: true },
+  { id: 'oshi_red_p',     name: '推し・赤',       file: './frames/oshi_red_p.webp',     anchor: 'full', paid: true },
+  { id: 'oshi_blue_w',    name: '推し・青',       file: './frames/oshi_blue_w.webp',    anchor: 'wide', paid: true },
+  { id: 'oshi_blue_p',    name: '推し・青',       file: './frames/oshi_blue_p.webp',    anchor: 'full', paid: true },
+  { id: 'oshi_green_w',   name: '推し・緑',       file: './frames/oshi_green_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_green_p',   name: '推し・緑',       file: './frames/oshi_green_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_yellow_w',  name: '推し・黄',       file: './frames/oshi_yellow_w.webp',  anchor: 'wide', paid: true },
+  { id: 'oshi_yellow_p',  name: '推し・黄',       file: './frames/oshi_yellow_p.webp',  anchor: 'full', paid: true },
+  { id: 'oshi_pink_w',    name: '推し・ピンク',   file: './frames/oshi_pink_w.webp',    anchor: 'wide', paid: true },
+  { id: 'oshi_pink_p',    name: '推し・ピンク',   file: './frames/oshi_pink_p.webp',    anchor: 'full', paid: true },
+  { id: 'oshi_orange_w',  name: '推し・オレンジ', file: './frames/oshi_orange_w.webp',  anchor: 'wide', paid: true },
+  { id: 'oshi_orange_p',  name: '推し・オレンジ', file: './frames/oshi_orange_p.webp',  anchor: 'full', paid: true },
+  { id: 'oshi_purple_w',  name: '推し・紫',       file: './frames/oshi_purple_w.webp',  anchor: 'wide', paid: true },
+  { id: 'oshi_purple_p',  name: '推し・紫',       file: './frames/oshi_purple_p.webp',  anchor: 'full', paid: true },
+  { id: 'oshi_white_w',   name: '推し・白',       file: './frames/oshi_white_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_white_p',   name: '推し・白',       file: './frames/oshi_white_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_black_w',   name: '推し・黒',       file: './frames/oshi_black_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_black_p',   name: '推し・黒',       file: './frames/oshi_black_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_manga_w',   name: '推し・漫画',     file: './frames/oshi_manga_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_manga_p',   name: '推し・漫画',     file: './frames/oshi_manga_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_rainbow',   name: '推し・虹',       file: './frames/oshi_rainbow.webp',   anchor: 'full', paid: true },
+
+  // --- きらきら（2026-08-11 追加。有料の枠） ---
+  { id: 'otaku_01',       name: 'ゆめかわ',       file: './frames/otaku_01.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_02',       name: 'よぞら',         file: './frames/otaku_02.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_03',       name: 'きらきら',       file: './frames/otaku_03.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_04',       name: 'ぬいぐるみ',     file: './frames/otaku_04.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_05',       name: 'ペンライト',     file: './frames/otaku_05.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_06',       name: 'グッズ',         file: './frames/otaku_06.webp',       anchor: 'wide', paid: true },
 ];
 
 /** その枠が、いまの書き出しの形にぴったり合うか。
