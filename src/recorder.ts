@@ -154,9 +154,13 @@ export function startStage(opts: StageOptions): () => void {
       g.beginPath();
       g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       g.clip();
-      const s2 = Math.max(OUT_W / vw, OUT_H / vh);
+      // 穴の大きさに合わせて、穴の中心へ寄せる。
+      // 画面いっぱいまで広げたカメラを小さな穴で切り抜くと、顔の一部だけが
+      // 極端に大きく覗いて何も分からない（2026-08-11、伊波さん
+      // 「インカメラは近すぎて見えない」）
+      const s2 = Math.max((rx * 2) / vw, (ry * 2) / vh);
       const w2 = vw * s2, h2 = vh * s2;
-      g.drawImage(video, (OUT_W - w2) / 2, (OUT_H - h2) / 2, w2, h2);
+      g.drawImage(video, cx - w2 / 2, cy - h2 / 2, w2, h2);
       g.restore();
     }
     drawEffects(g, OUT_W, OUT_H);
