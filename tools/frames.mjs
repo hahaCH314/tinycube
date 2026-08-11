@@ -24,6 +24,10 @@ import { join, basename, extname, resolve } from 'node:path';
 
 const OUT_DIR = resolve('public/frames');
 const CHECK = resolve('tools/frames-check.png');   // 出来を目で見るための一覧
+// どの枠をどの絵から出したかの覚え書き。同じ絵の作り直しと、
+// 別の絵による上書きを見分けるために要る
+const MADE_FILE = resolve('tools/frames-made.json');
+const MADE = existsSync(MADE_FILE) ? JSON.parse(readFileSync(MADE_FILE, 'utf8')) : {};
 const MAX_EDGE = 1400;          // 書き出しは 1920x1080。これ以上大きくしても違いが出ない
 const QUALITY = 0.80;           // 43枚で6MB。1枚150KB前後に収めないと、スマホで開くのが重い
 const PORT = 9382;
@@ -62,10 +66,21 @@ if (!inputs.length) { console.error('画像がありません'); process.exit(1)
 // 出す名前。日本語のファイル名はそのままだと URL で扱いにくいので英数字に落とす。
 // 当てはまらないものは連番。あとから frames.ts で直せばよい
 const WORDS = [
+  // 「顔」は先に置く。あとに置くと 犬顔 が face_dog になる（並びを逆にしてから繋ぐため）
+  [/顔|かお|face/i, 'face'],
   [/赤|red/i, 'red'], [/青|あお|blue/i, 'blue'], [/緑|みどり|green/i, 'green'],
   [/黄|yellow/i, 'yellow'], [/ピンク|pink/i, 'pink'], [/オレンジ|orange/i, 'orange'],
   [/紫|purple/i, 'purple'], [/白|white/i, 'white'], [/黒|black/i, 'black'],
-  [/虹|rainbow/i, 'rainbow'], [/漫画|manga/i, 'manga'], [/推し|おし|oshi/i, 'oshi'],
+  [/虹|rainbow/i, 'rainbow'], [/漫画|manga/i, 'manga'],
+  [/リボン|ribbon/i, 'ribbon'], [/シャンパン|champagne/i, 'champagne'],
+  [/ペンラ|penlight/i, 'penlight'], [/キラ|kira/i, 'kira'],
+  [/バンド|band/i, 'band'], [/シティ|city/i, 'city'], [/テレビ|tv/i, 'tv'],
+  [/ハイビスカス|hibiscus/i, 'hibiscus'], [/海|sea/i, 'sea'],
+  [/犬|dog/i, 'dog'], [/猫|cat/i, 'cat'],
+  [/歌舞伎|kabuki/i, 'kabuki'], [/女形|onnagata/i, 'onnagata'],
+  [/風呂|bath/i, 'bath'], [/レモン|lemon/i, 'lemon'], [/ゴーヤ|goya/i, 'goya'],
+  [/ヲタ|オタ|otaku/i, 'otaku'], [/日本|japan/i, 'japan'],
+  [/推し|おし|oshi/i, 'oshi'],
 ];
 function slug(file, i) {
   const base = basename(file, extname(file));
@@ -116,7 +131,6 @@ await send('Page.navigate', { url: 'about:blank' });
 await sleep(400);
 
 const done = [];
-const made = new Set();       // この回で出した名前。上書きの判定に使う
 for (let i = 0; i < inputs.length; i++) {
   const inn = inputs[i];
   let name = names[i];
@@ -200,16 +214,18 @@ for (let i = 0; i < inputs.length; i++) {
   if (dup.has(name)) name += r.w >= r.h ? '_w' : '_p';
 
   // すでにある枠を黙って潰さない。
-  // 01.png〜06.png を取り込んだとき、同じ名前だった顔ハメの絵を
-  // 上書きしてしまった（2026-08-11）。名前をずらして、はっきり伝える
-  if (existsSync(out()) && !made.has(name)) {
+  // 01.png〜06.png を取り込んだとき、同じ名前だった顔ハメの絵を上書きした。
+  // 同じ回の中でも、犬顔が2枚とも dog_face_p になって片方が消えた（2026-08-11）。
+  //
+  // ただし同じ絵を取り込み直したときは、そのまま上書きしてよい。
+  // どの絵から出したものかを覚え書き（frames-made.json）に残して見分ける
+  if (existsSync(out()) && MADE[name] !== inn) {
     const taken = name;
     let n = 2;
-    while (existsSync(out()) || made.has(name)) name = taken + '_' + n++;
-    console.log(`   ※ ${taken}.webp は既にあります。${name}.webp として出しました`);
-    console.log('     ぶつからない名前にしたいときは --prefix=名前 を付けてください');
+    while (existsSync(out()) && MADE[name] !== inn) name = taken + '_' + n++;
+    console.log(`   ※ ${taken}.webp は別の絵で埋まっています。${name}.webp として出しました`);
   }
-  made.add(name);
+  MADE[name] = inn;
 
   const buf = Buffer.from(r.webp.split(',')[1], 'base64');
   writeFileSync(out(), buf);

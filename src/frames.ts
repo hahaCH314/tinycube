@@ -107,6 +107,36 @@ export const FRAMES: Frame[] = [
   { id: 'otaku_04',       name: 'ぬいぐるみ',     file: './frames/otaku_04.webp',       anchor: 'wide', paid: true },
   { id: 'otaku_05',       name: 'ペンライト',     file: './frames/otaku_05.webp',       anchor: 'wide', paid: true },
   { id: 'otaku_06',       name: 'グッズ',         file: './frames/otaku_06.webp',       anchor: 'wide', paid: true },
+
+  // --- キューブ枠（2026-08-11 追加。有料の枠） ---
+  { id: 'band_w',           name: 'バンド',              file: './frames/band_w.webp',           anchor: 'wide', paid: true },
+  { id: 'band_p',           name: 'バンド',              file: './frames/band_p.webp',           anchor: 'full', paid: true },
+  { id: 'city_w',           name: 'シティ',              file: './frames/city_w.webp',           anchor: 'wide', paid: true },
+  { id: 'city_p',           name: 'シティ',              file: './frames/city_p.webp',           anchor: 'full', paid: true },
+  { id: 'tv_w',             name: 'テレビ',              file: './frames/tv_w.webp',             anchor: 'wide', paid: true },
+  { id: 'tv_p',             name: 'テレビ',              file: './frames/tv_p.webp',             anchor: 'full', paid: true },
+  { id: 'hibiscus_w',       name: 'ハイビスカス',           file: './frames/hibiscus_w.webp',       anchor: 'wide', paid: true },
+  { id: 'hibiscus_p',       name: 'ハイビスカス',           file: './frames/hibiscus_p.webp',       anchor: 'full', paid: true },
+  { id: 'sea_w',            name: '海',                file: './frames/sea_w.webp',            anchor: 'wide', paid: true },
+  { id: 'sea_p',            name: '海',                file: './frames/sea_p.webp',            anchor: 'full', paid: true },
+  { id: 'cat',              name: '猫',                file: './frames/cat.webp',              anchor: 'wide', paid: true },
+  { id: 'dog',              name: '犬',                file: './frames/dog.webp',              anchor: 'full', paid: true },
+  { id: 'oshi_kira',        name: '推し・キラ',            file: './frames/oshi_kira.webp',        anchor: 'full', paid: true },
+  { id: 'penlight',         name: 'ペンライト',            file: './frames/penlight.webp',         anchor: 'full', paid: true },
+  { id: 'oshi_champagne',   name: '推し・シャンパン',         file: './frames/oshi_champagne.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_ribbon_red',  name: '推し・赤リボン',          file: './frames/oshi_ribbon_red.webp',  anchor: 'full', paid: true },
+
+  // --- 顔ハメ（2026-08-11 追加。有料の枠）。穴から映像が見える ---
+  { id: 'goya',             name: 'ゴーヤ（顔ハメ）',         file: './frames/goya.webp',             anchor: 'wide', paid: true },
+  { id: 'japan_face',       name: '日本（顔ハメ）',          file: './frames/japan_face.webp',       anchor: 'wide', paid: true },
+  { id: 'kabuki_face',      name: '歌舞伎（顔ハメ）',         file: './frames/kabuki_face.webp',      anchor: 'wide', paid: true },
+  { id: 'bath_face',        name: 'お風呂（顔ハメ）',         file: './frames/bath_face.webp',        anchor: 'wide', paid: true },
+  { id: 'dog_face_w',       name: '犬（顔ハメ）',           file: './frames/dog_face_w.webp',       anchor: 'wide', paid: true },
+  { id: 'lemon_face',       name: 'レモン（顔ハメ）',         file: './frames/lemon_face.webp',       anchor: 'full', paid: true },
+  { id: 'otaku_face',       name: 'ヲタ（顔ハメ）',          file: './frames/otaku_face.webp',       anchor: 'full', paid: true },
+  { id: 'onnagata',         name: '女形（顔ハメ）',          file: './frames/onnagata.webp',         anchor: 'full', paid: true },
+  { id: 'dog_face_p',       name: '犬 1（顔ハメ）',         file: './frames/dog_face_p.webp',       anchor: 'full', paid: true },
+  { id: 'dog_face_p_2',     name: '犬 2（顔ハメ）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', paid: true },
 ];
 
 /** その枠が、いまの書き出しの形にぴったり合うか。

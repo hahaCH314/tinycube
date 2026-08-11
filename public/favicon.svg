@@ -3,10 +3,6 @@
        色だけシティポップ（水色が主役）にして見分ける
        （2026-08-11、伊波さんの指示）。赤い点は両方から外した -->
   <defs>
-    <linearGradient id="plate" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1b0f3d"/>
-      <stop offset="1" stop-color="#0a0520"/>
-    </linearGradient>
     <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#e8fbff"/>
       <stop offset="0.5" stop-color="#66e7ff"/>
@@ -20,16 +16,11 @@
       <stop offset="0" stop-color="#66e7ff"/>
       <stop offset="1" stop-color="#1176b8"/>
     </linearGradient>
-    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="26" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
 
-  <rect width="1024" height="1024" rx="196" fill="url(#plate)"/>
-  <rect x="8" y="8" width="1008" height="1008" rx="188" fill="none" stroke="#66e7ff" stroke-opacity="0.3" stroke-width="10"/>
+  <rect width="1024" height="1024" rx="196" fill="#ff1493"/>
 
-  <g filter="url(#glow)">
+  <g>
     <!-- 立方体。上面が明るく、左が紫、右が水色。16px でも三面が分かれて見える -->
     <path d="M512 212 L772 362 L512 512 L252 362 Z" fill="url(#top)"/>
     <path d="M252 362 L512 512 L512 812 L252 662 Z" fill="url(#left)"/>
