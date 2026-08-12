@@ -1294,3 +1294,21 @@
 
 /* 撮影画面に着いた直後の誘導 */
 .turn-hint.start-hint { color: #fff; border-color: var(--cp-pink); }
+
+/* 撮る前の数え。押した瞬間に始まらないように3つ数える */
+.countdown {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 18; pointer-events: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 6rem; font-weight: 900; font-style: italic; line-height: 1;
+  color: #fff;
+  text-shadow: 3px 3px 0 var(--cp-pink), 0 0 30px rgba(102, 231, 255, 0.8);
+  animation: countdown-pop 1s ease-out;
+}
+@keyframes countdown-pop {
+  from { transform: translate(-50%, -50%) scale(1.6); opacity: 0.2; }
+  to   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+}
+
+/* 案内の横長ボタン（じぶんの音とことば） */
+.source-btn.wide-btn { grid-column: 1 / -1; flex-direction: row; gap: 10px; min-height: 60px; }

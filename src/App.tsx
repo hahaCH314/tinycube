@@ -130,7 +130,10 @@ function App() {
     'ざわ…ざわ…', '尊い', '最高', 'いま', 'は？',
   ];
   const [myTelops, setMyTelops] = useState<string[]>(() => {
-    const base = ['草', '神プレイ', 'うまい'];
+    // 1・2・3 は「あなたが決める場所」。最初から言葉を入れておくと、
+    // 自分の言葉に変えられることに気づかない
+    // （2026-08-12、伊波さん「テキストの１２３は空で数字入れて、中身も空に」）
+    const base = ['', '', ''];
     try {
       const saved = localStorage.getItem('tinycube.telops');
       if (saved) {
@@ -264,6 +267,14 @@ function App() {
   const [hand, setHand] = useState<'right' | 'left'>('right');
   // 初めて撮影画面に来た人に、押す場所だけ示すための旗
   const [startHint, setStartHint] = useState(false);
+  // 撮る前の数え。押した瞬間に始まると構える間がない
+  // （2026-08-12、伊波さん「動画、camera共にカウント入れたら？３秒ぐらい」）。
+  // 動画でもカメラでも同じように数える
+  const [countdown, setCountdown] = useState<number | null>(null);
+  // 設定を閉じたときに、どこへ戻すか。来た場所へ返さないと迷子になる
+  // （2026-08-12、伊波さん「戻るボタンがほしいね」）
+  const [backTo, setBackTo] = useState<'frame' | 'source' | 'video'>('video');
+  const openSetup = (from: 'frame' | 'source' | 'video') => { setBackTo(from); setScreen('setup'); };
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
   // （2026-08-11、伊波さん「両方」）
   const [unlocked, setUnlocked] = useState(isUnlocked());
@@ -556,6 +567,8 @@ function App() {
 
   // 録画の開始・停止
   const toggleRecording = async () => {
+    // 数えているあいだの二度押しは受けない。二重に始まってしまう
+    if (countdown !== null) return;
     if (isRecording) {
       recorderRef.current?.stop();
       recorderRef.current = null;
@@ -578,6 +591,14 @@ function App() {
       videoRef.current.currentTime = 0;
       setIsPreviewing(false);
     }
+
+    // 3つ数えてから始める。ここで構えてもらう
+    setStartHint(false);
+    for (let n = 3; n > 0; n--) {
+      setCountdown(n);
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    setCountdown(null);
 
     try {
       // 透かしは無料版の印。動画そのものに焼き込まれる。
@@ -685,6 +706,7 @@ function App() {
           </div>
         )}
         {camInfo && <div className="cam-info">{camInfo}</div>}
+        {countdown !== null && <div className="countdown">{countdown}</div>}
         {shape === 'landscape' && portraitDevice ? (
           <div className="turn-hint">{t('turn_hint')}</div>
         ) : startHint && !isRecording ? (
@@ -708,7 +730,7 @@ function App() {
             {/* 絵文字だけだと何のボタンか分からない。リボンが設定、ピースが使い方
                 という組み合わせは、作った側にも伝わらなかった（2026-08-11）。
                 意味の通る絵に戻す */}
-            <button className="tool-btn-small" onClick={() => setScreen('setup')} title="設定">⚙️</button>
+            <button className="tool-btn-small" onClick={() => openSetup('video')} title="設定">⚙️</button>
             <button className="tool-btn-small" onClick={() => setScreen('manner')} title="使い方">❓</button>
             <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">👾</button>
           </div>
@@ -786,21 +808,27 @@ function App() {
         {/* 右側のテロップパネル */}
         <div className="side-panel right" data-role="telop">
           <div className="panel-scroll">
-            {telops.map((text, i) => text.trim() ? (
-              <button
-                key={i}
-                className="effect-btn btn-telop"
-                onClick={() => fireTelop(text, telopDark, telopRandom)}
-              >
-                {/* 先頭3つは番号で出す。押す場所を体で覚えられるように。
-                    4つめからは吹き出しとギザギザを交互に
-                    （2026-08-11、伊波さんの指示） */}
-                {i < 3
-                  ? <span className="number-icon">{i + 1}</span>
-                  : <span className="btn-icon">{i % 2 === 1 ? BUBBLE : ZIGZAG}</span>}
-                <span className="btn-label">{text}</span>
-              </button>
-            ) : null)}
+            {telops.map((text, i) => {
+              const mine = i < TELOP_MINE;   // 番号つきの、自分で決める場所
+              const empty = !text.trim();
+              // 決め打ちのほうは空なら出さない。番号つきは空でも枠として残す
+              if (empty && !mine) return null;
+              return (
+                <button
+                  key={i}
+                  className={'effect-btn btn-telop' + (empty ? ' empty' : '')}
+                  onClick={() => (empty ? openSetup('video') : fireTelop(text, telopDark, telopRandom))}
+                >
+                  {/* 先頭3つは番号で出す。押す場所を体で覚えられるように。
+                      4つめからは吹き出しとギザギザを交互に
+                      （2026-08-11、伊波さんの指示） */}
+                  {mine
+                    ? <span className="number-icon">{i + 1}</span>
+                    : <span className="btn-icon">{i % 2 === 1 ? BUBBLE : ZIGZAG}</span>}
+                  {!empty && <span className="btn-label">{text}</span>}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -892,7 +920,7 @@ function App() {
                   className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
                   onClick={() => {
                     // 鍵つきを押しても何も起きないと壊れて見える。買うところまで連れていく
-                    if (locked(f)) { setScreen('setup'); showUnlock(); }
+                    if (locked(f)) { openSetup('frame'); showUnlock(); }
                     else { setFrameId(f.id); setScreen('source'); }
                   }}
                   title={locked(f) ? t('locked_hint') : f.name}
@@ -931,6 +959,15 @@ function App() {
               </button>
             </div>
 
+            {/* 自分の音と言葉を入れられることを、ここで知らせる。
+                柱の 1 2 3 が空なのは「あなたが決める場所」だから
+                （2026-08-12、伊波さん「誘導のカメラの下で音ファイルと
+                テキスト入れれる案内して」） */}
+            <button className="source-btn wide-btn" onClick={() => openSetup('source')}>
+              <span className="source-icon">🎵</span>
+              <span className="source-text">じぶんの音と ことばを入れる</span>
+            </button>
+
             {/* 持つ手で録画ボタンの位置を変える
                 （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */}
             <h3 className="setup-section-title">利き手</h3>
@@ -947,10 +984,11 @@ function App() {
         <div className="setup-screen">
           <div className="setup-header">
             <h2 className="setup-title">設定してね</h2>
-            {/* 設定から戻るボタン（すでに映像が選ばれている場合など） */}
-            {(videoSrc || camOn) && (
-              <button className="setup-close-btn" onClick={() => setScreen('video')}>✕</button>
-            )}
+            {/* 戻るボタンは必ず出す。以前は映像を選んだあとしか出ておらず、
+                素材を選ぶ前にここへ入ると出られなくなっていた
+                （2026-08-12、伊波さん「戻るボタンがほしいね」）。
+                行き先は来た場所。撮影画面へ飛ばすと②に戻れない */}
+            <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>
           </div>
           
           <div className="setup-content">
