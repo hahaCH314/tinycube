@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, loadFrame, type FrameAnchor } from './frames'
+import { FRAMES, loadFrame, fitsShape, type FrameAnchor } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
 import { t, getLang } from './i18n'
@@ -133,7 +133,7 @@ function App() {
     // 1・2・3 は「あなたが決める場所」。最初から言葉を入れておくと、
     // 自分の言葉に変えられることに気づかない
     // （2026-08-12、伊波さん「テキストの１２３は空で数字入れて、中身も空に」）
-    const base = ['', '', ''];
+    const base = ['マジ？', 'パーティータイム', 'ちゅき'];
     try {
       const saved = localStorage.getItem('tinycube.telops');
       if (saved) {
@@ -336,11 +336,12 @@ function App() {
     try { localStorage.setItem('tinycube.guideSeen', '1'); } catch { /* 保存できなくても動く */ }
     setScreen('frame');
   };
-  // ②で素材が決まったら、待たせずに撮影画面へ送る。
-  // カメラでもファイルでも同じ扱いにしたいので、結果のほうを見ている
-  useEffect(() => {
-    if (screen === 'source' && (videoSrc || camOn)) { setStartHint(true); setScreen('video'); }
-  }, [screen, videoSrc, camOn]);
+  // ②で素材が決まっても、すぐに撮影画面へは送らない。
+  // source 画面に留まり、「決定」ボタンで進む
+  // （2026-08-12、伊波さん「cameraを選んだら即決定になるので、決定ボタンを作る」）
+  const confirmSource = () => {
+    if (videoSrc || camOn) { setStartHint(true); setScreen('video'); }
+  };
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
   // 鍵のかかった枠は、解除するまで選べない。一覧には出す（何が入るか分かるように）
@@ -730,7 +731,9 @@ function App() {
             {/* 絵文字だけだと何のボタンか分からない。リボンが設定、ピースが使い方
                 という組み合わせは、作った側にも伝わらなかった（2026-08-11）。
                 意味の通る絵に戻す */}
-            <button className="tool-btn-small" onClick={() => openSetup('video')} title="設定">⚙️</button>
+            {/* 設定ボタン（⚙️）は消して、設定（source）に戻るボタンに変更
+                （2026-08-12、伊波さん「撮影画面の設定ボタンは消して設定に戻るボタンを付ける」） */}
+            <button className="tool-btn-small" onClick={() => setScreen('source')} title="設定に戻る">←</button>
             <button className="tool-btn-small" onClick={() => setScreen('manner')} title="使い方">❓</button>
             <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">👾</button>
           </div>
@@ -914,7 +917,9 @@ function App() {
                 className={`frame-tile none ${frameId === null ? 'on' : ''}`}
                 onClick={() => { setFrameId(null); setScreen('source'); }}
               >{t('frame_none')}</button>
-              {FRAMES.map(f => (
+              {/* 縦に横フレーム（切れる）は要らない。形に合うものだけ出す
+                  （2026-08-12、伊波さん「縦フレームに横フレームが入っている（切れる）は要らない」） */}
+              {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
                 <button
                   key={f.id}
                   className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
@@ -959,6 +964,14 @@ function App() {
               </button>
             </div>
 
+            {/* 素材が決まったら、この決定ボタンで撮影画面へ進む
+                （2026-08-12、伊波さん「cameraを選んだら即決定になるので、決定ボタンを作る」） */}
+            {(videoSrc || camOn) && (
+              <button className="manner-agree-btn" onClick={confirmSource}>
+                この設定で撮る！
+              </button>
+            )}
+
             {/* 「入れられます」と書くだけでは伝わらない。入れる場所そのものを
                 ここに出す。柱の 1 2 と 1 2 3 が、この欄と同じ番号
                 （2026-08-12、伊波さん「ちゃんと１，２の音ファイル
@@ -993,6 +1006,7 @@ function App() {
                     className="telop-input"
                     value={text}
                     maxLength={20}
+                    placeholder="自由に変更できます"
                     onChange={e => setTelop(i, e.target.value)}
                   />
                 </div>

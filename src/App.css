@@ -650,9 +650,13 @@
    16:9 に固定していたので、たてを選んでも見本が横長のままだった。
    object-fit も cover だと枠の縁が切り取られて、何の枠か分からなくなる
    （2026-08-12、伊波さん「なんか変」） */
+/* タイルの中身の絵。白い枠（お祝い等）が背景に溶け込んで見えない問題があるので、
+   チェッカー模様で透過/白い部分を区別する
+   （2026-08-12、伊波さん「お祝いフレームだけ選択のとこのビューが出来ていない」） */
 .frame-tile img {
   width: 100%; aspect-ratio: var(--tile-ar, 16 / 9);
-  object-fit: contain; display: block; background: #000;
+  object-fit: contain; display: block;
+  background: repeating-conic-gradient(#222 0% 25%, #333 0% 50%) 50% / 16px 16px;
 }
 .frame-tile span {
   display: block; padding: 5px 3px; text-align: center;
