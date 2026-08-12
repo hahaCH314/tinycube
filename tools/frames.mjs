@@ -177,7 +177,8 @@ for (let i = 0; i < inputs.length; i++) {
       while (sp > 0) {
         const p = stack[--sp]; count++;
         const x = p % W, y = (p / W) | 0;
-        if (x === 0 || x === W - 1 || y === 0 || y === H - 1) touchesEdge = true; // 端に触れた
+        // 1ピクセルのフチではなく、画面の5%以内の端に近い黒なら「服や背景」とみなす！
+        if (x < W * 0.05 || x > W * 0.95 || y < H * 0.05 || y > H * 0.95) touchesEdge = true;
         if (x > 0     && dark[p - 1] && label[p - 1] < 0) { label[p - 1] = next; stack[sp++] = p - 1; }
         if (x < W - 1 && dark[p + 1] && label[p + 1] < 0) { label[p + 1] = next; stack[sp++] = p + 1; }
         if (y > 0     && dark[p - W] && label[p - W] < 0) { label[p - W] = next; stack[sp++] = p - W; }
