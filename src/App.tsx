@@ -909,7 +909,7 @@ function App() {
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
               <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
             </div>
-            <div className="frame-picker">
+            <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
               <button
                 className={`frame-tile none ${frameId === null ? 'on' : ''}`}
                 onClick={() => { setFrameId(null); setScreen('source'); }}
@@ -946,11 +946,11 @@ function App() {
           <div className="setup-content">
             <div className="source-picker">
               <button className="source-btn" onClick={() => startCam(true)}>
-                <span className="source-icon">📱</span>
+                <span className="source-icon">🤳</span>
                 <span className="source-text">{t('cam_front')}</span>
               </button>
               <button className="source-btn" onClick={() => startCam(false)}>
-                <span className="source-icon">📷</span>
+                <span className="source-icon">📸</span>
                 <span className="source-text">{t('cam_back')}</span>
               </button>
               <button className="source-btn" onClick={() => fileInputRef.current?.click()}>
@@ -959,14 +959,45 @@ function App() {
               </button>
             </div>
 
-            {/* 自分の音と言葉を入れられることを、ここで知らせる。
-                柱の 1 2 3 が空なのは「あなたが決める場所」だから
-                （2026-08-12、伊波さん「誘導のカメラの下で音ファイルと
-                テキスト入れれる案内して」） */}
-            <button className="source-btn wide-btn" onClick={() => openSetup('source')}>
-              <span className="source-icon">🎵</span>
-              <span className="source-text">じぶんの音と ことばを入れる</span>
-            </button>
+            {/* 「入れられます」と書くだけでは伝わらない。入れる場所そのものを
+                ここに出す。柱の 1 2 と 1 2 3 が、この欄と同じ番号
+                （2026-08-12、伊波さん「ちゃんと１，２の音ファイル
+                １，２，３，のテキストファイル見せなきゃ」） */}
+            <h3 className="setup-section-title">音ファイル</h3>
+            <div className="sound-list">
+              {SOUND_SLOTS.map((id, n) => {
+                const name = customName(id);
+                return (
+                  <div key={id + soundVer} className="sound-row">
+                    <span className="slot-no mine">{n + 1}</span>
+                    <button className="sound-try" onClick={() => fireEffect(id)}>▶</button>
+                    <span className="sound-name">
+                      {t(('eff_' + id) as never)}
+                      {name && <em>{name}</em>}
+                    </span>
+                    <button
+                      className="sound-set"
+                      onClick={() => { setSoundSlot(id); soundInputRef.current?.click(); }}
+                    >{name ? t('sound_change') : t('sound_load')}</button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <h3 className="setup-section-title">テキスト</h3>
+            <div className="telop-inputs">
+              {myTelops.map((text, i) => (
+                <div className="telop-row" key={i}>
+                  <span className="slot-no telop">{i + 1}</span>
+                  <input
+                    className="telop-input"
+                    value={text}
+                    maxLength={20}
+                    onChange={e => setTelop(i, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
 
             {/* 持つ手で録画ボタンの位置を変える
                 （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */}
@@ -1020,11 +1051,11 @@ function App() {
             <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
               <div className="source-picker">
                 <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
-                  <span className="source-icon">📱</span>
+                  <span className="source-icon">🤳</span>
                   <span className="source-text">{t('cam_front')}</span>
                 </button>
                 <button className={`source-btn ${camOn && !camFront ? 'on' : ''}`} onClick={() => startCam(false)}>
-                  <span className="source-icon">📷</span>
+                  <span className="source-icon">📸</span>
                   <span className="source-text">{t('cam_back')}</span>
                 </button>
                 <button className={`source-btn ${videoSrc ? 'on' : ''}`} onClick={() => fileInputRef.current?.click()}>
@@ -1079,7 +1110,7 @@ function App() {
                 ))}
               </div>
 
-              <div className="frame-picker">
+              <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
                 <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
                 {FRAMES.map(f => (
                   <button
@@ -1267,7 +1298,7 @@ function App() {
               ))}
             </div>
 
-            <div className="frame-picker">
+            <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
               <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
               {FRAMES.map(f => (
                 <button

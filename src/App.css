@@ -646,8 +646,13 @@
   box-shadow: 0 0 14px rgba(255, 79, 163, 0.65);
 }
 .frame-tile:active { transform: translateY(2px); }
+/* タイルの形は、選んだ向き（たて/よこ）に合わせる。--tile-ar は App.tsx が渡す。
+   16:9 に固定していたので、たてを選んでも見本が横長のままだった。
+   object-fit も cover だと枠の縁が切り取られて、何の枠か分からなくなる
+   （2026-08-12、伊波さん「なんか変」） */
 .frame-tile img {
-  width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000;
+  width: 100%; aspect-ratio: var(--tile-ar, 16 / 9);
+  object-fit: contain; display: block; background: #000;
 }
 .frame-tile span {
   display: block; padding: 5px 3px; text-align: center;
@@ -1288,9 +1293,22 @@
 .ui-layer.hand-left .side-panel.left  { left: auto; right: 4px; }
 .ui-layer.hand-left .side-panel.right { right: auto; left: 4px; }
 
-/* 左手で持つときは、下のボタンの並びも鏡にする
-   （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */
-.ui-layer.hand-left .bottom-controls { flex-direction: row-reverse; }
+/* 録画ボタンを、持つ手の側へ寄せる
+   （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」
+     「利き手用の寄せ効いてない」）。
+   justify-content: center のままだと、並びを逆にしても録画ボタンは
+   真ん中から動かない。order と auto マージンで端まで送る */
+.ui-layer.hand-right .bottom-controls,
+.ui-layer.hand-left  .bottom-controls {
+  justify-content: flex-start;
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
+  gap: 10px;
+}
+/* 右利き：録画ボタンを右端へ。ほかの3つは左にまとまる */
+.ui-layer.hand-right .record-btn-round { order: 9; margin-left: auto; }
+/* 左利き：録画ボタンを左端へ。ほかの3つは右にまとまる */
+.ui-layer.hand-left  .record-btn-round { order: -1; margin-right: auto; }
 
 /* 撮影画面に着いた直後の誘導 */
 .turn-hint.start-hint { color: #fff; border-color: var(--cp-pink); }
