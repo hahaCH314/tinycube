@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, loadFrame, fitsShape, type FrameAnchor } from './frames'
+import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
 import { t, getLang, setLang } from './i18n'

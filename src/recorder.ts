@@ -26,7 +26,7 @@ export type RecordHandle = {
 export type RecordOptions = {
   video: HTMLVideoElement;
   /** 焼き込む枠。上か下だけの飾りで、横幅いっぱいに置く。null なら枠なし */
-  frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number } } | null;
+  frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
   /** 透かしの文字。null なら焼かない（有料版） */
   watermark: string | null;
   /** 書き出しの形。既定は縦 */
@@ -47,7 +47,7 @@ export type RecordOptions = {
   onError: (e: Error) => void;
 };
 
-import type { FrameAnchor, OutShape } from './frames';
+import type { FrameAnchor, OutShape, FaceHole } from './frames';
 import { attachAudio, detachAudio, drawEffects, audioContext } from './effects';
 
 /** 書き出しの形。読み込んだ動画が横長なら横で出す。
@@ -80,7 +80,7 @@ export type StageOptions = {
      *  顔ハメの穴に顔を合わせられない（2026-08-11、伊波さん「合わせにくい」） */
     mirror?: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: { x: number; y: number; w: number; h: number }; faceHoles?: { x: number; y: number; w: number; h: number }[] } | null;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
   };
 };
