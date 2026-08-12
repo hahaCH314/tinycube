@@ -1044,3 +1044,64 @@
   font-size: 1.1rem;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
 }
+
+/* ============================================================
+   CSS だけで作る飾り枠（無料）。画像は使わず border / box-shadow /
+   background だけで描く。映像の上に重ねるオーバーレイなので、
+   .stage-box の中に置いて inset:0 で全面に敷く。タップは映像に
+   通したいので pointer-events は切る（2026-08-12、伊波さん依頼）
+   ============================================================ */
+.fancy-css-frame-retro,
+.fancy-css-frame-plump {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* --- 1. フラット・レトロ（90年代キャラグッズ／初期プリクラ） ---
+   平面のまま。ぷっくり影は使わず、太いドット枠＋フラットな多重リング。
+   ビビッド〜パステルのベタ塗り。水玉は background で描く */
+.fancy-css-frame-retro {
+  border: 6px dashed #ff5fa8;
+  border-radius: 10px;
+  background:
+    /* 四隅寄りのパステル水玉（フラット。中央の映像は覆わない） */
+    radial-gradient(circle at 10px 10px, #ffd93d 4px, transparent 5px),
+    radial-gradient(circle at calc(100% - 10px) 10px, #63e6ff 4px, transparent 5px),
+    radial-gradient(circle at 10px calc(100% - 10px), #63e6ff 4px, transparent 5px),
+    radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), #ffd93d 4px, transparent 5px);
+  background-repeat: no-repeat;
+  /* フラットな多重リング（blur 0＝立体感を出さない）。
+     白 → ミント → 黄色 のベタ塗りを重ねてプリクラの縁取りに */
+  box-shadow:
+    inset 0 0 0 6px #ffffff,
+    inset 0 0 0 12px #8ef6c6,
+    inset 0 0 0 16px #ffd93d;
+}
+
+/* --- 2. ぷっくりガラス（アクリルチャーム／プラ玩具） ---
+   角丸を太く取り、inset と outset のやわらか影で 3D プラスチック感。
+   ミルキーピンク × ベビーブルー */
+.fancy-css-frame-plump {
+  border: 14px solid transparent;
+  border-radius: 24px;
+  /* 枠部分だけに乳白グラデを乗せる（中央は border-box の内側なので抜ける） */
+  background:
+    linear-gradient(145deg, #ffd6e8 0%, #ffeef5 35%, #dff1ff 70%, #bfe3ff 100%)
+      border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  /* ぷっくり：外側のやわらかグロー＋内側のハイライトと陰影で
+     アクリルの厚みを出す */
+  box-shadow:
+    0 8px 22px rgba(255, 150, 200, 0.45),
+    0 2px 6px rgba(120, 180, 255, 0.4),
+    inset 0 3px 6px rgba(255, 255, 255, 0.95),
+    inset 0 -5px 10px rgba(150, 120, 190, 0.35),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
