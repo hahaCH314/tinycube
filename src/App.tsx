@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor } from './frames'
+import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
 import { t, getLang, setLang } from './i18n'
@@ -103,7 +103,7 @@ function App() {
     video: HTMLVideoElement | null;
     fill: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor; faceHole?: { x: number; y: number; w: number; h: number } } | null;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
     mirror: boolean;
   }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE', mirror: false });
@@ -1442,7 +1442,7 @@ function App() {
                   onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                   title={locked(f) ? t('locked_hint') : f.name}
                 >
-                  <img src={f.file} alt={f.name} />
+                  <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}

@@ -187,6 +187,6 @@ export function loadFrame(frame: { file: string }): Promise<HTMLImageElement> {
     // ファイル名を変えずに中身だけ差し替えることがあるので、住所を変えて
     // 別物として取りに行かせる。作り直したらこの数を上げること
     // （2026-08-11、顔ハメが古いまま黒く出ていた）
-    img.src = frame.file.startsWith('data:') ? frame.file : frame.file + '?v=3';
+    img.src = frame.file.startsWith('data:') ? frame.file : frame.file + '?v=20260813_raw';
   });
 }
