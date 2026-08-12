@@ -157,7 +157,9 @@ https://raw.githubusercontent.com/hahaCH314/tinycube/main/docs/tinycube-skin-shi
 誰でも同じ数字を出せるようにしておく。Node と Electron があれば動く。
 
 ```js
-// shoot.js — electron.exe shoot.js <幅> <高さ> で実行
+// shoot.cjs — electron.exe docs/shoot.cjs <幅> <高さ> で実行
+// ★ 拡張子は .cjs のまま。package.json に "type": "module" があるため、
+//    .js にすると ESM 扱いになって require が使えず、起動時にエラーで止まる。
 const { app, BrowserWindow } = require('electron');
 const fs = require('fs');
 app.disableHardwareAcceleration();
@@ -183,7 +185,7 @@ app.whenReady().then(async () => {
 # リポジトリのルートで実行する。
 # ELECTRON_RUN_AS_NODE が環境に残っていると素の node として動くので必ず外す。
 # electron.exe の場所は環境しだい（CMCUBE 側の app/node_modules/electron/dist/ にある）
-env -u ELECTRON_RUN_AS_NODE "<electron.exe のパス>" docs/shoot.js 390 844
+env -u ELECTRON_RUN_AS_NODE "<electron.exe のパス>" docs/shoot.cjs 390 844
 ```
 
 **クリックできるかの確認は必ず入れること**（見た目だけでは分からないため）：

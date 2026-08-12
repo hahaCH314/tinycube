@@ -1,7 +1,9 @@
-// tinyCUBE 見た目チェック用。デプロイ済みビルドに CSS を差し替えて測る／撮る。
+// tinyCUBE 見た目チェック用。
+// ★ 拡張子は .cjs のまま変えないこと。package.json に "type": "module" が
+//    あるため、.js にすると require が使えず起動しない。デプロイ済みビルドに CSS を差し替えて測る／撮る。
 //
-//   env -u ELECTRON_RUN_AS_NODE "<electron.exe>" docs/shoot.js 390 844
-//   env -u ELECTRON_RUN_AS_NODE "<electron.exe>" docs/shoot.js 844 390 docs/別のCSS
+//   env -u ELECTRON_RUN_AS_NODE "<electron.exe>" docs/shoot.cjs 390 844
+//   env -u ELECTRON_RUN_AS_NODE "<electron.exe>" docs/shoot.cjs 844 390 docs/別のCSS
 //
 // ELECTRON_RUN_AS_NODE が環境に残っていると素の node として動くので必ず外すこと。
 

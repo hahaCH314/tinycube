@@ -1531,7 +1531,251 @@ button {
 
 
 /* ============================================================================
-   16. PC NOTICE  (desktop only — this app is a phone app)
+   16. 起動フローの2画面（同意 → 設定）
+
+   「平成大プリクラ＝先に枠を選んでから撮る」という体験の芯にあたる画面。
+   撮影画面より前に出るので、どちらも全画面。ここには録画中の映像が無いため
+   「中央は飾らない」制約はかからず、装飾を効かせてよい。
+   ========================================================================= */
+
+/* --- 共通の下地 ---------------------------------------------------------- */
+.manner-screen,
+.setup-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--ink-900);
+  background-image:
+    radial-gradient(120% 62% at 12% -6%, rgba(255, 61, 139, 0.24), transparent 62%),
+    radial-gradient(110% 58% at 92% 106%, rgba(53, 240, 255, 0.20), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.022) 0 2px, transparent 2px 10px),
+    linear-gradient(180deg, var(--ink-700), var(--ink-900));
+  overscroll-behavior: contain;
+}
+
+/* --- 同意（マナー喚起）画面 ---------------------------------------------- */
+.manner-screen {
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(var(--sat) + 20px) calc(var(--sar) + 18px)
+    calc(var(--sab) + 20px) calc(var(--sal) + 18px);
+}
+
+.manner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, 460px);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 22px 20px;
+  border-radius: var(--r-xl);
+  text-align: center;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi), var(--lift-3);
+}
+
+.manner-title {
+  margin: 0;
+  font-size: clamp(19px, 5.6vw, 25px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  background: linear-gradient(96deg, var(--cyan-soft), #FFFFFF 40%, var(--pink-soft) 78%, var(--lemon));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.manner-text {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 2;
+  text-align: left;
+  color: var(--fg);
+}
+
+.manner-agree-btn {
+  min-height: 54px;
+  padding: 0 22px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--pink), var(--violet) 68%, var(--cyan));
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  box-shadow: 0 8px 26px rgba(255, 61, 139, 0.42), var(--inner-hi);
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.manner-agree-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 14px rgba(255, 61, 139, 0.42), var(--inner-hi);
+}
+
+/* --- 設定画面（フレーム選択＋利き手） ------------------------------------ */
+.setup-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--sat) + 14px) calc(var(--sar) + 16px) 12px calc(var(--sal) + 16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.setup-title {
+  margin: 0;
+  font-size: clamp(17px, 5vw, 22px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  background: linear-gradient(96deg, var(--cyan-soft), #FFFFFF 42%, var(--pink-soft));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.setup-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px calc(var(--sar) + 16px) 16px calc(var(--sal) + 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 利き手トグル。:has() で label 自体を光らせる */
+.hand-setting {
+  display: flex;
+  gap: 8px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hand-setting label {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 46px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--fg-dim);
+  cursor: pointer;
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.hand-setting input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--pink);
+}
+
+.hand-setting label:has(input:checked) {
+  color: var(--ink-900);
+  background: linear-gradient(180deg, #FFFFFF, var(--cyan-soft));
+  box-shadow: 0 2px 12px rgba(53, 240, 255, 0.42);
+}
+
+/* :has() が無い環境向けの保険。少なくとも選択中が分かる */
+.hand-setting input:checked {
+  outline: 2px solid var(--pink);
+  outline-offset: 2px;
+}
+
+.setup-footer {
+  flex: 0 0 auto;
+  padding: 12px calc(var(--sar) + 16px) calc(var(--sab) + 14px) calc(var(--sal) + 16px);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi), 0 -8px 26px rgba(0, 0, 0, 0.4);
+}
+
+.start-btn {
+  width: 100%;
+  min-height: 54px;
+  padding: 0 20px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--ink-900);
+  background: linear-gradient(135deg, var(--lemon), var(--pink-soft) 62%, var(--cyan-soft));
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  box-shadow: 0 8px 26px rgba(255, 228, 92, 0.34), var(--inner-hi);
+  transition: transform 0.12s ease;
+}
+
+.start-btn:active {
+  transform: scale(0.98);
+}
+
+/* --- フレーム選択は既存の .frame-picker / .frame-tile / .on に寄せる -----
+   設定画面のフレーム一覧も、シート内のフレーム一覧も同じ見た目にする。
+   .frame-grid / .frame-item / .frame-item-active は、実装がそちらの名前に
+   なっていた場合に無装飾にならないための保険。命名が片方に統一できたら、
+   このブロックは消してよい。 */
+.frame-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+}
+
+.frame-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3 / 4;
+  padding: 6px;
+  border-radius: var(--r-md);
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--fg);
+  background: rgba(0, 0, 0, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--inner-hi);
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.frame-item:active {
+  transform: scale(0.95);
+}
+
+.frame-item.on,
+.frame-item-active {
+  border-color: var(--pink);
+  box-shadow: var(--halo-pink), var(--inner-hi);
+}
+
+/* 設定画面の中でも、シートと同じタイルをそのまま使える */
+.setup-content .frame-picker {
+  max-height: none;
+  overflow: visible;
+}
+
+
+/* ============================================================================
+   17. PC NOTICE  (desktop only — this app is a phone app)
    ========================================================================= */
 
 .pc-notice {
@@ -1614,7 +1858,7 @@ button {
 
 
 /* ============================================================================
-   17. KEYFRAMES  (every one of these plays only inside a clipped bar or rail)
+   18. KEYFRAMES  (every one of these plays only inside a clipped bar or rail)
    ========================================================================= */
 
 @keyframes tc-ribbon {
@@ -1656,7 +1900,7 @@ button {
 
 
 /* ============================================================================
-   18. RESPONSIVE
+   19. RESPONSIVE
    ========================================================================= */
 
 /* --- 320x568: the tightest portrait. Shrink the bars, keep 20px+ buttons -- */
@@ -1780,7 +2024,7 @@ button {
 
 
 /* ============================================================================
-   19. REDUCED MOTION
+   20. REDUCED MOTION
    ========================================================================= */
 
 @media (prefers-reduced-motion: reduce) {
