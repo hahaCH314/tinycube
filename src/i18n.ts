@@ -69,6 +69,10 @@ type I18nDict = {
   setting_teloppos: string;
   telop_center: string;
   telop_random: string;
+  setting_handed: string;
+  handed_note: string;
+  handed_right: string;
+  handed_left: string;
   setting_telopcolor: string;
   telop_white: string;
   telop_black: string;
@@ -191,6 +195,10 @@ const dictJa: I18nDict = {
   setting_teloppos: '文字の出る場所',
   telop_center: '◎ まん中',
   telop_random: '🎲 ばらける',
+  setting_handed: '録画ボタンの位置（横向き）',
+  handed_note: 'スマホを横に持ったとき、録画ボタンをどちらの手で押しますか。押しやすい側に寄せます。',
+  handed_right: '👉 右手（右に寄せる）',
+  handed_left: '👈 左手（左に寄せる）',
   setting_telopcolor: '文字の色',
   telop_white: '⬜ 白文字',
   telop_black: '⬛ 黒文字',
@@ -310,6 +318,10 @@ const dictEn: I18nDict = {
   setting_teloppos: 'Caption position',
   telop_center: '◎ Centre',
   telop_random: '🎲 Scattered',
+  setting_handed: 'Record button side (landscape)',
+  handed_note: 'When you hold the phone sideways, which hand presses record? We move the button to that side.',
+  handed_right: '👉 Right hand',
+  handed_left: '👈 Left hand',
   setting_telopcolor: 'Caption colour',
   telop_white: '⬜ White',
   telop_black: '⬛ Black',

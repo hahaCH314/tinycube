@@ -560,6 +560,54 @@
   .btn-icon svg { width: 12px; height: 10px; }
   .number-icon { font-size: 0.9rem; }
   .btn-label { font-size: 0.42rem; }
+
+  /* 横向きは両手グリップ。中央下は両方の親指から遠いので、
+     利き手側の端に4つのボタンを寄せる（2026-08-12、伊波さん）。
+     柱の下には潜らせない＝レール幅ぶんの余白を必ず空ける */
+  .app-container[data-handed='right'] .bottom-controls,
+  .app-container[data-handed='left']  .bottom-controls {
+    justify-content: center;
+  }
+
+  /* --- 右手：右端に寄せる。左が試す→写真→録画→一時停止の順 --- */
+  .app-container[data-handed='right'] .record-btn-round {
+    position: absolute;
+    right: max(16px, calc(var(--rail-w) + 16px), env(safe-area-inset-right));
+    left: auto;
+  }
+  .app-container[data-handed='right'] .pause-btn-round {
+    right: max(16px, calc(var(--rail-w) + 16px), env(safe-area-inset-right));
+    left: auto;
+    bottom: calc(var(--foot-h) + 6px);
+  }
+  .app-container[data-handed='right'] .photo-btn-round {
+    left: auto;
+    right: max(84px, calc(var(--rail-w) + 84px), calc(env(safe-area-inset-right) + 68px));
+  }
+  .app-container[data-handed='right'] .preview-btn-round {
+    left: auto;
+    right: max(136px, calc(var(--rail-w) + 136px), calc(env(safe-area-inset-right) + 120px));
+  }
+
+  /* --- 左手：左端に寄せる。鏡合わせ --- */
+  .app-container[data-handed='left'] .record-btn-round {
+    position: absolute;
+    left: max(16px, calc(var(--rail-w) + 16px), env(safe-area-inset-left));
+    right: auto;
+  }
+  .app-container[data-handed='left'] .pause-btn-round {
+    left: max(16px, calc(var(--rail-w) + 16px), env(safe-area-inset-left));
+    right: auto;
+    bottom: calc(var(--foot-h) + 6px);
+  }
+  .app-container[data-handed='left'] .photo-btn-round {
+    right: auto;
+    left: max(84px, calc(var(--rail-w) + 84px), calc(env(safe-area-inset-left) + 68px));
+  }
+  .app-container[data-handed='left'] .preview-btn-round {
+    right: auto;
+    left: max(136px, calc(var(--rail-w) + 136px), calc(env(safe-area-inset-left) + 120px));
+  }
 }
 
 /* ============================================================

@@ -223,7 +223,18 @@ function App() {
   const pickTelopColor = (dark: boolean) => {
     setTelopDark(dark);
     try { localStorage.setItem('tinycube.telopDark', dark ? '1' : '0'); } catch { /* 保存できなくても動く */ }
-  };    // 入れ替えたら画面を描き直すための番号
+  };
+
+  // 横向きのとき、録画ボタンをどちらの端に寄せるか。左利きの人がしんどい
+  // という声を受けて、利き手で切り替えられるようにした（2026-08-12、伊波さん）
+  const [handed, setHanded] = useState<'right' | 'left'>(() => {
+    try { return (localStorage.getItem('tinycube.handed') as 'right' | 'left') || 'right'; } catch { return 'right'; }
+  });
+  const pickHanded = (h: 'right' | 'left') => {
+    setHanded(h);
+    try { localStorage.setItem('tinycube.handed', h); } catch { /* 保存できなくても動く */ }
+  };
+    // 入れ替えたら画面を描き直すための番号
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
   const [showSettings, setShowSettings] = useState(false);
@@ -285,7 +296,7 @@ function App() {
     try { localStorage.setItem('tinycube.guideSeen', '1'); } catch { /* 保存できなくても動く */ }
     setShowGuide(false);
   };
-  // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
+  // 枠は全部出す。形が合わないものは端が切れるが、それでも使���たいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
   // 鍵のかかった枠は、解除するまで選べない。一覧には出す（何が入るか分かるように）
   const locked = (f: { paid?: boolean }) => !!f.paid && !unlocked;
@@ -581,7 +592,7 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-handed={handed}>
       {/* 映像領域（最背面で全画面） */}
       <main className="preview-stage" onClick={triggerFileInput}>
         <input
@@ -896,6 +907,13 @@ function App() {
             <div className="shape-switch">
               <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
+            </div>
+
+            <h3>{t('setting_handed')}</h3>
+            <p className="sheet-note">{t('handed_note')}</p>
+            <div className="shape-switch">
+              <button className={handed === 'left' ? 'on' : ''} onClick={() => pickHanded('left')}>{t('handed_left')}</button>
+              <button className={handed === 'right' ? 'on' : ''} onClick={() => pickHanded('right')}>{t('handed_right')}</button>
             </div>
 
             <h3>{t('setting_teloppos')}</h3>
