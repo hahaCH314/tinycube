@@ -167,25 +167,30 @@ for (let i = 0; i < inputs.length; i++) {
     const label = new Int32Array(N).fill(-1);
     const stack = new Int32Array(N);
     const sizes = [];
+    const edgeTouches = []; // 端に触れているかを記録
     let next = 0;
     for (let s = 0; s < N; s++) {
       if (!dark[s] || label[s] >= 0) continue;
       let sp = 0, count = 0;
+      let touchesEdge = false;
       stack[sp++] = s; label[s] = next;
       while (sp > 0) {
         const p = stack[--sp]; count++;
         const x = p % W, y = (p / W) | 0;
+        if (x === 0 || x === W - 1 || y === 0 || y === H - 1) touchesEdge = true; // 端に触れた
         if (x > 0     && dark[p - 1] && label[p - 1] < 0) { label[p - 1] = next; stack[sp++] = p - 1; }
         if (x < W - 1 && dark[p + 1] && label[p + 1] < 0) { label[p + 1] = next; stack[sp++] = p + 1; }
         if (y > 0     && dark[p - W] && label[p - W] < 0) { label[p - W] = next; stack[sp++] = p - W; }
         if (y < H - 1 && dark[p + W] && label[p + W] < 0) { label[p + W] = next; stack[sp++] = p + W; }
       }
-      sizes.push(count); next++;
+      sizes.push(count);
+      edgeTouches.push(touchesEdge);
+      next++;
     }
 
-    // 画面の 0.4% 以上ある塊だけ抜く
+    // 画面の 0.4% 以上ある塊で、かつ「画面の端に触れていないもの（＝服ではなく穴）」だけ抜く
     const min = N * ${MIN_PCT / 100};
-    const kill = sizes.map(s => s >= min);
+    const kill = sizes.map((s, i) => s >= min && !edgeTouches[i]);
     let cleared = 0;
     for (let i = 0; i < N; i++) {
       const l = label[i];

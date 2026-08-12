@@ -37,15 +37,15 @@ export const FRAMES: Frame[] = [
   { id: 'ol9',              name: 'OL9',                file: './frames/ol9.webp',              anchor: 'full' },
   { id: 'p9',               name: 'P9',                 file: './frames/p9.webp',               anchor: 'full' },
   { id: 'frame_05',         name: 'PANK,16',            file: './frames/frame_05.webp',         anchor: 'wide' },
-  { id: 'frame_06',         name: 'アイドルメンズ',         file: './frames/frame_06.webp',         anchor: 'wide' },
-  { id: 'frame_07',         name: 'ギャル男16',            file: './frames/frame_07.webp',         anchor: 'wide' },
-  { id: 'frame_08',         name: 'ヒーロー9',             file: './frames/frame_08.webp',         anchor: 'full' },
-  { id: 'frame_09',         name: 'ファンシー9',           file: './frames/frame_09.webp',         anchor: 'full' },
-  { id: 'frame_10',         name: 'うみ16',              file: './frames/frame_10.webp',         anchor: 'wide' },
+  { id: 'frame_06',         name: 'うみ16',              file: './frames/frame_06.webp',         anchor: 'wide' },
+  { id: 'frame_07',         name: 'アイドルメンズ',         file: './frames/frame_07.webp',         anchor: 'wide' }, // 16がないですが、横長フレームと判定
+  { id: 'frame_08',         name: 'ギャル男16',            file: './frames/frame_08.webp',         anchor: 'wide' },
+  { id: 'frame_09',         name: 'ヒーロー9',             file: './frames/frame_09.webp',         anchor: 'full' },
+  { id: 'frame_10',         name: 'ファンシー9',           file: './frames/frame_10.webp',         anchor: 'full' },
   { id: 'white',            name: '白ギャル16',            file: './frames/white.webp',            anchor: 'wide' },
   { id: 'black',            name: '黒ギャル16',            file: './frames/black.webp',            anchor: 'wide' },
-  { id: 'frame_13',         name: 's9',                 file: './frames/frame_13.webp',         anchor: 'full' },
-  { id: 'frame_14',         name: 'sアイドル16',           file: './frames/frame_14.webp',         anchor: 'wide' },
+  { id: 'frame_13',         name: 'sアイドル16',           file: './frames/frame_13.webp',         anchor: 'wide' },
+  { id: 'frame_14',         name: 's9',                 file: './frames/frame_14.webp',         anchor: 'full' },
   { id: 'frame_15',         name: 'v系16',               file: './frames/frame_15.webp',         anchor: 'wide' },
 
   // --- 顔ハメ（9:16 で描いてあるので、縦で書き出すときにぴったり合う） ---
