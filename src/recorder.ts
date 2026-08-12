@@ -80,7 +80,7 @@ export type StageOptions = {
      *  顔ハメの穴に顔を合わせられない（2026-08-11、伊波さん「合わせにくい」） */
     mirror?: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: { x: number; y: number; w: number; h: number } } | null;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: { x: number; y: number; w: number; h: number }; faceHoles?: { x: number; y: number; w: number; h: number }[] } | null;
     watermark: string | null;
   };
 };
@@ -172,27 +172,25 @@ export function startStage(opts: StageOptions): () => void {
     // したが、伊波さんの端末では透けずに黒いままだった。実機で動いていたのは
     // こちらなので戻した（2026-08-11、伊波さん「1度映ったのはなぜ？」）。
     // 絵の穴が透明でも黒でも、どちらでも成り立つ作りでもある
-    if (frame?.faceHole && video && vw && vh) {
-      const fh = frame.faceHole;
-      const cx = OUT_W * (fh.x + fh.w / 2) / 100;
-      const cy = OUT_H * (fh.y + fh.h / 2) / 100;
-      const rx = OUT_W * (fh.w / 2) / 100;
-      const ry = OUT_H * (fh.h / 2) / 100;
-      g.save();
-      g.beginPath();
-      g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-      g.clip();
-      // 穴の大きさに合わせて、穴の中心へ寄せる。
-      // 画面いっぱいまで広げたカメラを小さな穴で切り抜くと、顔の一部だけが
-      // 極端に大きく覗いて何も分からない（2026-08-11、伊波さん
-      // 「インカメラは近すぎて見えない」）
-      const s2 = Math.max((rx * 2) / vw, (ry * 2) / vh);
-      const w2 = vw * s2, h2 = vh * s2;
-      // 切り抜きは元の向きで作り、そのあとで鏡にする
-      if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
-      const dx = mirror ? OUT_W - cx : cx;
-      g.drawImage(video, dx - w2 / 2, cy - h2 / 2, w2, h2);
-      g.restore();
+    const holes = frame?.faceHoles ?? (frame?.faceHole ? [frame.faceHole] : []);
+    if (holes.length > 0 && video && vw && vh) {
+      for (const fh of holes) {
+        const cx = OUT_W * (fh.x + fh.w / 2) / 100;
+        const cy = OUT_H * (fh.y + fh.h / 2) / 100;
+        const rx = OUT_W * (fh.w / 2) / 100;
+        const ry = OUT_H * (fh.h / 2) / 100;
+        g.save();
+        g.beginPath();
+        g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        g.clip();
+        // 穴の大きさに合わせて、穴の中心へ寄せる。
+        const s2 = Math.max((rx * 2) / vw, (ry * 2) / vh);
+        const w2 = vw * s2, h2 = vh * s2;
+        if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
+        const dx = mirror ? OUT_W - cx : cx;
+        g.drawImage(video, dx - w2 / 2, cy - h2 / 2, w2, h2);
+        g.restore();
+      }
     }
     drawEffects(g, OUT_W, OUT_H);
     if (watermark) {

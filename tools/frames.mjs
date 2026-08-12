@@ -38,6 +38,7 @@ const CHROME = process.env.CHROME_PATH
 // 01.png のような連番だけのフォルダは、これを付けないと既にある枠と名前がぶつかる
 const argv = process.argv.slice(2);
 const PREFIX = (argv.find(a => a.startsWith('--prefix=')) || '').slice(9);
+const KEEP_RAW = argv.includes('--raw') || argv.includes('--facehole') || argv.includes('--keep');
 // 抜く塊の最小の大きさ（画面に対する％）。既定 0.4。
 // 顔ハメのように、絵の中にも暗いところがある絵は上げる。
 // 下げすぎると飾りの影まで抜けて、そこから映像が透ける（2026-08-11）
@@ -155,6 +156,16 @@ for (let i = 0; i < inputs.length; i++) {
     const im = g.getImageData(0, 0, W, H);
     const d = im.data;
     const N = W * H;
+
+    if (${KEEP_RAW}) {
+      return JSON.stringify({
+        w: W, h: H,
+        killed: 0,
+        clearedPct: 0,
+        blackLeftPct: 0,
+        webp: c.toDataURL('image/webp', ${QUALITY}),
+      });
+    }
 
     // 黒い画素。服の濃紺や髪の影（RGB 20以上）を誤って抜かないよう、真の黒（穴）のみ判定
     const dark = new Uint8Array(N);

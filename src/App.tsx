@@ -439,7 +439,7 @@ function App() {
     if (!frame || (builtinFrame && locked(builtinFrame))) { liveRef.current.frame = null; return; }
     let alive = true;
     loadFrame(frame).then(img => {
-      if (alive) liveRef.current.frame = { img, anchor: frame.anchor, faceHole: frame.faceHole };
+      if (alive) liveRef.current.frame = { img, anchor: frame.anchor, faceHole: frame.faceHole, faceHoles: (frame as Frame).faceHoles };
     }).catch(() => { /* 読めなければ枠なしで続ける */ });
     return () => { alive = false; };
   }, [frame, shape]);
