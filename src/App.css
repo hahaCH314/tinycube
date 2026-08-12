@@ -1287,3 +1287,7 @@
 /* 利き手：左右の柱を入れ替える */
 .ui-layer.hand-left .side-panel.left  { left: auto; right: 4px; }
 .ui-layer.hand-left .side-panel.right { right: auto; left: 4px; }
+
+/* 左手で持つときは、下のボタンの並びも鏡にする
+   （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */
+.ui-layer.hand-left .bottom-controls { flex-direction: row-reverse; }

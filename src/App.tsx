@@ -246,13 +246,17 @@ function App() {
   // 下のパネルは録画中に指で押すものだけにする
   // 'agree' はアプリを開くたびに必ず最初に出る（伊波さん「アプリ開いた時」）。
   // 一度きりにしたい場合は、下の初期値を localStorage で分岐させれば済む
-  const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video'>('agree');
+  // 起動の順番は「平成大プリクラ」に合わせてある。プリクラ機と同じで、
+  // 撮る前にまず枠を決める（docs/tinycube-update-scope.md 0章）。
+  //   agree（お願い）→ frame（①わくをえらぶ）→ source（②なにを撮る）→ video
+  // 1画面で決めることは1つだけ。それ以外の設定は ⚙️（setup）に置いたまま
+  const [screen, setScreen] = useState<'agree' | 'manner' | 'frame' | 'source' | 'setup' | 'video'>('agree');
   // 「同意してはじめる」を押したあとの行き先。
-  // 使い方をまだ見ていない人にはガイド、見た人は設定（＝枠を選ぶ）へ
+  // 使い方をまだ見ていない人にはガイド、見た人は①へ
   const afterAgree = () => {
     let seen = false;
     try { seen = localStorage.getItem('tinycube.guideSeen') === '1'; } catch { /* 読めなくても動く */ }
-    setScreen(seen ? 'setup' : 'manner');
+    setScreen(seen ? 'frame' : 'manner');
   };
   const [hand, setHand] = useState<'right' | 'left'>('right');
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
@@ -314,8 +318,13 @@ function App() {
 
   const closeGuide = () => {
     try { localStorage.setItem('tinycube.guideSeen', '1'); } catch { /* 保存できなくても動く */ }
-    setScreen('setup');
+    setScreen('frame');
   };
+  // ②で素材が決まったら、待たせずに撮影画面へ送る。
+  // カメラでもファイルでも同じ扱いにしたいので、結果のほうを見ている
+  useEffect(() => {
+    if (screen === 'source' && (videoSrc || camOn)) setScreen('video');
+  }, [screen, videoSrc, camOn]);
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
   // 鍵のかかった枠は、解除するまで選べない。一覧には出す（何が入るか分かるように）
@@ -849,6 +858,87 @@ function App() {
         </div>
       )}
 
+      {/* ① わくをえらぶ。プリクラ機と同じで、撮る前にまず枠を決める。
+          ここで決めることは「どの枠か」だけ。他は何も聞かない */}
+      {screen === 'frame' && (
+        <div className="setup-screen">
+          <div className="setup-header">
+            <h2 className="setup-title">① わくを えらぶ</h2>
+          </div>
+          <div className="setup-content">
+            {/* 形を先に決める。縦と横で出せる枠が変わるので、ここで一緒に選ぶ
+                （2026-08-12、伊波さん「フレームを選ぶところで縦横もきまったら？」） */}
+            <p className="sheet-note">たてか よこを えらんでから、わくを ひとつ えらんでね</p>
+            <div className="shape-switch">
+              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
+              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
+            </div>
+            <div className="frame-picker">
+              <button
+                className={`frame-tile none ${frameId === null ? 'on' : ''}`}
+                onClick={() => { setFrameId(null); setScreen('source'); }}
+              >{t('frame_none')}</button>
+              {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
+                <button
+                  key={f.id}
+                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
+                  onClick={() => {
+                    // 鍵つきを押しても何も起きないと壊れて見える。買うところまで連れていく
+                    if (locked(f)) { setScreen('setup'); showUnlock(); }
+                    else { setFrameId(f.id); setScreen('source'); }
+                  }}
+                  title={locked(f) ? t('locked_hint') : f.name}
+                >
+                  <img src={f.file} alt={f.name} />
+                  {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
+                  {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
+                      見やすいよ」）。読み上げ用に img の alt には残してある */}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ② なにを撮るか。カメラか、すでにある動画か。それだけ */}
+      {screen === 'source' && (
+        <div className="setup-screen">
+          <div className="setup-header">
+            <h2 className="setup-title">② なにを 撮る？</h2>
+            <button className="setup-close-btn" onClick={() => setScreen('frame')} title="もどる">←</button>
+          </div>
+          <div className="setup-content">
+            <p className="sheet-note">カメラで撮るか、すでにある動画をつかうか えらんでね</p>
+            <div className="source-picker">
+              <button className="source-btn" onClick={() => startCam(true)}>
+                <span className="source-icon">📱</span>
+                <span className="source-text">{t('cam_front')}</span>
+              </button>
+              <button className="source-btn" onClick={() => startCam(false)}>
+                <span className="source-icon">📷</span>
+                <span className="source-text">{t('cam_back')}</span>
+              </button>
+              <button className="source-btn" onClick={() => fileInputRef.current?.click()}>
+                <span className="source-icon">📁</span>
+                <span className="source-text">{t('setting_video_load')}</span>
+              </button>
+            </div>
+
+            {/* 持つ手で録画ボタンの位置を変える
+                （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */}
+            <h3 className="setup-section-title">どっちの手で もつ？</h3>
+            <div className="shape-switch">
+              <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>ひだり</button>
+              <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>みぎ</button>
+            </div>
+          </div>
+          {/* カメラを許可できない人を行き止まりにしない */}
+          <div className="setup-footer">
+            <button className="start-btn" onClick={() => setScreen('video')}>あとで きめる</button>
+          </div>
+        </div>
+      )}
+
       {/* 設定。事前準備はすべてここに入れる */}
       {screen === 'setup' && (
         <div className="setup-screen">
@@ -887,8 +977,6 @@ function App() {
 
             {/* 何を撮るか決めるエリア（一番上） */}
             <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
-              <h3 className="setup-section-title">✨ 1. まずはカメラをつけよう！</h3>
-              
               <div className="source-picker">
                 <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
                   <span className="source-icon">📱</span>
@@ -961,7 +1049,8 @@ function App() {
                   >
                     <img src={f.file} alt={f.name} />
                     {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
-                    <span>{f.name}</span>
+                    {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
+                      見やすいよ」）。読み上げ用に img の alt には残してある */}
                   </button>
                 ))}
               </div>
@@ -1148,18 +1237,18 @@ function App() {
                 >
                   <img src={f.file} alt={f.name} />
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
-                  <span>{f.name}</span>
+                  {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
+                      見やすいよ」）。読み上げ用に img の alt には残してある */}
                 </button>
               ))}
             </div>
 
             <div className="setup-footer">
-              <button 
-                className="start-btn" 
-                onClick={() => setScreen('video')}
-                disabled={!videoSrc && !camOn}
-              >
-                {(videoSrc || camOn) ? 'この設定で撮る！' : '⚠️ まずはカメラをつけてね！'}
+              {/* 素材は②の画面で選ぶようになったので、ここで急かさない。
+                  塞ぐと戻れなくなる（2026-08-12、伊波さん「まずはカメラを
+                  つけてねはほんとにいらない」） */}
+              <button className="start-btn" onClick={() => setScreen('video')}>
+                この設定で撮る！
               </button>
             </div>
           </div>
