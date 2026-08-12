@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, fitsShape, loadFrame, type FrameAnchor } from './frames'
+import { FRAMES, loadFrame, type FrameAnchor } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
 import { t, getLang } from './i18n'
@@ -889,7 +889,7 @@ function App() {
               {FRAMES.map(f => (
                 <button
                   key={f.id}
-                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''} ${fitsShape(f, shape) ? '' : 'cut'}`}
+                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
                   onClick={() => {
                     // 鍵つきを押しても何も起きないと壊れて見える。買うところまで連れていく
                     if (locked(f)) { setScreen('setup'); showUnlock(); }
@@ -899,7 +899,6 @@ function App() {
                 >
                   <img src={f.file} alt={f.name} />
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
-                  {!fitsShape(f, shape) && <span className="cut-mark">切れる</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
                 </button>
@@ -1047,13 +1046,12 @@ function App() {
                 {FRAMES.map(f => (
                   <button
                     key={f.id}
-                    className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''} ${fitsShape(f, shape) ? '' : 'cut'}`}
+                    className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
                     onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                     title={locked(f) ? t('locked_hint') : f.name}
                   >
                     <img src={f.file} alt={f.name} />
                     {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
-                  {!fitsShape(f, shape) && <span className="cut-mark">切れる</span>}
                     {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
                   </button>
@@ -1236,13 +1234,12 @@ function App() {
               {FRAMES.map(f => (
                 <button
                   key={f.id}
-                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''} ${fitsShape(f, shape) ? '' : 'cut'}`}
+                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
                   onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                   title={locked(f) ? t('locked_hint') : f.name}
                 >
                   <img src={f.file} alt={f.name} />
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
-                  {!fitsShape(f, shape) && <span className="cut-mark">切れる</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
                 </button>
