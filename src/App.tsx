@@ -921,7 +921,6 @@ function App() {
             </button>
           </div>
           <div className="setup-content">
-            {/* 形を先に決める。縦と横で出せる枠が変わるので、ここで一緒に選ぶ
             {/* 縦に横フレーム（切れる）は要らない。形に合うものだけ出す
                 （2026-08-12、伊波さん「フレームを選ぶところで縦横もきまったら？」） */}
             <div className="shape-switch">
