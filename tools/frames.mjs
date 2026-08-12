@@ -240,7 +240,8 @@ for (let i = 0; i < inputs.length; i++) {
   //
   // ただし同じ絵を取り込み直したときは、そのまま上書きしてよい。
   // どの絵から出したものかを覚え書き（frames-made.json）に残して見分ける
-  if (existsSync(out()) && MADE[name] !== inn) {
+  const FORCE = argv.includes('--force') || argv.includes('--overwrite') || KEEP_RAW;
+  if (!FORCE && existsSync(out()) && MADE[name] !== inn) {
     const taken = name;
     let n = 2;
     while (existsSync(out()) && MADE[name] !== inn) name = taken + '_' + n++;

@@ -1046,7 +1046,7 @@ function App() {
                   }}
                   title={locked(f) ? t('locked_hint') : f.name}
                 >
-                  <img src={f.file ? f.file + '?v=20260813' : undefined} alt={f.name} />
+                  <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
