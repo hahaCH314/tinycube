@@ -1,0 +1,1798 @@
+/* ============================================================================
+   tinyCUBE — skin only
+   Theme: 渋谷デコラティブストリートカルチャー × オタク文化
+          ("Neo-Heisei Purikura" meets a modern social sharing tool)
+
+   Rules honoured in this file
+   - .preview-stage is sacred. No animation, glow, gradient or border intrudes.
+   - Animated decoration exists ONLY inside .side-panel / .header /
+     .bottom-controls / .city-frame, and every one of them is overflow:hidden.
+   - dvh only, never vh. env(safe-area-inset-*) respected on all four sides.
+   - Rail button height is derived from --rail-max (15). Never below 20px at
+     320x568, 360x640, 390x844, 412x915 or landscape 844x390.
+   - No @import, no external fonts, no images.
+   ========================================================================= */
+
+
+/* ============================================================================
+   00. TOKENS
+   ========================================================================= */
+
+:root {
+  /* --- rails ------------------------------------------------------------ */
+  --rail-max: 15;            /* left rail holds 15; right rail holds 12      */
+  --rail-w: clamp(42px, 13vw, 56px);
+  --rail-gap: 3px;
+  --rail-pad: 4px;
+
+  /* --- bar heights (content box; safe-area is added as padding) --------- */
+  --header-h: 46px;
+  --bottom-h: 92px;
+
+  /* --- safe area -------------------------------------------------------- */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+
+  /* --- chrome insets: everything else is measured from these ------------ */
+  --chrome-top: calc(var(--sat) + var(--header-h));
+  --chrome-bot: calc(var(--sab) + var(--bottom-h));
+  --gutter: calc(var(--rail-w) + 10px);
+
+  /* --- rail vertical extent (overridden in landscape) ------------------- */
+  --rail-top: calc(var(--chrome-top) + 6px);
+  --rail-bot: calc(var(--chrome-bot) + 6px);
+
+  /* --- THE rail maths --------------------------------------------------- */
+  --rail-inner: calc(
+    100dvh - var(--rail-top) - var(--rail-bot)
+    - 2px                                   /* .side-panel の上下ボーダー */
+    - (var(--rail-pad) * 2)
+    - (var(--rail-gap) * (var(--rail-max) - 1))
+  );
+  --btn-h: clamp(20px, calc(var(--rail-inner) / var(--rail-max)), 56px);
+
+  /* --- palette: deep intellectual navy ---------------------------------- */
+  --ink-900: #070B18;
+  --ink-800: #0B1021;
+  --ink-700: #111834;
+  --ink-600: #1A2246;
+
+  /* --- decora accents --------------------------------------------------- */
+  --pink: #FF3D8B;
+  --pink-soft: #FF8FC0;
+  --cyan: #35F0FF;
+  --cyan-soft: #9BF7FF;
+  --violet: #A96BFF;
+  --lemon: #FFE45C;
+  --danger: #FF5A5A;
+
+  /* --- text ------------------------------------------------------------- */
+  --fg: #F2F5FF;
+  --fg-dim: #A9B4D8;
+  --fg-mute: #6E7BA6;
+
+  /* --- glass ------------------------------------------------------------ */
+  --glass-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.035));
+  --glass-bg-strong: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+  --glass-line: rgba(255, 255, 255, 0.16);
+  --glass-line-hi: rgba(255, 255, 255, 0.28);
+  --glass-blur: blur(18px) saturate(150%);
+  --glass-blur-lite: blur(10px) saturate(135%);
+
+  /* --- elevation -------------------------------------------------------- */
+  --lift-1: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --lift-2: 0 10px 34px rgba(0, 0, 0, 0.48);
+  --lift-3: 0 18px 60px rgba(0, 0, 0, 0.62);
+  --inner-hi: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+
+  /* --- neon halos (used on chrome only, never on the stage) ------------- */
+  --halo-pink: 0 0 0 1px rgba(255, 61, 139, 0.55), 0 0 18px rgba(255, 61, 139, 0.45);
+  --halo-cyan: 0 0 0 1px rgba(53, 240, 255, 0.55), 0 0 18px rgba(53, 240, 255, 0.40);
+
+  /* --- radii ------------------------------------------------------------ */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+  --r-pill: 999px;
+
+  /* --- type ------------------------------------------------------------- */
+  --font: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+          "Yu Gothic UI", "Yu Gothic", Meiryo, system-ui, -apple-system,
+          "Segoe UI", Roboto, sans-serif;
+  --font-num: "SF Mono", "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  color-scheme: dark;
+}
+
+
+/* ============================================================================
+   01. RESET / PAGE GROUND
+   ========================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--ink-900);
+}
+
+body {
+  font-family: var(--font);
+  color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+:where(button, input, a):focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+
+/* ============================================================================
+   02. APP SHELL
+   The container paints the Shibuya night: a static navy wash with a fine
+   sticker-grid. Static only — the stage sits on top of it untouched.
+   ========================================================================= */
+
+/* Real DOM (verified against the live build):
+     .app-container
+       main.preview-stage  > input, .stage-box, .video-placeholder
+       div.ui-layer        > .city-frame, .header, .bottom-controls, .side-panel
+   So .ui-layer is a full-screen overlay that carries ALL of the chrome, and
+   .preview-stage is the only element in normal flow. Everything below is
+   positioned from that fact. */
+
+.app-container {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background-color: var(--ink-800);
+  background-image:
+    radial-gradient(120% 68% at 12% -8%, rgba(255, 61, 139, 0.20), transparent 62%),
+    radial-gradient(110% 62% at 92% 108%, rgba(53, 240, 255, 0.16), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.022) 0 2px, transparent 2px 10px),
+    linear-gradient(180deg, var(--ink-700), var(--ink-900));
+  /* NOTE: no transform / filter here — fixed rails must anchor to the viewport */
+}
+
+
+/* ============================================================================
+   03. HEADER  (animated decoration allowed — clipped)
+   ========================================================================= */
+
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  pointer-events: auto;              /* .ui-layer is click-through; this is not */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: calc(var(--header-h) + var(--sat));
+  padding: var(--sat) calc(var(--sar) + 10px) 0 calc(var(--sal) + 10px);
+  overflow: hidden;                        /* clips the decoration below */
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi), 0 6px 22px rgba(0, 0, 0, 0.34);
+}
+
+/* decora ribbon sweeping behind the header — clipped by overflow:hidden */
+.header::before {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  z-index: -1;
+  background: repeating-linear-gradient(
+    115deg,
+    rgba(255, 61, 139, 0.16) 0 10px,
+    rgba(53, 240, 255, 0.14) 10px 20px,
+    transparent 20px 46px
+  );
+  animation: tc-ribbon 14s linear infinite;
+  pointer-events: none;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.logo-container::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  border-radius: 5px;
+  background: conic-gradient(from 210deg, var(--pink), var(--violet), var(--cyan), var(--pink));
+  box-shadow: 0 0 12px rgba(255, 61, 139, 0.55);
+  transform: rotate(12deg);
+}
+
+.logo-text {
+  font-size: clamp(15px, 4.6vw, 19px);
+  font-weight: 900;
+  letter-spacing: 0.055em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: linear-gradient(96deg, var(--cyan-soft) 0%, #FFFFFF 34%, var(--pink-soft) 72%, var(--lemon) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 20px rgba(255, 61, 139, 0.28);
+}
+
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.tool-btn-small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 9px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fg);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi);
+  transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.tool-btn-small:active {
+  transform: scale(0.93);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--halo-cyan);
+}
+
+.discord-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #5865F2, #7A5CF0 55%, var(--violet));
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: var(--inner-hi), 0 4px 16px rgba(88, 101, 242, 0.5);
+  transition: transform 0.12s ease, filter 0.18s ease;
+}
+
+.discord-btn:active {
+  transform: scale(0.93);
+}
+
+
+/* ============================================================================
+   04. PREVIEW STAGE — SACRED GROUND
+   Nothing animated, nothing glowing, nothing gradient lives in here.
+   The only paint is flat black so the recorded picture reads true.
+   ========================================================================= */
+
+.preview-stage {
+  position: absolute;
+  z-index: 10;
+  top: calc(var(--chrome-top) + 6px);
+  bottom: calc(var(--chrome-bot) + 6px);
+  left: calc(var(--sal) + var(--gutter));
+  right: calc(var(--sar) + var(--gutter));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* no overflow:hidden here: fixed-position rails must not be clipped */
+}
+
+/* the hidden file input that lives inside .preview-stage */
+.preview-stage > input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.stage-box {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: #000000;
+  /* one hairline, entirely outside the picture area */
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 14px 40px rgba(0, 0, 0, 0.55);
+}
+
+.stage-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000000;
+  touch-action: none;
+}
+
+/* the decode source that feeds the canvas: invisible, but never display:none
+   (some browsers stop decoding a display:none video, which would kill capture) */
+.video-player.hidden-source {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  left: -9999px;
+  top: 0;
+}
+
+.video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--fg-dim);
+  background: #000000;
+}
+
+.upload-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  font-size: 27px;
+  color: var(--fg);
+  background: var(--glass-bg-strong);
+  border: 1px dashed rgba(255, 143, 192, 0.6);
+  box-shadow: var(--inner-hi);
+}
+
+.turn-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  max-width: min(86%, 300px);
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--fg);
+  background: rgba(11, 16, 33, 0.74);
+  backdrop-filter: var(--glass-blur-lite);
+  -webkit-backdrop-filter: var(--glass-blur-lite);
+  border: 1px solid var(--glass-line);
+  pointer-events: none;
+}
+
+.cam-info {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 9px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-num);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--cyan-soft);
+  background: rgba(7, 11, 24, 0.62);
+  border: 1px solid rgba(53, 240, 255, 0.28);
+  pointer-events: none;
+}
+
+
+/* ============================================================================
+   05. UI LAYER
+   Sits over the stage but stays out of the way: transparent, click-through,
+   and the only decoration allowed is the two clipped edge bars.
+   ========================================================================= */
+
+.ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;              /* the picture stays reachable underneath */
+}
+
+/* …but every control inside it must stay clickable */
+.ui-layer .header,
+.ui-layer .bottom-controls,
+.ui-layer .side-panel,
+.ui-layer button,
+.ui-layer a,
+.ui-layer input {
+  pointer-events: auto;
+}
+
+/* pure decoration never takes a tap */
+.city-frame,
+.shutter-flash,
+.pause-badge {
+  pointer-events: none;
+}
+
+/* --- .city-frame: the slim decorated edge bars ---------------------------
+   Deliberately thin (12px) and pinned to the extreme top / bottom edge so the
+   picture stays readable. Animation is clipped inside each bar.            */
+.city-frame {
+  position: absolute;
+  /* pinned to the stage edges, not the screen edges */
+  left: calc(var(--sal) + var(--gutter));
+  right: calc(var(--sar) + var(--gutter));
+  height: 12px;
+  z-index: 3;
+  overflow: hidden;                        /* required: clips the decoration */
+}
+
+.city-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0 -60%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pink) 0 14px,
+    var(--lemon) 14px 22px,
+    var(--cyan) 22px 36px,
+    var(--violet) 36px 44px
+  );
+  opacity: 0.85;
+  animation: tc-tape 9s linear infinite;
+}
+
+.city-frame.top {
+  top: calc(var(--chrome-top) + 6px);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.city-frame.bottom {
+  bottom: calc(var(--chrome-bot) + 6px);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.city-frame.bottom::before {
+  animation-direction: reverse;
+}
+
+/* --- shutter flash: fires once on mount, then leaves the picture alone --- */
+.shutter-flash {
+  position: absolute;
+  top: calc(var(--chrome-top) + 6px);
+  bottom: calc(var(--chrome-bot) + 6px);
+  left: calc(var(--sal) + var(--gutter));
+  right: calc(var(--sar) + var(--gutter));
+  border-radius: var(--r-lg);
+  z-index: 5;
+  background: #FFFFFF;
+  opacity: 0;
+  pointer-events: none;
+  animation: tc-flash 340ms ease-out forwards;
+}
+
+/* --- pause badge: static by design; nothing pulses over the picture ------ */
+.pause-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  padding: 9px 18px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: var(--ink-900);
+  background: var(--lemon);
+  border: 2px solid rgba(7, 11, 24, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+
+/* ============================================================================
+   06. SIDE RAILS  (animated decoration allowed — clipped)
+   Fixed to the viewport so they are immune to whatever wraps them, and sized
+   purely from --rail-max so 15 buttons always fit without scrolling.
+   ========================================================================= */
+
+.side-panel {
+  position: fixed;
+  /* !important: the app writes inline top/bottom on these two elements, and the
+     --rail-max maths below only holds if the rail really is this tall. */
+  top: var(--rail-top) !important;
+  bottom: var(--rail-bot) !important;
+  z-index: 40;
+  width: var(--rail-w);
+  padding: var(--rail-pad) 3px;
+  overflow: hidden;                        /* clips the decoration below */
+  border-radius: var(--r-lg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi), var(--lift-2);
+}
+
+.side-panel::before {
+  content: "";
+  position: absolute;
+  inset: -30% -50%;
+  z-index: 0;
+  background: repeating-linear-gradient(
+    160deg,
+    rgba(255, 61, 139, 0.16) 0 8px,
+    transparent 8px 18px,
+    rgba(53, 240, 255, 0.14) 18px 26px,
+    transparent 26px 40px
+  );
+  animation: tc-rail-drift 20s linear infinite;
+  pointer-events: none;
+}
+
+.side-panel.left {
+  left: calc(var(--sal) + 4px);
+}
+
+.side-panel.right {
+  right: calc(var(--sar) + 4px);
+}
+
+.side-panel.right::before {
+  animation-direction: reverse;
+}
+
+.panel-scroll {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rail-gap);
+  height: 100%;
+  overflow-y: auto;                        /* safety net; the maths avoids it */
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.panel-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+
+/* ============================================================================
+   07. EFFECT BUTTONS
+   ========================================================================= */
+
+.effect-btn {
+  position: relative;
+  /* basis = the --rail-max maths, but allowed to shrink if the rail ever
+     carries more children than --rail-max (the live build does) */
+  flex: 0 1 var(--btn-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  min-height: 20px;
+  padding: 1px 2px;
+  overflow: hidden;
+  border-radius: 11px;
+  color: var(--fg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.1s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+
+.effect-btn:active {
+  transform: scale(0.9);
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-line-hi);
+}
+
+.effect-btn.on {
+  background: linear-gradient(180deg, rgba(255, 61, 139, 0.42), rgba(169, 107, 255, 0.28));
+  border-color: rgba(255, 143, 192, 0.85);
+  box-shadow: var(--halo-pink), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* --- per-kind tinting ---------------------------------------------------- */
+.effect-btn.btn-burst {
+  border-color: rgba(255, 61, 139, 0.34);
+  background: linear-gradient(180deg, rgba(255, 61, 139, 0.20), rgba(255, 61, 139, 0.05));
+}
+
+.effect-btn.btn-burst.on {
+  box-shadow: var(--halo-pink), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.effect-btn.btn-sound {
+  border-color: rgba(53, 240, 255, 0.34);
+  background: linear-gradient(180deg, rgba(53, 240, 255, 0.18), rgba(53, 240, 255, 0.05));
+}
+
+.effect-btn.btn-sound.on {
+  background: linear-gradient(180deg, rgba(53, 240, 255, 0.42), rgba(53, 240, 255, 0.18));
+  border-color: rgba(155, 247, 255, 0.85);
+  box-shadow: var(--halo-cyan), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.effect-btn.btn-telop {
+  border-color: rgba(169, 107, 255, 0.36);
+  background: linear-gradient(180deg, rgba(169, 107, 255, 0.20), rgba(169, 107, 255, 0.05));
+}
+
+.effect-btn.btn-telop.on {
+  background: linear-gradient(180deg, rgba(169, 107, 255, 0.46), rgba(255, 61, 139, 0.22));
+  border-color: rgba(200, 165, 255, 0.85);
+  box-shadow: 0 0 0 1px rgba(169, 107, 255, 0.6), 0 0 18px rgba(169, 107, 255, 0.45),
+              inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.effect-btn.btn-mine {
+  border-color: rgba(255, 228, 92, 0.42);
+  background: linear-gradient(180deg, rgba(255, 228, 92, 0.20), rgba(255, 228, 92, 0.05));
+}
+
+.effect-btn.btn-mine.empty {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--fg-mute);
+}
+
+.btn-icon {
+  font-size: clamp(11px, calc(var(--btn-h) * 0.44), 19px);
+  line-height: 1;
+}
+
+.btn-label {
+  max-width: 100%;
+  font-size: clamp(7px, calc(var(--btn-h) * 0.24), 10px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.92;
+}
+
+.number-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  padding: 0 0.28em;
+  border-radius: 5px;
+  font-family: var(--font-num);
+  font-size: clamp(9px, calc(var(--btn-h) * 0.36), 15px);
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--ink-900);
+  background: linear-gradient(180deg, #FFFFFF, var(--cyan-soft));
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+
+/* ============================================================================
+   08. BOTTOM CONTROLS  (animated decoration allowed — clipped)
+   ========================================================================= */
+
+.bottom-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 4.5vw, 22px);
+  height: calc(var(--bottom-h) + var(--sab));
+  padding: 0 calc(var(--sar) + 12px) var(--sab) calc(var(--sal) + 12px);
+  overflow: hidden;                        /* clips the decoration below */
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi), 0 -8px 26px rgba(0, 0, 0, 0.4);
+}
+
+.bottom-controls::before {
+  content: "";
+  position: absolute;
+  inset: -60% -50%;
+  z-index: -1;
+  background:
+    radial-gradient(48% 90% at 50% 50%, rgba(255, 61, 139, 0.26), transparent 70%),
+    repeating-linear-gradient(65deg,
+      rgba(53, 240, 255, 0.12) 0 9px,
+      transparent 9px 24px);
+  animation: tc-ribbon 18s linear infinite reverse;
+  pointer-events: none;
+}
+
+/* --- the record button --------------------------------------------------- */
+.record-btn-round {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(58px, 17vw, 72px);
+  height: clamp(58px, 17vw, 72px);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--glass-bg-strong);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--inner-hi), 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.record-btn-round:active {
+  transform: scale(0.93);
+}
+
+.record-inner {
+  width: 62%;
+  height: 62%;
+  border-radius: 50%;
+  background: linear-gradient(160deg, var(--pink), #FF1F6E 60%, var(--violet));
+  box-shadow: 0 0 16px rgba(255, 61, 139, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: width 0.22s ease, height 0.22s ease, border-radius 0.22s ease, background 0.22s ease;
+}
+
+.record-btn-round.recording {
+  border-color: var(--pink);
+  box-shadow: var(--halo-pink), 0 8px 24px rgba(0, 0, 0, 0.45);
+  animation: tc-rec-pulse 1.5s ease-in-out infinite;
+}
+
+.record-btn-round.recording .record-inner {
+  width: 40%;
+  height: 40%;
+  border-radius: 7px;
+}
+
+.record-btn-round.recording.paused {
+  border-color: var(--lemon);
+  box-shadow: 0 0 0 1px rgba(255, 228, 92, 0.6), 0 0 18px rgba(255, 228, 92, 0.4),
+              0 8px 24px rgba(0, 0, 0, 0.45);
+  animation: none;
+}
+
+.record-btn-round.recording.paused .record-inner {
+  background: linear-gradient(160deg, var(--lemon), #FFB84C);
+  box-shadow: 0 0 14px rgba(255, 228, 92, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+/* --- satellite round buttons -------------------------------------------- */
+.preview-btn-round,
+.photo-btn-round,
+.pause-btn-round {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: clamp(42px, 12.5vw, 54px);
+  height: clamp(42px, 12.5vw, 54px);
+  border-radius: 50%;
+  font-size: clamp(15px, 4.6vw, 20px);
+  color: var(--fg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur-lite);
+  -webkit-backdrop-filter: var(--glass-blur-lite);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi), var(--lift-1);
+  transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.preview-btn-round:active,
+.photo-btn-round:active,
+.pause-btn-round:active {
+  transform: scale(0.9);
+  background: var(--glass-bg-strong);
+}
+
+.preview-btn-round {
+  box-shadow: var(--inner-hi), var(--lift-1), 0 0 0 1px rgba(53, 240, 255, 0.22);
+}
+
+.photo-btn-round {
+  box-shadow: var(--inner-hi), var(--lift-1), 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.pause-btn-round.on {
+  color: var(--ink-900);
+  background: linear-gradient(180deg, var(--lemon), #FFC24A);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 18px rgba(255, 228, 92, 0.5), var(--inner-hi);
+}
+
+
+/* ============================================================================
+   09. SHEETS — shared chrome
+   ========================================================================= */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(4, 7, 16, 0.62);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  animation: tc-fade-in 0.2s ease-out;
+}
+
+.sheet {
+  position: fixed;
+  z-index: 100;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(100%, 520px);
+  max-height: 86dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px calc(var(--sar) + 16px) calc(var(--sab) + 18px) calc(var(--sal) + 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  color: var(--fg);
+  background:
+    linear-gradient(180deg, rgba(26, 34, 70, 0.94), rgba(11, 16, 33, 0.97));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-line);
+  border-bottom: 0;
+  box-shadow: var(--lift-3), var(--inner-hi);
+  animation: tc-sheet-up 0.26s cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+/* grab handle */
+.sheet::before {
+  content: "";
+  align-self: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 4px;
+  margin-bottom: 2px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.sheet.guide {
+  background: linear-gradient(180deg, rgba(30, 24, 60, 0.95), rgba(11, 16, 33, 0.97));
+}
+
+.sheet h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--fg);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sheet-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--fg);
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-line-hi);
+  box-shadow: var(--inner-hi);
+  transition: transform 0.12s ease, box-shadow 0.18s ease;
+}
+
+.sheet-btn:active {
+  transform: scale(0.96);
+  box-shadow: var(--halo-cyan);
+}
+
+.sheet-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--fg-dim);
+}
+
+
+/* --- segmented switch ---------------------------------------------------- */
+.shape-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.shape-switch button {
+  flex: 1 1 0;
+  min-height: 38px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--fg-dim);
+  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.shape-switch button.on {
+  color: var(--ink-900);
+  background: linear-gradient(180deg, #FFFFFF, var(--cyan-soft));
+  box-shadow: 0 2px 10px rgba(53, 240, 255, 0.4);
+}
+
+
+/* ============================================================================
+   10. TELOP EDITOR
+   ========================================================================= */
+
+.telop-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.telop-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.telop-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 13px;
+  border-radius: var(--r-md);
+  font-size: 15px;
+  color: var(--fg);
+  background: rgba(0, 0, 0, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.telop-input::placeholder {
+  color: var(--fg-mute);
+}
+
+.telop-input:focus {
+  outline: none;
+  border-color: rgba(169, 107, 255, 0.8);
+  box-shadow: 0 0 0 3px rgba(169, 107, 255, 0.22);
+}
+
+.slot-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  font-family: var(--font-num);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-900);
+  background: linear-gradient(180deg, #FFFFFF, #C9D4F5);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.slot-no.mine {
+  background: linear-gradient(180deg, #FFFFFF, var(--lemon));
+}
+
+.slot-no.telop {
+  color: #FFFFFF;
+  background: linear-gradient(180deg, var(--violet), #7B3BE0);
+}
+
+
+/* ============================================================================
+   11. SOUND LIST
+   ========================================================================= */
+
+.sound-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 46dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
+
+.sound-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 46px;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.sound-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sound-try {
+  flex: 0 0 auto;
+  min-width: 52px;
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--cyan-soft);
+  background: rgba(53, 240, 255, 0.12);
+  border: 1px solid rgba(53, 240, 255, 0.42);
+  transition: transform 0.12s ease, background 0.18s ease;
+}
+
+.sound-try:active {
+  transform: scale(0.94);
+  background: rgba(53, 240, 255, 0.26);
+}
+
+.sound-set {
+  flex: 0 0 auto;
+  min-width: 52px;
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 800;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--pink), var(--violet));
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 3px 12px rgba(255, 61, 139, 0.4);
+  transition: transform 0.12s ease;
+}
+
+.sound-set:active {
+  transform: scale(0.94);
+}
+
+
+/* ============================================================================
+   12. FRAME PICKER
+   ========================================================================= */
+
+.frame-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 9px;
+  max-height: 48dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px;
+}
+
+.frame-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 3 / 4;
+  padding: 5px;
+  border-radius: var(--r-md);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--fg);
+  background: rgba(0, 0, 0, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--inner-hi);
+  overflow: hidden;
+  transition: transform 0.12s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.frame-tile:active {
+  transform: scale(0.95);
+}
+
+.frame-tile.on {
+  border-color: var(--pink);
+  box-shadow: var(--halo-pink), var(--inner-hi);
+}
+
+.frame-tile.none {
+  color: var(--fg-mute);
+  background: rgba(255, 255, 255, 0.03);
+  border-style: dashed;
+}
+
+.frame-tile.locked {
+  color: var(--fg-mute);
+  opacity: 0.62;
+}
+
+.lock-mark {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 10px;
+  color: var(--ink-900);
+  background: linear-gradient(180deg, #FFFFFF, var(--lemon));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+
+/* ============================================================================
+   13. GUIDE
+   ========================================================================= */
+
+.guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding-left: 1.35em;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--fg);
+}
+
+.guide-steps ::marker,
+.guide-steps > *::marker {
+  color: var(--cyan);
+  font-weight: 900;
+}
+
+.guide-warn {
+  padding: 11px 13px;
+  border-radius: var(--r-md);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.7;
+  color: #FFE9E9;
+  background: rgba(255, 90, 90, 0.14);
+  border: 1px solid rgba(255, 90, 90, 0.44);
+  border-left: 3px solid var(--danger);
+}
+
+.guide-note {
+  padding: 10px 13px;
+  border-radius: var(--r-md);
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--fg-dim);
+  background: rgba(53, 240, 255, 0.08);
+  border: 1px solid rgba(53, 240, 255, 0.24);
+}
+
+
+/* ============================================================================
+   14. PROMO / DISCORD BANNER
+   ========================================================================= */
+
+.promo {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 61, 139, 0.16), rgba(169, 107, 255, 0.08)),
+    rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 143, 192, 0.34);
+  box-shadow: var(--inner-hi);
+}
+
+.promo-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.promo-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--ink-900);
+  background: linear-gradient(135deg, var(--lemon), var(--pink-soft));
+  box-shadow: 0 2px 10px rgba(255, 228, 92, 0.35);
+}
+
+.promo-lead {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--fg);
+}
+
+.promo-points {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-dim);
+}
+
+.promo-points ::marker,
+.promo-points > *::marker {
+  color: var(--pink);
+}
+
+/* collapsed state used by the live build */
+.promo-points.promo-fold {
+  max-height: 7.6em;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+}
+
+.promo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--pink), var(--violet) 70%, var(--cyan));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 22px rgba(255, 61, 139, 0.42), var(--inner-hi);
+  transition: transform 0.12s ease;
+}
+
+.promo-link:active {
+  transform: scale(0.97);
+}
+
+.promo-foot {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--fg-mute);
+}
+
+.discord-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: var(--r-lg);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.9), rgba(169, 107, 255, 0.75));
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  box-shadow: var(--inner-hi), 0 6px 20px rgba(88, 101, 242, 0.38);
+}
+
+
+/* ============================================================================
+   15. UNLOCK
+   ========================================================================= */
+
+.unlock-box {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 15px;
+  border-radius: var(--r-lg);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--inner-hi);
+}
+
+.unlock-box.done {
+  background: rgba(53, 240, 255, 0.09);
+  border-color: rgba(53, 240, 255, 0.46);
+  box-shadow: var(--inner-hi), 0 0 22px rgba(53, 240, 255, 0.16);
+}
+
+.unlock-title {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.unlock-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--cyan);
+}
+
+.unlock-points {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-dim);
+}
+
+.unlock-buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 900;
+  text-decoration: none;
+  color: var(--ink-900);
+  background: linear-gradient(135deg, var(--lemon), var(--pink-soft) 65%, var(--cyan-soft));
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: 0 6px 22px rgba(255, 228, 92, 0.32), var(--inner-hi);
+  transition: transform 0.12s ease;
+}
+
+.unlock-buy:active {
+  transform: scale(0.97);
+}
+
+.unlock-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unlock-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 13px;
+  border-radius: var(--r-md);
+  font-family: var(--font-num);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--fg);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.unlock-input::placeholder {
+  color: var(--fg-mute);
+  letter-spacing: 0.04em;
+}
+
+.unlock-input:focus {
+  outline: none;
+  border-color: rgba(53, 240, 255, 0.75);
+  box-shadow: 0 0 0 3px rgba(53, 240, 255, 0.2);
+}
+
+.unlock-go {
+  flex: 0 0 auto;
+  min-width: 72px;
+  min-height: 46px;
+  padding: 0 15px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 900;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, var(--pink), var(--violet));
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 16px rgba(255, 61, 139, 0.4);
+  transition: transform 0.12s ease;
+}
+
+.unlock-go:active {
+  transform: scale(0.95);
+}
+
+.unlock-ng {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: #FFB4B4;
+}
+
+.unlock-key {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 7px;
+  font-family: var(--font-num);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--cyan-soft);
+  background: rgba(53, 240, 255, 0.12);
+  border: 1px solid rgba(53, 240, 255, 0.34);
+  word-break: break-all;
+}
+
+.unlock-relock {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-mute);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+
+/* ============================================================================
+   16. PC NOTICE  (desktop only — this app is a phone app)
+   ========================================================================= */
+
+.pc-notice {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 32px 24px;
+  text-align: center;
+  background-color: var(--ink-900);
+  background-image:
+    radial-gradient(90% 60% at 20% 0%, rgba(255, 61, 139, 0.22), transparent 60%),
+    radial-gradient(90% 60% at 80% 100%, rgba(53, 240, 255, 0.18), transparent 60%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0 2px, transparent 2px 12px);
+}
+
+.pc-cube {
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  background: conic-gradient(from 210deg, var(--pink), var(--violet), var(--cyan), var(--lemon), var(--pink));
+  box-shadow: 0 18px 50px rgba(255, 61, 139, 0.35), var(--inner-hi);
+  transform: rotate(10deg);
+}
+
+.pc-notice h1 {
+  margin: 0;
+  font-size: clamp(22px, 4vw, 32px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  background: linear-gradient(96deg, var(--cyan-soft), #FFFFFF 40%, var(--pink-soft));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.pc-lead {
+  margin: 0;
+  max-width: 34em;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--fg);
+}
+
+.pc-url {
+  padding: 11px 18px;
+  border-radius: var(--r-md);
+  font-family: var(--font-num);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--cyan-soft);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(53, 240, 255, 0.34);
+  word-break: break-all;
+}
+
+.pc-sub {
+  margin: 0;
+  max-width: 34em;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--fg-mute);
+}
+
+.pc-continue {
+  min-height: 46px;
+  padding: 0 22px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--fg);
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-line-hi);
+  box-shadow: var(--inner-hi);
+}
+
+
+/* ============================================================================
+   17. KEYFRAMES  (every one of these plays only inside a clipped bar or rail)
+   ========================================================================= */
+
+@keyframes tc-ribbon {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(18%, 0, 0); }
+}
+
+@keyframes tc-rail-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, 22%, 0); }
+}
+
+@keyframes tc-tape {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-88px, 0, 0); }
+}
+
+@keyframes tc-rec-pulse {
+  0%, 100% { box-shadow: var(--halo-pink), 0 8px 24px rgba(0, 0, 0, 0.45); }
+  50%      { box-shadow: 0 0 0 1px rgba(255, 61, 139, 0.9),
+                         0 0 30px rgba(255, 61, 139, 0.75),
+                         0 8px 24px rgba(0, 0, 0, 0.45); }
+}
+
+@keyframes tc-flash {
+  0%   { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+@keyframes tc-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tc-sheet-up {
+  from { transform: translate(-50%, 14%); opacity: 0; }
+  to   { transform: translate(-50%, 0);   opacity: 1; }
+}
+
+
+/* ============================================================================
+   18. RESPONSIVE
+   ========================================================================= */
+
+/* --- 320x568: the tightest portrait. Shrink the bars, keep 20px+ buttons -- */
+@media (max-width: 344px) {
+  :root {
+    --header-h: 42px;
+    --bottom-h: 80px;
+    --rail-w: 42px;
+    --rail-gap: 2px;
+    --rail-pad: 3px;
+  }
+  /* rail maths at 568px tall -> (568-48-86-6-28)/15 = 26.6px per button */
+}
+
+/* --- 360x640 --------------------------------------------------------------- */
+@media (min-width: 345px) and (max-width: 375px) {
+  :root {
+    --header-h: 44px;
+    --bottom-h: 86px;
+  }
+  /* -> (640-50-92-8-42)/15 = 29.9px per button */
+}
+
+/* --- 390x844 / 412x915: room to breathe ----------------------------------- */
+@media (min-width: 376px) {
+  :root {
+    --header-h: 48px;
+    --bottom-h: 96px;
+  }
+  /* 844 tall -> (844-54-102-8-42)/15 = 42.5px  |  915 tall -> 47.2px */
+}
+
+/* --- landscape 844x390 -----------------------------------------------------
+   The rails go full height and the bars pull in between them, so nothing
+   overlaps and the rail still clears 20px per button.                       */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root {
+    --header-h: 34px;
+    --bottom-h: 58px;
+    --rail-w: 104px;                   /* two 50px columns side by side */
+    --rail-gap: 2px;
+    --rail-pad: 3px;
+    --rail-top: calc(var(--sat) + 5px);
+    --rail-bot: calc(var(--sab) + 5px);
+    /* 390 tall -> (390-5-5-6-28)/15 = 23.7px per button */
+  }
+
+  /* A landscape phone is only ~390px tall, and the app keeps the rail shorter
+     than that. 15 buttons x 20px minimum simply does not fit in one column, so
+     the rail becomes TWO columns of 8 here. 16 slots >= --rail-max. */
+  .side-panel {
+    width: var(--rail-w);              /* doubled below via --rail-w */
+    top: calc(env(safe-area-inset-top, 0px) + 5px) !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 5px) !important;
+  }
+
+  .panel-scroll {
+    flex-flow: column wrap;
+    align-content: space-between;
+    overflow: hidden;
+  }
+
+  .effect-btn {
+    flex: 0 0 calc((100% - (var(--rail-gap) * 7)) / 8);
+    width: calc(50% - (var(--rail-gap) / 2));
+  }
+
+  .header,
+  .bottom-controls {
+    margin-inline: calc(var(--rail-w) + 10px);
+    border-radius: 0 0 var(--r-md) var(--r-md);
+  }
+
+  .bottom-controls {
+    border-radius: var(--r-md) var(--r-md) 0 0;
+    gap: clamp(12px, 4vw, 26px);
+  }
+
+  .header {
+    padding-inline: 10px;
+  }
+
+  .bottom-controls {
+    padding-inline: 12px;
+  }
+
+  .record-btn-round {
+    width: 48px;
+    height: 48px;
+  }
+
+  .preview-btn-round,
+  .photo-btn-round,
+  .pause-btn-round {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .preview-stage {
+    margin-block: 4px;
+  }
+
+  .sheet {
+    max-height: 92dvh;
+    padding-top: 12px;
+  }
+
+  .sound-list,
+  .frame-picker {
+    max-height: 40dvh;
+  }
+}
+
+/* --- desktop: the phone UI is hidden behind the PC notice ------------------ */
+@media (max-width: 767px) {
+  .pc-notice {
+    display: none;
+  }
+}
+
+
+/* ============================================================================
+   19. REDUCED MOTION
+   ========================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .shutter-flash {
+    opacity: 0;
+  }
+}
