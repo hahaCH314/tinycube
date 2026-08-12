@@ -1113,3 +1113,125 @@
     inset 0 -5px 10px rgba(150, 120, 190, 0.35),
     inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
+
+/* --- 3. コーナーだけ（辺は描かず四隅にL字マーカー） ---
+   ミント×コーラル。中央も辺もガラ空きで、四隅だけ太いL字。
+   カメラのフォーカス枠っぽい抜け感 */
+.fancy-css-frame-corners {
+  border: none;
+  border-radius: 4px;
+  background:
+    linear-gradient(#2ec4b6, #2ec4b6) left top / 44px 6px no-repeat,
+    linear-gradient(#2ec4b6, #2ec4b6) left top / 6px 44px no-repeat,
+    linear-gradient(#ff6b6b, #ff6b6b) right top / 44px 6px no-repeat,
+    linear-gradient(#ff6b6b, #ff6b6b) right top / 6px 44px no-repeat,
+    linear-gradient(#ff6b6b, #ff6b6b) left bottom / 44px 6px no-repeat,
+    linear-gradient(#ff6b6b, #ff6b6b) left bottom / 6px 44px no-repeat,
+    linear-gradient(#2ec4b6, #2ec4b6) right bottom / 44px 6px no-repeat,
+    linear-gradient(#2ec4b6, #2ec4b6) right bottom / 6px 44px no-repeat;
+}
+
+/* --- 4. フィルム穴（左右の縦帯にパーフォレーション） ---
+   黒帯×黄の穴。上下左右ではなく、左右だけに映画フィルムの穴を並べる */
+.fancy-css-frame-film {
+  border-left: 22px solid #14131a;
+  border-right: 22px solid #14131a;
+  border-radius: 2px;
+  background:
+    radial-gradient(circle, #f5d442 3.5px, transparent 4px) left 4px top 0 / 22px 20px repeat-y,
+    radial-gradient(circle, #f5d442 3.5px, transparent 4px) right 4px top 0 / 22px 20px repeat-y;
+}
+
+/* --- 5. スカラップ（波状の縁／レースドイリー風） ---
+   ラベンダー地に白の丸を辺沿いに並べ、内側は太い白リングで縁取る */
+.fancy-css-frame-scallop {
+  border: 18px solid #b18aff;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 11px 11px, #fff 8px, transparent 9px) top left / 22px 22px repeat-x,
+    radial-gradient(circle at 11px 11px, #fff 8px, transparent 9px) bottom left / 22px 22px repeat-x,
+    radial-gradient(circle at 11px 11px, #fff 8px, transparent 9px) left top / 22px 22px repeat-y,
+    radial-gradient(circle at 11px 11px, #fff 8px, transparent 9px) right top / 22px 22px repeat-y;
+  box-shadow: inset 0 0 0 4px #fff;
+}
+
+/* --- 6. ネオンサイン（細い枠＋多重グローで発光） ---
+   漆黒に近い細枠。シアン→マゼンタの外向きグローで光る看板風 */
+.fancy-css-frame-neon {
+  border: 3px solid #00e5ff;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow:
+    inset 0 0 6px rgba(0, 229, 255, 0.9),
+    0 0 6px rgba(0, 229, 255, 0.9),
+    0 0 16px rgba(0, 229, 255, 0.7),
+    0 0 30px rgba(255, 0, 200, 0.55),
+    0 0 48px rgba(255, 0, 200, 0.35);
+}
+
+/* --- 7. チケット（上下に破線ミシン目＋角の切り欠き） ---
+   クリーム地。上下だけ破線、四隅を radial で丸くくり抜いた半券風 */
+.fancy-css-frame-ticket {
+  border-top: 4px dashed #e07a5f;
+  border-bottom: 4px dashed #e07a5f;
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 0 0, transparent 11px, #f4e3c1 12px) top left / 50% 50% no-repeat,
+    radial-gradient(circle at 100% 0, transparent 11px, #f4e3c1 12px) top right / 50% 50% no-repeat,
+    radial-gradient(circle at 0 100%, transparent 11px, #f4e3c1 12px) bottom left / 50% 50% no-repeat,
+    radial-gradient(circle at 100% 100%, transparent 11px, #f4e3c1 12px) bottom right / 50% 50% no-repeat;
+  /* 中央は抜く：クリームは辺の帯だけに見せるため mask で内側を切る */
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+}
+
+/* --- 8. 斜めストライプ（太い枠に警告テープ調のライン） ---
+   ライム×ネイビーの45度ストライプを枠に流す。中央は mask で抜く */
+.fancy-css-frame-stripe {
+  border: 16px solid transparent;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(45deg,
+      #c6ff00 0, #c6ff00 12px,
+      #1b2a4a 12px, #1b2a4a 24px) border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+}
+
+/* --- 9. ポラロイド（下辺だけ極太の白マージン） ---
+   全体は細い白枠、下だけドンと分厚い。インスタントフォト風。淡いグレー影 */
+.fancy-css-frame-polaroid {
+  border: 12px solid #ffffff;
+  border-bottom-width: 56px;
+  border-radius: 3px;
+  background: transparent;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* --- 10. コンフェッティ（枠なし、四隅に散った紙吹雪の点） ---
+   辺は描かず、四隅に原色のドットを散らすだけの軽い装飾。
+   中央〜辺はガラ空きで映像を最大に見せる */
+.fancy-css-frame-confetti {
+  border: none;
+  background:
+    radial-gradient(circle at 14px 18px, #ff5fa8 5px, transparent 6px),
+    radial-gradient(circle at 30px 40px, #ffd93d 4px, transparent 5px),
+    radial-gradient(circle at 46px 14px, #63e6ff 4px, transparent 5px),
+    radial-gradient(circle at calc(100% - 16px) 22px, #7cff9b 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 36px) 44px, #b18aff 4px, transparent 5px),
+    radial-gradient(circle at 20px calc(100% - 20px), #ffd93d 5px, transparent 6px),
+    radial-gradient(circle at 44px calc(100% - 40px), #ff5fa8 4px, transparent 5px),
+    radial-gradient(circle at calc(100% - 18px) calc(100% - 18px), #63e6ff 5px, transparent 6px),
+    radial-gradient(circle at calc(100% - 40px) calc(100% - 38px), #7cff9b 4px, transparent 5px);
+  background-repeat: no-repeat;
+}
