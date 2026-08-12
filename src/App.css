@@ -62,12 +62,12 @@
   /* 中の箱が、この枠の縦横を直に読めるようにする */
   container-type: size;
   /* ホロっぽい縁取り。あくまで静止。中央の絵柄には動く光を入れない
-     （2026-08-12、ヒマワリの手紙「中央は神聖」） */
+     （2026-08-12、ヒマワリの手紙「中央は神聖」）。
+     虹色リングはやめ、白のヘアライン＋控えめなクールグローに締める */
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.5),
-    0 0 0 4px rgba(255, 95, 180, 0.45),
-    0 0 0 6px rgba(177, 138, 255, 0.35),
-    0 0 26px rgba(99, 230, 255, 0.3);
+    0 0 0 1.5px rgba(255, 255, 255, 0.35),
+    0 0 0 3px rgba(177, 138, 255, 0.18),
+    0 0 16px rgba(99, 230, 255, 0.16);
 }
 
 /* 動画の形（--ar は App.tsx が渡す）を保ったまま、枠に入る最大の大きさにする */
@@ -163,28 +163,18 @@
   overflow: hidden;
   pointer-events: none;
   z-index: 30;
+  /* 虹色を控えめに。彩度と明るさを落とし、流れるシマーはやめて
+     ゆっくり色相が寄せては返すだけの落ち着いた帯にする */
   background: linear-gradient(90deg,
-    var(--cp-cyan) 0%, var(--cp-purple) 30%, var(--cp-pink) 55%,
-    var(--cp-yellow) 78%, var(--cp-cyan) 100%);
+    var(--cp-cyan-deep) 0%, var(--cp-purple-deep) 34%, var(--cp-pink-deep) 60%,
+    var(--cp-purple-deep) 82%, var(--cp-cyan-deep) 100%);
   background-size: 200% 100%;
-  animation: deco-tape 7s linear infinite;
+  opacity: 0.7;
+  animation: deco-tape 16s linear infinite;
 }
 .city-frame.top { top: 0; }
 .city-frame.bottom { bottom: 0; }
-.city-frame::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 22%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
-  animation: deco-shimmer 4.5s linear infinite;
-}
-.city-frame.bottom::after { animation-delay: 2.2s; }
 
-@keyframes deco-shimmer {
-  from { transform: translateX(-40%); }
-  to   { transform: translateX(180%); }
-}
 @keyframes deco-tape {
   from { background-position: 0% 50%; }
   to   { background-position: 200% 50%; }
@@ -272,7 +262,7 @@
     inset 0 3px 8px rgba(255, 255, 255, 0.6),
     inset 0 -5px 12px rgba(120, 6, 66, 0.65),
     0 5px 0 var(--cp-pink-deep),
-    0 8px 22px rgba(255, 95, 180, 0.7);
+    0 8px 18px rgba(255, 95, 180, 0.4);
   transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .record-btn-round:active { transform: scale(0.9) translateY(3px); }
@@ -292,12 +282,12 @@
   0%, 100% {
     box-shadow:
       inset 0 3px 8px rgba(255,255,255,0.6), inset 0 -5px 12px rgba(120,6,66,0.65),
-      0 5px 0 var(--cp-pink-deep), 0 8px 22px rgba(255, 95, 180, 0.6);
+      0 5px 0 var(--cp-pink-deep), 0 8px 18px rgba(255, 95, 180, 0.4);
   }
   50% {
     box-shadow:
       inset 0 3px 8px rgba(255,255,255,0.6), inset 0 -5px 12px rgba(120,6,66,0.65),
-      0 5px 0 var(--cp-pink-deep), 0 8px 34px rgba(255, 95, 180, 1);
+      0 5px 0 var(--cp-pink-deep), 0 8px 26px rgba(255, 95, 180, 0.7);
   }
 }
 
@@ -422,8 +412,8 @@
     radial-gradient(1.5px 1.5px at 38% 62%, rgba(160, 232, 255, 0.8), transparent 60%),
     radial-gradient(2px 2px at 82% 84%, rgba(197, 168, 255, 0.8), transparent 60%),
     radial-gradient(1.5px 1.5px at 30% 92%, rgba(255, 215, 107, 0.8), transparent 60%);
-  opacity: 0.55;
-  animation: deco-twinkle 3.4s ease-in-out infinite;
+  opacity: 0.22;
+  animation: deco-twinkle 6s ease-in-out infinite;
 }
 /* 端にぴったり貼ると、角の丸みやノッチに食われて欠ける。端末の余白ぶん逃がす */
 .side-panel.left  { left:  max(6px, env(safe-area-inset-left)); }
@@ -431,8 +421,8 @@
 .side-panel.right::before { animation-delay: 1.6s; }
 
 @keyframes deco-twinkle {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50%      { opacity: 0.7; transform: translateY(-3px); }
+  0%, 100% { opacity: 0.12; transform: translateY(0); }
+  50%      { opacity: 0.32; transform: translateY(-2px); }
 }
 
 .panel-scroll {
@@ -478,7 +468,7 @@
     inset 0 2px 2px rgba(255, 255, 255, 0.85),
     inset 0 -3px 6px rgba(120, 10, 60, 0.4),
     0 2px 0 rgba(140, 20, 80, 0.55),
-    0 3px 10px rgba(255, 95, 180, 0.45);
+    0 3px 8px rgba(255, 95, 180, 0.22);
 }
 
 /* 自分の音の枠。入れるまでは点線で「まだ空」と分かるようにする */
@@ -492,7 +482,7 @@
     inset 0 2px 2px rgba(255, 255, 255, 0.9),
     inset 0 -3px 6px rgba(150, 105, 10, 0.35),
     0 2px 0 rgba(160, 115, 15, 0.55),
-    0 3px 10px rgba(255, 215, 107, 0.45);
+    0 3px 8px rgba(255, 215, 107, 0.22);
 }
 .effect-btn.btn-mine.empty {
   background: rgba(255, 215, 107, 0.1);
@@ -511,7 +501,7 @@
     inset 0 2px 2px rgba(255, 255, 255, 0.9),
     inset 0 -3px 6px rgba(20, 100, 150, 0.35),
     0 2px 0 rgba(15, 110, 150, 0.5),
-    0 3px 10px rgba(99, 230, 255, 0.45);
+    0 3px 8px rgba(99, 230, 255, 0.22);
 }
 .effect-btn.btn-telop {
   background:
@@ -523,14 +513,14 @@
     inset 0 2px 2px rgba(255, 255, 255, 0.75),
     inset 0 -3px 6px rgba(50, 20, 120, 0.4),
     0 2px 0 rgba(70, 40, 130, 0.55),
-    0 3px 10px rgba(177, 138, 255, 0.45);
+    0 3px 8px rgba(177, 138, 255, 0.22);
 }
 .effect-btn.on {
   border-color: #fff;
   box-shadow:
     inset 0 2px 2px rgba(255, 255, 255, 0.9),
-    0 0 0 2px rgba(255, 255, 255, 0.7),
-    0 0 18px rgba(255, 95, 180, 0.9);
+    0 0 0 2px rgba(255, 255, 255, 0.65),
+    0 0 12px rgba(255, 255, 255, 0.35);
 }
 
 /* 絵柄と、その下の小さな言葉。言葉は必ず残す */
@@ -550,8 +540,8 @@
   font-family: 'Baloo 2', 'Arial Rounded MT Bold', sans-serif;
   font-size: 1.18rem; font-weight: 800; line-height: 1;
   text-shadow:
-    1px 1px 0 rgba(255, 255, 255, 0.75),
-    2px 2px 0 rgba(255, 95, 180, 0.6);
+    1px 1px 0 rgba(255, 255, 255, 0.7),
+    2px 2px 0 rgba(140, 120, 190, 0.4);
 }
 
 /* 横に持ったとき。柱が短くなるので2列にする。言葉は消さない */
