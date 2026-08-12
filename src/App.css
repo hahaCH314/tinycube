@@ -1291,3 +1291,17 @@
 /* 左手で持つときは、下のボタンの並びも鏡にする
    （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */
 .ui-layer.hand-left .bottom-controls { flex-direction: row-reverse; }
+
+/* 形が合わない枠も選べる（欠けてでも全部使いたい、という判断）。
+   隠すのではなく、切れることを印で伝える
+   （2026-08-12、伊波さん「お祝いフレーム、フレーム選ぶところにうつってないよ」） */
+.frame-tile.cut { opacity: 0.72; }
+.cut-mark {
+  position: absolute; left: 4px; top: 4px;
+  padding: 2px 6px; border-radius: 8px;
+  font-size: 0.6rem; font-weight: 800; line-height: 1.2;
+  color: #10082b; background: var(--cp-yellow, #ffe45c);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+}
+/* 撮影画面に着いた直後の誘導 */
+.turn-hint.start-hint { color: #fff; border-color: var(--cp-pink); }

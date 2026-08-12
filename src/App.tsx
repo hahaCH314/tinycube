@@ -251,14 +251,19 @@ function App() {
   //   agree（お願い）→ frame（①わくをえらぶ）→ source（②なにを撮る）→ video
   // 1画面で決めることは1つだけ。それ以外の設定は ⚙️（setup）に置いたまま
   const [screen, setScreen] = useState<'agree' | 'manner' | 'frame' | 'source' | 'setup' | 'video'>('agree');
-  // 「同意してはじめる」を押したあとの行き先。
-  // 使い方をまだ見ていない人にはガイド、見た人は①へ
+  // 「同意してはじめる」を押したら、まっすぐフレーム選びへ。
+  // 以前はここで使い方のガイド（長い文章）を挟んでいたが、
+  // 実際に友達に使ってもらったら「何のアプリか、どう使うか分からない」だった。
+  // 説明を読んで分からないなら、説明を厚くするより手を引くほうが早い
+  // （2026-08-12、伊波さん「説明見てわからないなら、誘導が１番でしょ？」）。
+  // ガイド自体は消していない。ヘッダーの ❓ からいつでも読める
   const afterAgree = () => {
-    let seen = false;
-    try { seen = localStorage.getItem('tinycube.guideSeen') === '1'; } catch { /* 読めなくても動く */ }
-    setScreen(seen ? 'frame' : 'manner');
+    try { localStorage.setItem('tinycube.guideSeen', '1'); } catch { /* 保存できなくても動く */ }
+    setScreen('frame');
   };
   const [hand, setHand] = useState<'right' | 'left'>('right');
+  // 初めて撮影画面に来た人に、押す場所だけ示すための旗
+  const [startHint, setStartHint] = useState(false);
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
   // （2026-08-11、伊波さん「両方」）
   const [unlocked, setUnlocked] = useState(isUnlocked());
@@ -323,7 +328,7 @@ function App() {
   // ②で素材が決まったら、待たせずに撮影画面へ送る。
   // カメラでもファイルでも同じ扱いにしたいので、結果のほうを見ている
   useEffect(() => {
-    if (screen === 'source' && (videoSrc || camOn)) setScreen('video');
+    if (screen === 'source' && (videoSrc || camOn)) { setStartHint(true); setScreen('video'); }
   }, [screen, videoSrc, camOn]);
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
@@ -680,9 +685,13 @@ function App() {
           </div>
         )}
         {camInfo && <div className="cam-info">{camInfo}</div>}
-        {shape === 'landscape' && portraitDevice && (
+        {shape === 'landscape' && portraitDevice ? (
           <div className="turn-hint">{t('turn_hint')}</div>
-        )}
+        ) : startHint && !isRecording ? (
+          /* 誘導は説明より強い。初めて撮影画面に来た人に、押す場所だけ示す
+             （2026-08-12、伊波さん「説明見てわからないなら、誘導が１番でしょ？」） */
+          <div className="turn-hint start-hint">録画ボタンを押してね</div>
+        ) : null}
       </main>
 
       {/* 手前に重なるフローティングUI */}
@@ -877,10 +886,10 @@ function App() {
                 className={`frame-tile none ${frameId === null ? 'on' : ''}`}
                 onClick={() => { setFrameId(null); setScreen('source'); }}
               >{t('frame_none')}</button>
-              {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
+              {FRAMES.map(f => (
                 <button
                   key={f.id}
-                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
+                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''} ${fitsShape(f, shape) ? '' : 'cut'}`}
                   onClick={() => {
                     // 鍵つきを押しても何も起きないと壊れて見える。買うところまで連れていく
                     if (locked(f)) { setScreen('setup'); showUnlock(); }
@@ -890,6 +899,7 @@ function App() {
                 >
                   <img src={f.file} alt={f.name} />
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
+                  {!fitsShape(f, shape) && <span className="cut-mark">切れる</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
                 </button>
@@ -929,10 +939,6 @@ function App() {
               <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
               <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
             </div>
-          </div>
-          {/* カメラを許可できない人を行き止まりにしない */}
-          <div className="setup-footer">
-            <button className="start-btn" onClick={() => setScreen('video')}>あとで</button>
           </div>
         </div>
       )}
@@ -1038,15 +1044,16 @@ function App() {
 
               <div className="frame-picker">
                 <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
-                {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
+                {FRAMES.map(f => (
                   <button
                     key={f.id}
-                    className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
+                    className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''} ${fitsShape(f, shape) ? '' : 'cut'}`}
                     onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                     title={locked(f) ? t('locked_hint') : f.name}
                   >
                     <img src={f.file} alt={f.name} />
                     {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
+                  {!fitsShape(f, shape) && <span className="cut-mark">切れる</span>}
                     {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
                   </button>
@@ -1226,15 +1233,16 @@ function App() {
 
             <div className="frame-picker">
               <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
-              {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
+              {FRAMES.map(f => (
                 <button
                   key={f.id}
-                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
+                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''} ${fitsShape(f, shape) ? '' : 'cut'}`}
                   onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                   title={locked(f) ? t('locked_hint') : f.name}
                 >
                   <img src={f.file} alt={f.name} />
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
+                  {!fitsShape(f, shape) && <span className="cut-mark">切れる</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
                 </button>
