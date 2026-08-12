@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import './App.css'
+import '../docs/tinycube-skin-shibuya.css'
+import './setup.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
 import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
@@ -343,6 +344,8 @@ function App() {
   // （2026-08-12、伊波さん「戻るボタンがほしいね」）
   const [backTo, setBackTo] = useState<'frame' | 'source' | 'video'>('video');
   const openSetup = (from: 'frame' | 'source' | 'video') => { setBackTo(from); setScreen('setup'); };
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [loopVideo, setLoopVideo] = useState(true);
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
   // （2026-08-11、伊波さん「両方」）
   const [unlocked, setUnlocked] = useState(isUnlocked());
@@ -438,8 +441,8 @@ function App() {
     liveRef.current.shape = shape;
     if (!frame || (builtinFrame && locked(builtinFrame))) { liveRef.current.frame = null; return; }
     let alive = true;
-    loadFrame(frame).then(img => {
-      if (alive) liveRef.current.frame = { img, anchor: frame.anchor, faceHole: frame.faceHole, faceHoles: frame.faceHoles };
+    loadFrame(frame).then(({ img, bgImg }) => {
+      if (alive) liveRef.current.frame = { img, bgImg, anchor: frame.anchor, faceHole: frame.faceHole, faceHoles: frame.faceHoles };
     }).catch(() => { /* 読めなければ枠なしで続ける */ });
     return () => { alive = false; };
   }, [frame, shape]);
@@ -554,19 +557,11 @@ function App() {
 
   const save = async (blob: Blob, ext: string) => {
     const name = `tinycube_${Date.now()}.${ext}`;
-    const file = new File([blob], name, { type: blob.type });
-
-    const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-    if (nav.canShare && nav.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'tinyCUBE' });
-        return;
-      } catch (e: any) {
-        // 本人が共有をやめただけなら、そこで終わり。
-        // 失敗したときだけダウンロードへ回す
-        if (e && e.name === 'AbortError') return;
-      }
-    }
+    
+    const showSaved = () => {
+      setSaveMessage('保存しました！');
+      setTimeout(() => setSaveMessage(null), 3000);
+    };
 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -578,6 +573,7 @@ function App() {
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      showSaved();
     }, 100);
   };
 
@@ -684,6 +680,10 @@ function App() {
         onFinish: save,
         onError: (e) => alert(t('alert_rec_fail') + e.message),
       });
+      // 録画開始と同じタイミングで動画も最初から再生する
+      if (videoSrc && videoRef.current) {
+        videoRef.current.currentTime = 0;
+      }
       await videoRef.current.play();
       setCanPause(recorderRef.current.canPause);
       setIsPaused(false);
@@ -737,12 +737,8 @@ function App() {
               ref={videoRef}
               src={videoSrc ?? undefined}
               className="video-player hidden-source"
-              autoPlay
-              loop
+              loop={loopVideo}
               playsInline
-              // 再生を断られたまま黙って黒画面になるのを防ぐ。
-              // 準備ができた時点でもう一度たたく（2026-08-11）
-              onCanPlay={e => { e.currentTarget.play().catch(() => { /* 次の機会に */ }); }}
               onEnded={() => setIsPreviewing(false)}
               onLoadedMetadata={e => {
                 const v = e.currentTarget;
@@ -775,6 +771,7 @@ function App() {
           </div>
         )}
         {camInfo && <div className="cam-info">{camInfo}</div>}
+        {saveMessage && <div className="cam-info" style={{ background: 'rgba(255, 50, 150, 0.9)', fontWeight: 'bold' }}>{saveMessage}</div>}
         {countdown !== null && <div className="countdown">{countdown}</div>}
         {shape === 'landscape' && portraitDevice ? (
           <div className="turn-hint">（横フレームが選択されています。<br/>スマホを横にしてください。）</div>
@@ -807,7 +804,7 @@ function App() {
                 意味の通る絵に戻す */}
             {/* 設定ボタン（⚙️）は消して、設定（source）に戻るボタンに変更
                 （2026-08-12、伊波さん「撮影画面の設定ボタンは消して設定に戻るボタンを付ける」） */}
-            <button className="tool-btn-small" onClick={() => setScreen('source')} title="設定に戻る">←</button>
+            <button className="tool-btn-small" onClick={() => setScreen('source')} title="設定に戻る" style={{ width: 'auto', padding: '0 12px', fontSize: '13px', fontWeight: 'bold' }}>戻る</button>
             <button className="tool-btn-small" onClick={() => setScreen('manner')} title="使い方">❓</button>
             <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">👾</button>
           </div>
@@ -815,8 +812,8 @@ function App() {
 
         {/* 録画ボタン */}
         <footer className="bottom-controls">
-          <button className="preview-btn-round" onClick={togglePreview} disabled={isRecording || !videoSrc}>
-            {isPreviewing ? '⏸' : '▶'}
+          <button className="preview-btn-round" onClick={() => setScreen('source')} disabled={isRecording} title="取り直す">
+            ↺
           </button>
           {/* 写真。押した瞬間の画面が、そのまま1枚になる */}
           <button
@@ -995,6 +992,11 @@ function App() {
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>縦 (9:16)</button>
               <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>横 (16:9)</button>
             </div>
+            {shape === 'landscape' && (
+              <div style={{ textAlign: 'center', color: '#ff69b4', fontSize: '12px', marginTop: '8px', fontWeight: 'bold' }}>
+                ※横向きフレームが選択されておりますので、スマホを横向きにしてご利用ください。
+              </div>
+            )}
             <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
               <button
                 className={`frame-tile none ${frameId === null ? 'on' : ''}`}
@@ -1198,6 +1200,12 @@ function App() {
                   <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
                 </button>
               </div>
+              {videoSrc && (
+                <div className="shape-switch" style={{ marginTop: '12px' }}>
+                  <button className={!loopVideo ? 'on' : ''} onClick={() => setLoopVideo(false)}>ループしない</button>
+                  <button className={loopVideo ? 'on' : ''} onClick={() => setLoopVideo(true)}>ループする🔁</button>
+                </div>
+              )}
             </div>
 
             <div className="setup-section highlight-section">

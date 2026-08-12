@@ -20,6 +20,7 @@ export type Frame = {
   id: string;
   name: string;
   file: string;
+  bgFile?: string;
   anchor: FrameAnchor;
   /** 顔ハメ枠の穴の位置（キャンバス全体に対する%）。
    *  穴は透明ではなく黒く塗ってあるので、カメラは枠より後から重ね描く必要がある。
@@ -178,15 +179,18 @@ export function fitsShape(frame: Frame, shape: OutShape): boolean {
 }
 
 /** 読み込みが終わるまで待つ。録画中に間に合わないと、枠だけ抜けた動画が出てしまう */
-export function loadFrame(frame: { file: string }): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error('枠の絵を読み込めませんでした: ' + frame.file));
-    // 絵を作り直したときに、端末に残った古い絵を掴ませないための番号。
-    // ファイル名を変えずに中身だけ差し替えることがあるので、住所を変えて
-    // 別物として取りに行かせる。作り直したらこの数を上げること
-    // （2026-08-11、顔ハメが古いまま黒く出ていた）
-    img.src = frame.file.startsWith('data:') ? frame.file : frame.file + '?v=20260813_raw';
-  });
+export async function loadFrame(frame: { file: string; bgFile?: string }): Promise<{ img: HTMLImageElement; bgImg?: HTMLImageElement }> {
+  const loadSingle = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('枠の絵を読み込めませんでした: ' + src));
+      img.src = src.startsWith('data:') ? src : src + '?v=20260813_raw';
+    });
+  };
+
+  const img = await loadSingle(frame.file);
+  const bgImg = frame.bgFile ? await loadSingle(frame.bgFile) : undefined;
+  
+  return { img, bgImg };
 }

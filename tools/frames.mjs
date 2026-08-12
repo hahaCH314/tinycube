@@ -293,12 +293,37 @@ ws.close();
 chrome.kill();
 
 console.log('\n--- frames.ts に貼る行 ---');
+const paired = new Map();
+const single = [];
+
 for (const d of done) {
+  const m = d.name.match(/^(.*)_(mural|overlay)$/);
+  if (m) {
+    const base = m[1];
+    const type = m[2];
+    if (!paired.has(base)) paired.set(base, { id: base, name: base, anchor: d.anchor });
+    if (type === 'mural') paired.get(base).bgFile = `./frames/${d.name}.webp`;
+    else paired.get(base).file = `./frames/${d.name}.webp`;
+  } else {
+    single.push(d);
+  }
+}
+
+for (const d of single) {
   console.log(
     `  { id: '${d.name}',`.padEnd(30) +
     `name: '${d.name}',`.padEnd(26) +
     `file: './frames/${d.name}.webp',`.padEnd(38) +
-    `anchor: '${d.anchor}' },`,
+    `anchor: '${d.anchor}' },`
+  );
+}
+for (const [base, d] of paired.entries()) {
+  console.log(
+    `  { id: '${d.id}',`.padEnd(30) +
+    `name: '${d.name}',`.padEnd(26) +
+    `file: '${d.file}',`.padEnd(38) +
+    (d.bgFile ? `bgFile: '${d.bgFile}',`.padEnd(38) : '') +
+    `anchor: '${d.anchor}' },`
   );
 }
 console.log(`\n${done.length}枚。合計 ${done.reduce((a, b) => a + b.kb, 0)}KB`);

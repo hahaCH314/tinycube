@@ -26,7 +26,7 @@ export type RecordHandle = {
 export type RecordOptions = {
   video: HTMLVideoElement;
   /** 焼き込む枠。上か下だけの飾りで、横幅いっぱいに置く。null なら枠なし */
-  frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
+  frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
   /** 透かしの文字。null なら焼かない（有料版） */
   watermark: string | null;
   /** 書き出しの形。既定は縦 */
@@ -80,7 +80,7 @@ export type StageOptions = {
      *  顔ハメの穴に顔を合わせられない（2026-08-11、伊波さん「合わせにくい」） */
     mirror?: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
+    frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
   };
 };
@@ -97,18 +97,34 @@ export function startStage(opts: StageOptions): () => void {
 
   // 枠は毎コマ拡大し直さず、書き出しの大きさで一度だけ作って使い回す。
   // 1400px の絵を毎コマ 1080x1920 へ引き伸ばすのは、端末には重い（2026-08-11）
-  let baked: { img: HTMLImageElement; w: number; h: number; canvas: HTMLCanvasElement } | null = null;
+  let baked: { img: HTMLImageElement; w: number; h: number; canvas: HTMLCanvasElement; isFaceHole?: boolean } | null = null;
   const bakeFrame = (
     img: HTMLImageElement, anchor: FrameAnchor, W: number, H: number,
-    slice?: { t: number; r: number; b: number; l: number }
+    slice?: { t: number; r: number; b: number; l: number },
+    isFaceHole?: boolean
   ) => {
-    if (baked && baked.img === img && baked.w === W && baked.h === H) return baked.canvas;
+    if (baked && baked.img === img && baked.w === W && baked.h === H && baked.isFaceHole === isFaceHole) return baked.canvas;
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const gg = c.getContext('2d');
     if (!gg) return null;
     drawFrame(gg, img, anchor, W, H, slice);
-    baked = { img, w: W, h: H, canvas: c };
+
+    if (isFaceHole) {
+      // コマンドの多重実行で開いてしまった不要な透明穴（髪や服）を塞ぐため、
+      // 顔はめ枠の場合は透明なピクセルをすべて「黒（#000）」で塗りつぶす！
+      // これにより、余計な穴から背景が透けてお化けのようになるのを防ぎます。
+      const im = gg.getImageData(0, 0, W, H);
+      const d = im.data;
+      for (let i = 0; i < d.length; i += 4) {
+        if (d[i + 3] < 128) {
+          d[i] = 0; d[i + 1] = 0; d[i + 2] = 0; d[i + 3] = 255;
+        }
+      }
+      gg.putImageData(im, 0, 0);
+    }
+
+    baked = { img, w: W, h: H, canvas: c, isFaceHole };
     return c;
   };
 
@@ -122,8 +138,14 @@ export function startStage(opts: StageOptions): () => void {
     if (canvas.width !== OUT_W) canvas.width = OUT_W;
     if (canvas.height !== OUT_H) canvas.height = OUT_H;
 
-    g.fillStyle = '#000';
-    g.fillRect(0, 0, OUT_W, OUT_H);
+    if (frame?.bgImg) {
+      const b = bakeFrame(frame.bgImg, frame.anchor, OUT_W, OUT_H, frame.slice);
+      if (b) g.drawImage(b, 0, 0);
+      else drawFrame(g, frame.bgImg, frame.anchor, OUT_W, OUT_H, frame.slice);
+    } else {
+      g.fillStyle = '#000';
+      g.fillRect(0, 0, OUT_W, OUT_H);
+    }
 
     const vw = video?.videoWidth ?? 0, vh = video?.videoHeight ?? 0;
     if (video && vw && vh) {
@@ -161,7 +183,8 @@ export function startStage(opts: StageOptions): () => void {
     }
 
     if (frame) {
-      const b = bakeFrame(frame.img, frame.anchor, OUT_W, OUT_H, frame.slice);
+      const isFaceHole = (frame.faceHoles && frame.faceHoles.length > 0) || !!frame.faceHole;
+      const b = bakeFrame(frame.img, frame.anchor, OUT_W, OUT_H, frame.slice, isFaceHole);
       if (b) g.drawImage(b, 0, 0);
       else drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H, frame.slice);
     }
@@ -222,8 +245,12 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
   let running = true;
   const draw = () => {
     if (!running || opts.canvas) return;   // 画面側が回しているなら任せる
-    g.fillStyle = '#000';
-    g.fillRect(0, 0, OUT_W, OUT_H);
+    if (frame?.bgImg) {
+      drawFrame(g, frame.bgImg, frame.anchor, OUT_W, OUT_H, frame.slice);
+    } else {
+      g.fillStyle = '#000';
+      g.fillRect(0, 0, OUT_W, OUT_H);
+    }
 
     const vw = video.videoWidth, vh = video.videoHeight;
     if (vw && vh) {
