@@ -4,7 +4,7 @@ import { startRecording, startStage, type RecordHandle, type OutShape } from './
 import { FRAMES, loadFrame, fitsShape, type FrameAnchor } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
-import { t, getLang } from './i18n'
+import { t, getLang, setLang } from './i18n'
 import { isUnlocked, tryUnlock, savedKey, relock } from './unlock'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
@@ -709,7 +709,7 @@ function App() {
         {camInfo && <div className="cam-info">{camInfo}</div>}
         {countdown !== null && <div className="countdown">{countdown}</div>}
         {shape === 'landscape' && portraitDevice ? (
-          <div className="turn-hint">{t('turn_hint')}</div>
+          <div className="turn-hint">（横フレームが選択されています。<br/>スマホを横にしてください。）</div>
         ) : startHint && !isRecording ? (
           /* 誘導は説明より強い。初めて撮影画面に来た人に、押す場所だけ示す
              （2026-08-12、伊波さん「説明見てわからないなら、誘導が１番でしょ？」） */
@@ -725,6 +725,12 @@ function App() {
 
         <header className="header">
           <div className="logo-container">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#fff' }}>
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              <text x="12" y="16" fontSize="10" fontWeight="bold" fill="currentColor" stroke="none" textAnchor="middle" transform="translate(0, 1)">t</text>
+            </svg>
             <span className="logo-text" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>tinyCUBE</span>
           </div>
           <div className="header-tools">
@@ -902,21 +908,26 @@ function App() {
           ここで決めることは「どの枠か」だけ。他は何も聞かない */}
       {screen === 'frame' && (
         <div className="setup-screen">
-          <div className="setup-header">
+          <div className="setup-header" style={{ position: 'relative' }}>
             <h2 className="setup-title">フレームを選ぶ</h2>
+            <button 
+              onClick={() => {
+                setLang(getLang() === 'ja' ? 'en' : 'ja');
+                window.location.reload();
+              }}
+              style={{ position: 'absolute', right: 16, background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '4px', padding: '4px 8px', fontSize: '12px' }}
+            >
+              {getLang() === 'ja' ? 'English' : '日本語'}
+            </button>
           </div>
           <div className="setup-content">
             {/* 形を先に決める。縦と横で出せる枠が変わるので、ここで一緒に選ぶ
+            {/* 縦に横フレーム（切れる）は要らない。形に合うものだけ出す
                 （2026-08-12、伊波さん「フレームを選ぶところで縦横もきまったら？」） */}
             <div className="shape-switch">
-              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
-              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
+              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>縦 (9:16)</button>
+              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>横 (16:9)</button>
             </div>
-            {shape === 'landscape' && portraitDevice && (
-              <p style={{ color: '#fbbf24', fontSize: '13px', textAlign: 'center', margin: '8px 0 16px' }}>
-                ※スマホを横向きにすると広く見えます！📱↺
-              </p>
-            )}
             <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
               <button
                 className={`frame-tile none ${frameId === null ? 'on' : ''}`}
@@ -975,6 +986,10 @@ function App() {
                 </button>
               ))}
             </div>
+            
+            <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
+              ©２０２６CUBICENGINEstudio　
+            </div>
           </div>
         </div>
       )}
@@ -989,15 +1004,12 @@ function App() {
           <div className="setup-content">
             <div className="source-picker">
               <button className="source-btn" onClick={() => startCam(true)}>
-                <span className="source-icon">🤳</span>
                 <span className="source-text">{t('cam_front')}</span>
               </button>
               <button className="source-btn" onClick={() => startCam(false)}>
-                <span className="source-icon">📸</span>
                 <span className="source-text">{t('cam_back')}</span>
               </button>
               <button className="source-btn" onClick={() => fileInputRef.current?.click()}>
-                <span className="source-icon">📁</span>
                 <span className="source-text">{t('setting_video_load')}</span>
               </button>
             </div>
@@ -1053,12 +1065,16 @@ function App() {
 
             {/* 素材が決まったら、この決定ボタンで撮影画面へ進む
                 （2026-08-12、伊波さん「cameraを選んだら即決定になるので、決定ボタンを作る」） */}
-            {(videoSrc || camOn) && (
-              <button className="manner-agree-btn" onClick={confirmSource} style={{ marginTop: '24px' }}>
+          </div>
+          
+          {/* 決定ボタンはスクロール無しで出せるように、下に固定する */}
+          {(videoSrc || camOn) && (
+            <div style={{ position: 'sticky', bottom: 0, padding: '16px', background: 'var(--bg)', borderTop: '1px solid rgba(255,255,255,0.1)', zIndex: 10 }}>
+              <button className="manner-agree-btn" onClick={confirmSource} style={{ margin: 0 }}>
                 決定（この設定で撮る！）
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
