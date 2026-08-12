@@ -1052,7 +1052,15 @@
    通したいので pointer-events は切る（2026-08-12、伊波さん依頼）
    ============================================================ */
 .fancy-css-frame-retro,
-.fancy-css-frame-plump {
+.fancy-css-frame-plump,
+.fancy-css-frame-corners,
+.fancy-css-frame-film,
+.fancy-css-frame-scallop,
+.fancy-css-frame-neon,
+.fancy-css-frame-ticket,
+.fancy-css-frame-stripe,
+.fancy-css-frame-polaroid,
+.fancy-css-frame-confetti {
   position: absolute;
   inset: 0;
   box-sizing: border-box;
