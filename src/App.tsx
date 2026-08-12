@@ -160,13 +160,81 @@ function App() {
   }, []);
   const customFrameInputRef = useRef<HTMLInputElement>(null);
   
+  const makeFaceHoleTransparent = async (dataUrl: string): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.width;
+        c.height = img.height;
+        const ctx = c.getContext('2d');
+        if (!ctx) return resolve(dataUrl);
+        ctx.drawImage(img, 0, 0);
+        const im = ctx.getImageData(0, 0, img.width, img.height);
+        const d = im.data;
+        const W = img.width, H = img.height, N = W * H;
+
+        const dark = new Uint8Array(N);
+        for (let i = 0; i < N; i++) {
+          const o = i * 4;
+          if (d[o + 3] > 8 && d[o] < 42 && d[o + 1] < 42 && d[o + 2] < 42) dark[i] = 1;
+        }
+
+        const label = new Int32Array(N).fill(-1);
+        const stack = new Int32Array(N);
+        const sizes: number[] = [];
+        const edgeTouches: boolean[] = [];
+        let next = 0;
+
+        for (let s = 0; s < N; s++) {
+          if (!dark[s] || label[s] >= 0) continue;
+          let sp = 0, count = 0;
+          let touchesEdge = false;
+          stack[sp++] = s; label[s] = next;
+          while (sp > 0) {
+            const p = stack[--sp]; count++;
+            const x = p % W, y = (p / W) | 0;
+            if (x < W * 0.05 || x > W * 0.95 || y < H * 0.05 || y > H * 0.95) touchesEdge = true;
+            if (x > 0     && dark[p - 1] && label[p - 1] < 0) { label[p - 1] = next; stack[sp++] = p - 1; }
+            if (x < W - 1 && dark[p + 1] && label[p + 1] < 0) { label[p + 1] = next; stack[sp++] = p + 1; }
+            if (y > 0     && dark[p - W] && label[p - W] < 0) { label[p - W] = next; stack[sp++] = p - W; }
+            if (y < H - 1 && dark[p + W] && label[p + W] < 0) { label[p + W] = next; stack[sp++] = p + W; }
+          }
+          sizes.push(count);
+          edgeTouches.push(touchesEdge);
+          next++;
+        }
+
+        const min = N * 0.004;
+        let cleared = 0;
+        for (let i = 0; i < N; i++) {
+          const l = label[i];
+          if (l >= 0 && sizes[l] >= min && !edgeTouches[l]) {
+            d[i * 4 + 3] = 0;
+            cleared++;
+          }
+        }
+
+        if (cleared > 0) {
+          ctx.putImageData(im, 0, 0);
+          resolve(c.toDataURL('image/png'));
+        } else {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
   const handleCustomFrameUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async (ev) => {
-      const dataUrl = ev.target?.result as string;
+      const rawDataUrl = ev.target?.result as string;
+      const dataUrl = await makeFaceHoleTransparent(rawDataUrl);
       const id = `custom_${Date.now()}`;
       try {
         await saveCustomFrame(id, dataUrl);
