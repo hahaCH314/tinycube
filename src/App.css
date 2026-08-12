@@ -367,6 +367,45 @@
   100% { opacity: 0; }
 }
 
+/* 縦持ち（自撮り）でも、真ん中の録画ボタンは片手だと親指が届きづらい。
+   利き手設定に合わせて、録画だけを持ち手側の角へ大きく寄せ、
+   残り3つ（試す・写真・一時停止）は反対の角に小さくまとめる
+   （2026-08-12、伊波さん）。横向きのルールと混ざらないよう縦だけに限定。
+   柱はフッター帯の上で止まるので、角に寄せてもぶつからない */
+@media (orientation: portrait) {
+  /* --- 右手：録画を右角、ユーティリティは左角にまとめる --- */
+  .app-container[data-handed='right'] .record-btn-round {
+    position: absolute;
+    right: max(18px, env(safe-area-inset-right));
+    left: auto;
+  }
+  .app-container[data-handed='right'] .preview-btn-round {
+    left: max(16px, env(safe-area-inset-left)); right: auto;
+  }
+  .app-container[data-handed='right'] .photo-btn-round {
+    left: max(64px, calc(env(safe-area-inset-left) + 48px)); right: auto;
+  }
+  .app-container[data-handed='right'] .pause-btn-round {
+    left: max(112px, calc(env(safe-area-inset-left) + 96px)); right: auto;
+  }
+
+  /* --- 左手：鏡合わせ。録画を左角、ユーティリティは右角 --- */
+  .app-container[data-handed='left'] .record-btn-round {
+    position: absolute;
+    left: max(18px, env(safe-area-inset-left));
+    right: auto;
+  }
+  .app-container[data-handed='left'] .preview-btn-round {
+    right: max(16px, env(safe-area-inset-right)); left: auto;
+  }
+  .app-container[data-handed='left'] .photo-btn-round {
+    right: max(64px, calc(env(safe-area-inset-right) + 48px)); left: auto;
+  }
+  .app-container[data-handed='left'] .pause-btn-round {
+    right: max(112px, calc(env(safe-area-inset-right) + 96px)); left: auto;
+  }
+}
+
 /* 一時停止中だと分かる帯。上に出す（すりガラスの案内ピル） */
 .pause-badge {
   position: absolute; top: calc(var(--head-h) - 8px); left: 50%;
