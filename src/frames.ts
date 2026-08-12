@@ -11,7 +11,7 @@
 // 絵を足すときは npm run frames -- <フォルダ> を使う。黒を抜いて WebP にし、
 // ここへ貼る行まで出してくれる。出来は tools/frames-check.png で目で見ること。
 
-export type FrameAnchor = 'wide' | 'top' | 'bottom' | 'full';
+export type FrameAnchor = 'wide' | 'top' | 'bottom' | 'full' | 'split4';
 export type OutShape = 'portrait' | 'landscape';
 
 export type Frame = {
@@ -30,6 +30,7 @@ export type Frame = {
 };
 
 export const FRAMES: Frame[] = [
+
   // --- 顔ハメ（9:16 で描いてあるので、縦で書き出すときにぴったり合う） ---
   // CMCUBE ではカメラを穴にはめて使うもの。tinyCUBE では動画が穴から見える。
   // 穴は透明ではなく黒く塗ってある。フレームを先に描き、その上にカメラ映像を

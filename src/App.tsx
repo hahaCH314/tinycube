@@ -4,9 +4,22 @@ import { startRecording, startStage, type RecordHandle, type OutShape } from './
 import { FRAMES, fitsShape, loadFrame, type FrameAnchor } from './frames'
 import { fireEffect, fireTelop, useCustomSounds, audioContext, setAmbient, type EffectId } from './effects'
 import { SOUND_SLOTS, loadSaved, setCustom, clearCustom, customName, customBuffer } from './sounds'
-import { t, getLang, setLang } from './i18n'
+import { t, getLang } from './i18n'
 import { isUnlocked, tryUnlock, savedKey, relock } from './unlock'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
+
+// ---- 開いたときのお願い（2026-08-12、伊波さんの原文） -------------------
+//
+// この文章は伊波さんが書いたもの。要約・言い換え・整形をしないこと。
+// 改行も原文のまま。CSS 側（.manner-text）に white-space: pre-line を
+// 当ててあるので、<br> を入れずにこの文字列をそのまま流し込めば改行が出る。
+// 変えるときは伊波さんに確認してから、docs/tinycube-update-scope.md も直す。
+const MANNER_TEXT = `＊このアプリケーションはみなさんの日常を切り取る
+動画＆写真撮影アプリです
+SNSへの投稿及び二次使用は自由に行えます
+みなさんの愛のあるご利用をお願いすると共に
+このアプリが誹謗中傷への道具となりませんよう
+お願い申し上げます`;
 
 // ---- シティポップの絵柄（2026-08-11、伊波さんの指示） -------------------
 //
@@ -226,7 +239,17 @@ function App() {
   };    // 入れ替えたら画面を描き直すための番号
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
-  const [showSettings, setShowSettings] = useState(false);
+  // 'agree' はアプリを開くたびに必ず最初に出る（伊波さん「アプリ開いた時」）。
+  // 一度きりにしたい場合は、下の初期値を localStorage で分岐させれば済む
+  const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video'>('agree');
+  // 「同意してはじめる」を押したあとの行き先。
+  // 使い方をまだ見ていない人にはガイド、見た人は設定（＝枠を選ぶ）へ
+  const afterAgree = () => {
+    let seen = false;
+    try { seen = localStorage.getItem('tinycube.guideSeen') === '1'; } catch { /* 読めなくても動く */ }
+    setScreen(seen ? 'setup' : 'manner');
+  };
+  const [hand, setHand] = useState<'right' | 'left'>('right');
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
   // （2026-08-11、伊波さん「両方」）
   const [unlocked, setUnlocked] = useState(isUnlocked());
@@ -242,10 +265,16 @@ function App() {
     setKeyNG(!ok);
     if (ok) { setUnlocked(true); setKeyInput(''); }
   };
+  
+  // 値は読まない（開く操作だけ）。読む側が出てきたら第1要素を戻すこと
+  const [, setAdvancedOpen] = useState(false);
   // 鍵のかかったフレームを押したとき、買うところまで連れていく。
   // 押しても何も起きないと、壊れているように見える
   const showUnlock = () => {
-    unlockRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setAdvancedOpen(true);
+    setTimeout(() => {
+      unlockRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   // 透かしは無料版の印。解除したら消える。
@@ -278,12 +307,9 @@ function App() {
     };
   }, []);
 
-  const [showGuide, setShowGuide] = useState(() => {
-    try { return localStorage.getItem('tinycube.guideSeen') !== '1'; } catch { return true; }
-  });
   const closeGuide = () => {
     try { localStorage.setItem('tinycube.guideSeen', '1'); } catch { /* 保存できなくても動く */ }
-    setShowGuide(false);
+    setScreen('setup');
   };
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
   // 判断（2026-08-10、伊波さん）。切れることはタイルに印を出して伝える
@@ -646,7 +672,7 @@ function App() {
       </main>
 
       {/* 手前に重なるフローティングUI */}
-      <div className="ui-layer">
+      <div className={`ui-layer hand-${hand}`}>
         {/* 上下の帯。光が横切るが、中央の映像には届かない（切り取ってある） */}
         <div className="city-frame top" />
         <div className="city-frame bottom" />
@@ -659,8 +685,8 @@ function App() {
             {/* 絵文字だけだと何のボタンか分からない。リボンが設定、ピースが使い方
                 という組み合わせは、作った側にも伝わらなかった（2026-08-11）。
                 意味の通る絵に戻す */}
-            <button className="tool-btn-small" onClick={() => setShowSettings(true)} title="設定">⚙️</button>
-            <button className="tool-btn-small" onClick={() => setShowGuide(true)} title="使い方">❓</button>
+            <button className="tool-btn-small" onClick={() => setScreen('setup')} title="設定">⚙️</button>
+            <button className="tool-btn-small" onClick={() => setScreen('manner')} title="使い方">❓</button>
             <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">👾</button>
           </div>
         </header>
@@ -756,15 +782,26 @@ function App() {
         </div>
       </div>
 
-      {showGuide && (
+      {/* 開いたときのお願い。平成大プリクラの入口＝ここから枠を選びにいく */}
+      {screen === 'agree' && (
+        <div className="manner-screen">
+          <div className="manner-content">
+            <h2 className="manner-title">はじめに</h2>
+            <p className="manner-text">{MANNER_TEXT}</p>
+            <button className="manner-agree-btn" onClick={afterAgree}>同意してはじめる</button>
+          </div>
+        </div>
+      )}
+
+      {screen === 'manner' && (
         <div className="sheet-backdrop" onClick={closeGuide}>
           <div className="sheet guide" onClick={e => e.stopPropagation()}>
             <div className="sheet-head"><span>{t('guide_title')}</span></div>
 
             <ol className="guide-steps">
-              <li><b>{t('guide_step1_title')}</b><br />{t('guide_step1_desc')}</li>
-              <li><b>{t('guide_step2_title')}</b><br />{t('guide_step2_desc')}</li>
-              <li><b>{t('guide_step3_title')}</b><br />{t('guide_step3_desc')}</li>
+              <li><b>{t('guide_step1_title')}</b>{'\n'}{t('guide_step1_desc')}</li>
+              <li><b>{t('guide_step2_title')}</b>{'\n'}{t('guide_step2_desc')}</li>
+              <li><b>{t('guide_step3_title')}</b>{'\n'}{t('guide_step3_desc')}</li>
             </ol>
             <p className="guide-note">{t('guide_photo')}</p>
 
@@ -808,35 +845,124 @@ function App() {
       )}
 
       {/* 設定。事前準備はすべてここに入れる */}
-      {showSettings && (
-        <div className="sheet-backdrop" onClick={() => setShowSettings(false)}>
-          <div className="sheet" onClick={e => e.stopPropagation()}>
-            <div className="sheet-head">
-              <span>{t('setting_title')}</span>
-              <button onClick={() => setShowSettings(false)}>{t('setting_close')}</button>
+      {screen === 'setup' && (
+        <div className="setup-screen">
+          <div className="setup-header">
+            <h2 className="setup-title">設定してね</h2>
+            {/* 設定から戻るボタン（すでに映像が選ばれている場合など） */}
+            {(videoSrc || camOn) && (
+              <button className="setup-close-btn" onClick={() => setScreen('video')}>✕</button>
+            )}
+          </div>
+          
+          <div className="setup-content">
+            <div className="hand-setting">
+              <label><input type="radio" name="hand" value="right" checked={hand === 'right'} onChange={() => setHand('right')} /> 右</label>
+              <label><input type="radio" name="hand" value="left" checked={hand === 'left'} onChange={() => setHand('left')} /> 左</label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Language / 言語</span>
-              <select 
-                style={{ background: '#0b1021', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '4px 8px', borderRadius: 4 }}
-                value={getLang()} 
-                onChange={(e) => {
-                  setLang(e.target.value as 'ja' | 'en');
-                  window.location.reload();
-                }}
-              >
-                <option value="ja">日本語</option>
-                <option value="en">English</option>
-              </select>
+            {/* オンボーディング（アプリの紹介） */}
+            <div className="setup-onboarding">
+              <h2>💖 あなたのスマホが「平成のプリクラ」に！</h2>
+              <div className="onboarding-features">
+                <div className="onboarding-item">
+                  <span className="onboarding-icon">📸</span>
+                  <p><strong>カメラONですぐ遊べる！</strong><br/>インカメ・外カメを使ってリアルタイムに盛ろう！</p>
+                </div>
+                <div className="onboarding-item">
+                  <span className="onboarding-icon">✨</span>
+                  <p><strong>フレームで一気にエモく</strong><br/>平成レトロなフレームを気分で着せ替え！</p>
+                </div>
+                <div className="onboarding-item">
+                  <span className="onboarding-icon">🎬</span>
+                  <p><strong>しかも、動画にもできる！</strong><br/>写真だけじゃない！スタンプ感覚でデコりながらエモい動画を作ろう！</p>
+                </div>
+              </div>
             </div>
 
-            <h3>{t('setting_video')}</h3>
-            <button className="sheet-btn" onClick={() => fileInputRef.current?.click()}>
-              {videoSrc ? t('setting_video_change') : t('setting_video_load')}
-            </button>
+            {/* 何を撮るか決めるエリア（一番上） */}
+            <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
+              <h3 className="setup-section-title">✨ 1. まずはカメラをつけよう！</h3>
+              
+              <div className="source-picker">
+                <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
+                  <span className="source-icon">📱</span>
+                  <span className="source-text">{t('cam_front')}</span>
+                </button>
+                <button className={`source-btn ${camOn && !camFront ? 'on' : ''}`} onClick={() => startCam(false)}>
+                  <span className="source-icon">📷</span>
+                  <span className="source-text">{t('cam_back')}</span>
+                </button>
+                <button className={`source-btn ${videoSrc ? 'on' : ''}`} onClick={() => fileInputRef.current?.click()}>
+                  <span className="source-icon">📁</span>
+                  <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
+                </button>
+              </div>
+            </div>
 
-            <h3>{t('setting_sounds')}</h3>
+            <div className="setup-section highlight-section">
+              <h3 className="setup-section-title">✨ 2. フレームを選んでエモく！</h3>
+
+              <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(168, 85, 247, 0.1)', borderLeft: '3px solid #a855f7', borderRadius: '4px' }}>
+                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.4', color: '#e2e8f0' }}>
+                  <strong>みんながクリエイター！✨</strong><br/>
+                  ※AIと一緒に簡単に自作フレームが作れます<br/>
+                  素敵なオリジナルフレームや、おもしろフレームなど、あなたが作った作品をSNSで見れるのを楽しみにしています♡
+                </p>
+              </div>
+              <div className="frame-picker" style={{ marginBottom: '12px' }}>
+                <button 
+                  className="frame-tile"
+                  onClick={() => customFrameInputRef.current?.click()}
+                  style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)' }}
+                >
+                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
+                  <span style={{ color: '#a855f7' }}>マイフレーム追加</span>
+                </button>
+                <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
+                
+                {customFrames.map(cf => (
+                  <button
+                    key={cf.id}
+                    className={`frame-tile ${frameId === cf.id ? 'on' : ''}`}
+                    onClick={() => setFrameId(cf.id)}
+                    style={{ position: 'relative' }}
+                  >
+                    <img src={cf.dataUrl} alt="マイフレーム" />
+                    <span>マイフレーム</span>
+                    <div 
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (confirm('このフレームを削除しますか？')) {
+                          await deleteCustomFrame(cf.id);
+                          setCustomFrames(prev => prev.filter(p => p.id !== cf.id));
+                          if (frameId === cf.id) setFrameId(null);
+                        }
+                      }}
+                      style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >✕</div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="frame-picker">
+                <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
+                {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
+                  <button
+                    key={f.id}
+                    className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
+                    onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
+                    title={locked(f) ? t('locked_hint') : f.name}
+                  >
+                    <img src={f.file} alt={f.name} />
+                    {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
+                    <span>{f.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <h3 className="setup-section-title">{t('setting_sounds')}</h3>
             <p className="sheet-note">{t('sounds_note')}</p>
             <p className="sheet-note">{t('my_note')}</p>
             <div className="sound-list">
@@ -874,14 +1000,7 @@ function App() {
               onChange={onSoundFile}
             />
 
-            <h3>{t('setting_camera')}</h3>
-            <div className="shape-switch">
-              <button className={camOn && camFront ? 'on' : ''} onClick={() => startCam(true)}>{t('cam_front')}</button>
-              <button className={camOn && !camFront ? 'on' : ''} onClick={() => startCam(false)}>{t('cam_back')}</button>
-              <button className={!camOn ? 'on' : ''} onClick={stopCam}>{t('cam_off')}</button>
-            </div>
-
-            <h3>{t('setting_srcaudio')}</h3>
+            <h3 className="setup-section-title">{t('setting_srcaudio')}</h3>
             <p className="sheet-note">{t('srcaudio_note')}</p>
             <div className="shape-switch">
               <button className={useSrcAudio === 'mic' ? 'on' : ''} onClick={() => pickSrcAudio('mic')}>{t('srcaudio_mic')}</button>
@@ -889,7 +1008,7 @@ function App() {
               <button className={useSrcAudio === 'off' ? 'on' : ''} onClick={() => pickSrcAudio('off')}>{t('srcaudio_off')}</button>
             </div>
 
-            <h3>{t('setting_shape')}</h3>
+            <h3 className="setup-section-title">{t('setting_shape')}</h3>
             {srcIsWide && (
               <p className="sheet-note">{t('setting_shape_wide_note')}</p>
             )}
@@ -898,19 +1017,19 @@ function App() {
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
             </div>
 
-            <h3>{t('setting_teloppos')}</h3>
+            <h3 className="setup-section-title">{t('setting_teloppos')}</h3>
             <div className="shape-switch">
               <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
               <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
             </div>
 
-            <h3>{t('setting_telopcolor')}</h3>
+            <h3 className="setup-section-title">{t('setting_telopcolor')}</h3>
             <div className="shape-switch">
               <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
               <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
             </div>
 
-            <h3>{t('setting_telop')}</h3>
+            <h3 className="setup-section-title">{t('setting_telop')}</h3>
             <p className="sheet-note">{t('setting_telop_note')}</p>
             <div className="telop-inputs">
               {myTelops.map((text, i) => (
@@ -926,7 +1045,7 @@ function App() {
               ))}
             </div>
 
-            <h3>{t('setting_frame')}</h3>
+            <h3 className="setup-section-title">{t('setting_frame')}</h3>
 
             {/* 買い切りの解除。枠の一覧のすぐ上に置く。
                 何が解けるのかを、鍵のかかった枠を見る直前に読めるように */}
@@ -1027,6 +1146,16 @@ function App() {
                   <span>{f.name}</span>
                 </button>
               ))}
+            </div>
+
+            <div className="setup-footer">
+              <button 
+                className="start-btn" 
+                onClick={() => setScreen('video')}
+                disabled={!videoSrc && !camOn}
+              >
+                {(videoSrc || camOn) ? 'この設定で撮る！' : '⚠️ まずはカメラをつけてね！'}
+              </button>
             </div>
           </div>
         </div>

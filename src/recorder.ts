@@ -26,7 +26,7 @@ export type RecordHandle = {
 export type RecordOptions = {
   video: HTMLVideoElement;
   /** 焼き込む枠。上か下だけの飾りで、横幅いっぱいに置く。null なら枠なし */
-  frame: { img: HTMLImageElement; anchor: FrameAnchor } | null;
+  frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number } } | null;
   /** 透かしの文字。null なら焼かない（有料版） */
   watermark: string | null;
   /** 書き出しの形。既定は縦 */
@@ -80,7 +80,7 @@ export type StageOptions = {
      *  顔ハメの穴に顔を合わせられない（2026-08-11、伊波さん「合わせにくい」） */
     mirror?: boolean;
     shape: OutShape;
-    frame: { img: HTMLImageElement; anchor: FrameAnchor; faceHole?: { x: number; y: number; w: number; h: number } } | null;
+    frame: { img: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: { x: number; y: number; w: number; h: number } } | null;
     watermark: string | null;
   };
 };
@@ -98,13 +98,16 @@ export function startStage(opts: StageOptions): () => void {
   // 枠は毎コマ拡大し直さず、書き出しの大きさで一度だけ作って使い回す。
   // 1400px の絵を毎コマ 1080x1920 へ引き伸ばすのは、端末には重い（2026-08-11）
   let baked: { img: HTMLImageElement; w: number; h: number; canvas: HTMLCanvasElement } | null = null;
-  const bakeFrame = (img: HTMLImageElement, anchor: FrameAnchor, W: number, H: number) => {
+  const bakeFrame = (
+    img: HTMLImageElement, anchor: FrameAnchor, W: number, H: number,
+    slice?: { t: number; r: number; b: number; l: number }
+  ) => {
     if (baked && baked.img === img && baked.w === W && baked.h === H) return baked.canvas;
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const gg = c.getContext('2d');
     if (!gg) return null;
-    drawFrame(gg, img, anchor, W, H);
+    drawFrame(gg, img, anchor, W, H, slice);
     baked = { img, w: W, h: H, canvas: c };
     return c;
   };
@@ -129,20 +132,38 @@ export function startStage(opts: StageOptions): () => void {
       // （2026-08-10、伊波さんの指示）。
       // 読み込んだ動画は切らずに全部見せる（元の作品を勝手に切らない）
       const fill = read().fill;
-      const scale = fill
-        ? Math.max(OUT_W / vw, OUT_H / vh)
-        : Math.min(OUT_W / vw, OUT_H / vh);
-      const w = vw * scale, h = vh * scale;
-      g.save();
-      if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
-      g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
-      g.restore();
+      const isSplit4 = frame?.anchor === 'split4';
+
+      if (isSplit4) {
+        const halfW = OUT_W / 2;
+        const halfH = OUT_H / 2;
+        const scale = fill ? Math.max(halfW / vw, halfH / vh) : Math.min(halfW / vw, halfH / vh);
+        const w = vw * scale, h = vh * scale;
+        g.save();
+        if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
+        const dx = (halfW - w) / 2;
+        const dy = (halfH - h) / 2;
+        g.drawImage(video, dx, dy, w, h);
+        g.drawImage(video, halfW + dx, dy, w, h);
+        g.drawImage(video, dx, halfH + dy, w, h);
+        g.drawImage(video, halfW + dx, halfH + dy, w, h);
+        g.restore();
+      } else {
+        const scale = fill
+          ? Math.max(OUT_W / vw, OUT_H / vh)
+          : Math.min(OUT_W / vw, OUT_H / vh);
+        const w = vw * scale, h = vh * scale;
+        g.save();
+        if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
+        g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
+        g.restore();
+      }
     }
 
     if (frame) {
-      const b = bakeFrame(frame.img, frame.anchor, OUT_W, OUT_H);
+      const b = bakeFrame(frame.img, frame.anchor, OUT_W, OUT_H, frame.slice);
       if (b) g.drawImage(b, 0, 0);
-      else drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H);
+      else drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H, frame.slice);
     }
 
     // 顔ハメは、枠を描いたあとに、穴の形へ切り抜いたカメラをもう一度重ねる。
@@ -208,15 +229,28 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
 
     const vw = video.videoWidth, vh = video.videoHeight;
     if (vw && vh) {
-      // 縦画面に収める（切らずに全部見せる）
-      const scale = Math.min(OUT_W / vw, OUT_H / vh);
-      const w = vw * scale, h = vh * scale;
-      g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
+      if (frame?.anchor === 'split4') {
+        const halfW = OUT_W / 2;
+        const halfH = OUT_H / 2;
+        const scale = Math.min(halfW / vw, halfH / vh);
+        const w = vw * scale, h = vh * scale;
+        const dx = (halfW - w) / 2;
+        const dy = (halfH - h) / 2;
+        g.drawImage(video, dx, dy, w, h);
+        g.drawImage(video, halfW + dx, dy, w, h);
+        g.drawImage(video, dx, halfH + dy, w, h);
+        g.drawImage(video, halfW + dx, halfH + dy, w, h);
+      } else {
+        // 縦画面に収める（切らずに全部見せる）
+        const scale = Math.min(OUT_W / vw, OUT_H / vh);
+        const w = vw * scale, h = vh * scale;
+        g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
+      }
     }
 
     // 一発エフェクトは枠より前、透かしより後ろ。
     // 枠の下に潜ると、下向きの飾りに隠れて何も見えないことがある
-    if (frame) drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H);
+    if (frame) drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H, frame.slice);
     drawEffects(g, OUT_W, OUT_H);
     // 下に飾りのある枠のときは、透かしを右上へ逃がす。
     // 右下のままだと絵の上に重なって、どちらも読みにくくなる
@@ -346,15 +380,50 @@ function pickMimeType(): string | null {
   return null;                            // ブラウザの既定に任せる
 }
 
-/** 枠は横幅いっぱい。上の飾りは上端に、下の飾りは下端に寄せる。
-    絵は 16:9 なので、縦画面では高さが余る。伸ばさず元の比率のまま置く */
+/** 枠の描画（9スライス対応） */
 function drawFrame(
   g: CanvasRenderingContext2D, img: HTMLImageElement,
   anchor: FrameAnchor, OUT_W: number, OUT_H: number,
+  slice?: { t: number; r: number; b: number; l: number }
 ) {
-  // wide（16:9の枠）と full（9:16の枠）は画面いっぱいに敷く。
-  // 形が合わないとき（16:9の枠を縦に使うなど）は、伸ばさずに埋めて、
-  // はみ出した側だけを切る。伸ばすと絵が歪んで一目で安っぽくなる
+  if (slice) {
+    const iw = img.naturalWidth, ih = img.naturalHeight;
+    const { t, r, b, l } = slice;
+    const cx = iw - l - r; // 中央の幅
+    const cy = ih - t - b; // 中央の高さ
+    
+    // 描画先の領域を決定
+    let dx = 0, dy = 0, dw = OUT_W, dh = OUT_H;
+    if (anchor !== 'full' && anchor !== 'wide') {
+      dh = img.naturalHeight * (OUT_W / img.naturalWidth);
+      dy = anchor === 'top' ? 0 : OUT_H - dh;
+    }
+    const cw = dw - l - r; // 描画先の中央幅
+    const ch = dh - t - b; // 描画先の中央高さ
+
+    // 四隅（等倍）
+    g.drawImage(img, 0, 0, l, t, dx, dy, l, t);
+    g.drawImage(img, iw - r, 0, r, t, dx + dw - r, dy, r, t);
+    g.drawImage(img, 0, ih - b, l, b, dx, dy + dh - b, l, b);
+    g.drawImage(img, iw - r, ih - b, r, b, dx + dw - r, dy + dh - b, r, b);
+
+    // 四辺（辺だけ伸縮）
+    if (cx > 0) {
+      g.drawImage(img, l, 0, cx, t, dx + l, dy, cw, t); // 上
+      g.drawImage(img, l, ih - b, cx, b, dx + l, dy + dh - b, cw, b); // 下
+    }
+    if (cy > 0) {
+      g.drawImage(img, 0, t, l, cy, dx, dy + t, l, ch); // 左
+      g.drawImage(img, iw - r, t, r, cy, dx + dw - r, dy + t, r, ch); // 右
+    }
+    // 中央（幅・高さ伸縮）
+    if (cx > 0 && cy > 0) {
+      g.drawImage(img, l, t, cx, cy, dx + l, dy + t, cw, ch);
+    }
+    return;
+  }
+
+  // 以下はスライス指定がない従来の処理（引き伸ばし等）
   if (anchor === 'full' || anchor === 'wide') {
     const iw = img.naturalWidth, ih = img.naturalHeight;
     const scale = Math.max(OUT_W / iw, OUT_H / ih);
