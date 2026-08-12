@@ -117,7 +117,9 @@ export function startStage(opts: StageOptions): () => void {
       const im = gg.getImageData(0, 0, W, H);
       const d = im.data;
       for (let i = 0; i < d.length; i += 4) {
-        if (d[i + 3] < 128) {
+        // 完全な透明（alpha=0）は「意図的な真ん中の抜き」として残し、
+        // 半透明のゴミ（alpha > 0 かつ alpha < 255）だけを黒で塞ぐ！
+        if (d[i + 3] > 0 && d[i + 3] < 255) {
           d[i] = 0; d[i + 1] = 0; d[i + 2] = 0; d[i + 3] = 255;
         }
       }

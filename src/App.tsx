@@ -1048,7 +1048,14 @@ function App() {
                   }}
                   title={locked(f) ? t('locked_hint') : f.name}
                 >
-                  <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
+                  {f.bgFile ? (
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img src={f.bgFile + '?v=20260813_raw'} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+                      <img src={f.file + '?v=20260813_raw'} alt={f.name} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }} />
+                    </div>
+                  ) : (
+                    <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
+                  )}
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
@@ -1057,7 +1064,9 @@ function App() {
             </div>
             
             <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
-              ©２０２６CUBICENGINEstudio　
+              <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                ©２０２６CUBICENGINEstudio　
+              </a>
             </div>
           </div>
         </div>
@@ -1450,7 +1459,14 @@ function App() {
                   onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                   title={locked(f) ? t('locked_hint') : f.name}
                 >
-                  <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
+                  {f.bgFile ? (
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img src={f.bgFile + '?v=20260813_raw'} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+                      <img src={f.file + '?v=20260813_raw'} alt={f.name} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }} />
+                    </div>
+                  ) : (
+                    <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
+                  )}
                   {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
                   {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}

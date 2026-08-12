@@ -9,7 +9,7 @@
   "theme_color": "#ff00aa",
   "lang": "ja",
   "icons": [
-    { "src": "/cute-icon.svg", "sizes": "512x512", "type": "image/svg+xml" },
-    { "src": "/cute-icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "/favicon.svg", "sizes": "512x512", "type": "image/svg+xml" },
+    { "src": "/favicon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
   ]
 }

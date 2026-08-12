@@ -9,17 +9,19 @@ const folders = fs.readdirSync(srcDir).filter(f => fs.statSync(path.join(srcDir,
 
 let newFrames = [];
 
-for (const folder of folders) {
-  const folderPath = path.join(srcDir, folder);
-  const files = fs.readdirSync(folderPath).filter(f => f.endsWith('.png') || f.endsWith('.webp'));
-  
-  const mural = files.find(f => f.includes('mural'));
-  const overlay = files.find(f => f.includes('overlay'));
-  
-  if (mural && overlay) {
-    const idMatch = folder.match(/cmcube_(.+?)_themes/);
-    const baseId = idMatch ? idMatch[1] : folder.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-    const id = baseId + '_' + Date.now().toString().slice(-4);
+  let counter = 0;
+  for (const folder of folders) {
+    const folderPath = path.join(srcDir, folder);
+    const files = fs.readdirSync(folderPath).filter(f => f.endsWith('.png') || f.endsWith('.webp'));
+    
+    const mural = files.find(f => f.includes('mural'));
+    const overlay = files.find(f => f.includes('overlay'));
+    
+    if (mural && overlay) {
+      counter++;
+      const idMatch = folder.match(/cmcube_(.+?)_themes/);
+      const baseId = idMatch ? idMatch[1] : folder.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      const id = baseId + '_' + Date.now().toString().slice(-4) + '_' + counter;
     
     const destMural = `${id}_mural${path.extname(mural)}`;
     const destOverlay = `${id}_overlay${path.extname(overlay)}`;
