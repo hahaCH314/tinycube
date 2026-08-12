@@ -863,12 +863,11 @@ function App() {
       {screen === 'frame' && (
         <div className="setup-screen">
           <div className="setup-header">
-            <h2 className="setup-title">① わくを えらぶ</h2>
+            <h2 className="setup-title">フレームを選ぶ</h2>
           </div>
           <div className="setup-content">
             {/* 形を先に決める。縦と横で出せる枠が変わるので、ここで一緒に選ぶ
                 （2026-08-12、伊波さん「フレームを選ぶところで縦横もきまったら？」） */}
-            <p className="sheet-note">たてか よこを えらんでから、わくを ひとつ えらんでね</p>
             <div className="shape-switch">
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
               <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
@@ -904,11 +903,10 @@ function App() {
       {screen === 'source' && (
         <div className="setup-screen">
           <div className="setup-header">
-            <h2 className="setup-title">② なにを 撮る？</h2>
+            <h2 className="setup-title">カメラか動画を選ぶ</h2>
             <button className="setup-close-btn" onClick={() => setScreen('frame')} title="もどる">←</button>
           </div>
           <div className="setup-content">
-            <p className="sheet-note">カメラで撮るか、すでにある動画をつかうか えらんでね</p>
             <div className="source-picker">
               <button className="source-btn" onClick={() => startCam(true)}>
                 <span className="source-icon">📱</span>
@@ -926,15 +924,15 @@ function App() {
 
             {/* 持つ手で録画ボタンの位置を変える
                 （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */}
-            <h3 className="setup-section-title">どっちの手で もつ？</h3>
+            <h3 className="setup-section-title">利き手</h3>
             <div className="shape-switch">
-              <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>ひだり</button>
-              <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>みぎ</button>
+              <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
+              <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
             </div>
           </div>
           {/* カメラを許可できない人を行き止まりにしない */}
           <div className="setup-footer">
-            <button className="start-btn" onClick={() => setScreen('video')}>あとで きめる</button>
+            <button className="start-btn" onClick={() => setScreen('video')}>あとで</button>
           </div>
         </div>
       )}
