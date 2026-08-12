@@ -205,7 +205,7 @@ const dictJa: I18nDict = {
   srcaudio_mix: '🎧 イヤホン',
   srcaudio_note: 'イヤホンを使うなら「イヤホン」。そのままスピーカーで撮るなら「スピーカー」を選んでください。逆にすると、動画の音が二重に入るか、まったく入らなくなります。',
   srcaudio_off: '🔇 消す',
-  cam_front: '🤳 インカメ',
+  cam_front: '🤳 内カメ',
   cam_back: '📷 外カメ',
   cam_off: '⏹ 使わない',
   cam_fail: 'カメラを開けませんでした。許可の設定を確かめてください。',
