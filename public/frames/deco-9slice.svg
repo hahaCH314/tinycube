@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  tinyCUBE / CMCUBE 用 9スライス装飾フレーム（渋谷デコラ×プリクラ）
+   - source size : 1200 x 1200
+  - slice inset  : 240px（上下左右すべて 240）
+  - 角(240x240)は等倍固定 / 辺はテープが伸縮 / 中央は透明で不可侵
+  - backdrop-filter 不使用（border/box-shadow相当の塗りと影のみ）= canvas焼き込み可
+  - 9:16 でも 16:9 でも、この1枚から drawFrame の9スライスで生成できる
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs>
+    <!-- ホログラム風テープの塗り -->
+    <linearGradient id="holo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0"    stop-color="#ff5fa8"/>
+      <stop offset="0.33" stop-color="#b18aff"/>
+      <stop offset="0.66" stop-color="#63e6ff"/>
+      <stop offset="1"    stop-color="#ffd93d"/>
+    </linearGradient>
+
+    <!-- ステッカーの落ち影（貼ってある浮き）。canvasに焼けるよう軽め -->
+    <filter id="stick" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#2a0f3a" flood-opacity="0.35"/>
+    </filter>
+
+    <!-- パーツ定義（原点中心。stroke=白フチ、paint-order=stroke で外側に白） -->
+    <path id="p-heart" d="M0,-6 C -7,-20 -30,-16 -30,2 C -30,16 -10,24 0,30 C 10,24 30,16 30,2 C 30,-16 7,-20 0,-6 Z"/>
+    <polygon id="p-star" points="0,-24 5.6,-7.8 22.8,-7.4 9.1,3 14.1,19.4 0,9.6 -14.1,19.4 -9.1,3 -22.8,-7.4 -5.6,-7.8"/>
+    <path id="p-spark" d="M0,-16 C2,-4 4,-2 16,0 C4,2 2,4 0,16 C-2,4 -4,2 -16,0 C-4,-2 -2,-4 0,-16 Z"/>
+
+    <!-- 左上コーナーの飾りクラスター（0..240 の箱に収める） -->
+    <g id="corner"
+       stroke="#ffffff" stroke-width="7" paint-order="stroke"
+       stroke-linejoin="round" vector-effect="non-scaling-stroke" filter="url(#stick)">
+      <!-- 大きいピンクのぷっくりハート -->
+      <use href="#p-heart" x="0" y="0" transform="translate(150,150) scale(1.7)" fill="#ff5fa8"/>
+      <!-- レモンの星 -->
+      <use href="#p-star"  x="0" y="0" transform="translate(92,78) scale(1.15)"  fill="#ffd93d"/>
+      <!-- 小さいバイオレットのハート -->
+      <use href="#p-heart" x="0" y="0" transform="translate(178,86) scale(0.85)" fill="#b18aff"/>
+      <!-- シアンのラインストーン（丸＋白ハイライト） -->
+      <circle cx="78" cy="158" r="20" fill="#63e6ff"/>
+      <circle cx="72" cy="152" r="6"  fill="#ffffff" stroke="none"/>
+      <!-- キラッ（白＆ピンクの4点スパークル） -->
+      <use href="#p-spark" x="0" y="0" transform="translate(40,40)  scale(0.9)" fill="#ffffff"/>
+      <use href="#p-spark" x="0" y="0" transform="translate(210,190) scale(0.7)" fill="#ff5fa8"/>
+    </g>
+  </defs>
+
+  <!-- ============ ベースのテープ枠（丸角ストローク＝9スライスで自然に伸縮） ============ -->
+  <!-- 白フチ（外） -->
+  <rect x="58" y="58" width="1084" height="1084" rx="76" fill="none"
+        stroke="#ffffff" stroke-width="52"/>
+  <!-- ホロテープ本体 -->
+  <rect x="58" y="58" width="1084" height="1084" rx="76" fill="none"
+        stroke="url(#holo)" stroke-width="40"/>
+  <!-- 内側の細い白ライン（プリクラのペン縁取り） -->
+  <rect x="86" y="86" width="1028" height="1028" rx="58" fill="none"
+        stroke="#ffffff" stroke-width="5" stroke-dasharray="2 16" stroke-linecap="round"/>
+
+  <!-- ============ 四隅のステッカークラスター（等倍固定スライス） ============ -->
+  <use href="#corner"/>                                            <!-- 左上 -->
+  <use href="#corner" transform="translate(1200,0)   scale(-1,1)"/> <!-- 右上 -->
+  <use href="#corner" transform="translate(1200,1200) scale(-1,-1)"/><!-- 右下 -->
+  <use href="#corner" transform="translate(0,1200)   scale(1,-1)"/> <!-- 左下 -->
+
+  <!-- 中央は何も描かない = 完全透明（撮影エリア不可侵） -->
+</svg>
