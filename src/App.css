@@ -1,29 +1,26 @@
 /* ============================================================
-   tinyCUBE — シティポップ（2026-08-11、伊波さんの指示）
+   tinyCUBE — 渋谷デコラティブストリート × オタク文化
+   （推し活デコ ＆ 魔法少女ポップ / 2026-08-12、ボタン=v0 リスキン）
 
    守っている決まりは1つだけ。
-   「光やパーティクルは枠の中（左右の柱・上下の帯）で終わらせ、
+   「光・キラキラ・流れる装飾は枠の中（左右の柱・上下の帯）で終わらせ、
      中央の映像には絶対に被らせない」
 
    そのために中央（.preview-stage）は overflow:hidden / isolation:isolate /
    contain:paint で隔離し、左右の柱と上下の帯も自分の中で切り取る。
-   ボタンそのものは映像の上に乗ってよい（2026-08-11、伊波さんの判断）。
-   被らせないのは、光・粒・流れる装飾のほう。
+   ボタンそのものは映像の上に乗ってよい。動くのは飾りのほうを禁じる。
 
+   素材：面はすりガラス、ボタンはぷっくりしたラインストーン。
    ※ここは「画面の飾り」で、録画されるのは canvas の中身だけ。
-     動画にも入れたいものは effects.ts / recorder.ts 側に書くこと
    ============================================================ */
 
 :root {
   /* 左右の柱の幅。柱は映像の上に重なる */
   --rail-w: clamp(60px, 19vw, 76px);
-  /* 上下の帯。小さいほど映像が見える面積が増える
-     （2026-08-11、伊波さん「録画ボタンをちいさくして、動画の範囲広げよう」） */
+  /* 上下の帯。小さいほど映像が見える面積が増える */
   --head-h: 58px;
   --foot-h: 88px;
   /* 柱に並ぶボタンの最大数（いまは左の15個）。
-     左右で数が違うと、同じ高さを分け合ったときにボタンの大きさが変わり、
-     段が横に揃わなくなる（2026-08-11、伊波さん「機能ボタンのズレ」）。
      多いほうに合わせて高さを決め、少ないほうは下を余らせる。
      左にボタンを足したら、この数も直すこと */
   --rail-max: 15;
@@ -42,13 +39,10 @@
 }
 
 /* ============================================================
-   2. 中央＝配信映像だけの場所（完全隔離）
+   2. 中央＝配信映像だけの場所（完全隔離・装飾は静止のみ）
    ============================================================ */
 .preview-stage {
   position: absolute;
-  /* 映像は画面いっぱいまで使う。柱は上に重ねる
-     （2026-08-11、伊波さん「ボタンは画像の上にあっていい」）。
-     内側に寄せていたときは、縦持ちで映像が 242px しか無かった */
   top: 10px;
   bottom: 10px;
   left: 0;
@@ -56,7 +50,7 @@
   width: auto;
   height: auto;
   background: #000;
-  border-radius: 12px;
+  border-radius: 18px;
   /* 外側のエフェクトを侵入させない */
   overflow: hidden;
   isolation: isolate;
@@ -67,27 +61,26 @@
   align-items: center;
   /* 中の箱が、この枠の縦横を直に読めるようにする */
   container-type: size;
+  /* ホロっぽい縁取り。あくまで静止。中央の絵柄には動く光を入れない
+     （2026-08-12、ヒマワリの手紙「中央は神聖」） */
   box-shadow:
-    0 0 0 2px rgba(102, 231, 255, 0.35),
-    0 0 24px rgba(149, 102, 255, 0.35);
+    0 0 0 2px rgba(255, 255, 255, 0.5),
+    0 0 0 4px rgba(255, 95, 180, 0.45),
+    0 0 0 6px rgba(177, 138, 255, 0.35),
+    0 0 26px rgba(99, 230, 255, 0.3);
 }
 
-/* 動画の形（--ar は App.tsx が渡す）を保ったまま、枠に入る最大の大きさにする。
-   max-width / max-height に任せると、flex に引き伸ばされて 16:9 が 2:1 になった
-   （2026-08-11、実測 2.014）。幅と高さの両方から出して、小さいほうを取る */
+/* 動画の形（--ar は App.tsx が渡す）を保ったまま、枠に入る最大の大きさにする */
 .stage-box {
   position: relative;
   overflow: hidden;
 
-  /* まずは、どの端末でも成り立つ書き方。
-     下の cq 単位を知らない端末では、こちらが残る。
-     知らない端末で下だけを書いていると、幅も高さも決まらず 0 になり、
-     画面が真っ暗になる（2026-08-11、伊波さん「スマホは真っ暗だよ」） */
+  /* どの端末でも成り立つ書き方（cq 未対応でも真っ暗にならない） */
   width: 100%;
   aspect-ratio: var(--ar, 0.5625);
   max-height: 100%;
 
-  /* 対応している端末では、こちらが勝つ。入る大きさぴったりに収まる */
+  /* 対応端末ではこちらが勝つ。入る大きさぴったりに収まる */
   width: min(100cqw, calc(100cqh * var(--ar, 0.5625)));
   height: min(100cqh, calc(100cqw / var(--ar, 0.5625)));
 }
@@ -99,10 +92,7 @@
   background: #000;
 }
 
-/* 映像の元。canvas の裏に敷いて、canvas で覆い隠す。
-   1x1・opacity:0 にしていたが、端末によっては「見えていない映像」を
-   描画の対象から外すため、canvas へ一枚も届かないことがある。
-   カメラのランプは点くのに画面が黒い、はこれで起きる（2026-08-11） */
+/* 映像の元。canvas の裏に敷いて、canvas で覆い隠す */
 .video-player.hidden-source {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover;
@@ -123,47 +113,49 @@
   width: 56px; height: 56px; border-radius: 50%;
   display: flex; justify-content: center; align-items: center;
   border: 2px dashed var(--cp-cyan);
-  background: rgba(102, 231, 255, 0.08);
-  box-shadow: 0 0 18px rgba(102, 231, 255, 0.35);
+  background: rgba(99, 230, 255, 0.1);
+  box-shadow: 0 0 18px rgba(99, 230, 255, 0.4);
 }
 
+/* 誘導文字。すりガラスのピルにして読みやすく（静止・装飾ではなく案内） */
 .turn-hint {
-  /* 録画ボタンの上に置く。下端に貼るとボタンと重なる。
-     9px の一行に押し込んで「…」で切れていて読めなかった
-     （2026-08-11、伊波さん「誘導文字がみえない」）。
-     柱のあいだに収め、大きく・明るくして、折り返しも許す */
   position: absolute; left: 50%; bottom: calc(var(--foot-h) - 2px);
   transform: translateX(-50%);
   width: max-content; max-width: calc(100% - var(--rail-w) * 2 - 16px);
   text-align: center; line-height: 1.35;
-  font-size: 0.72rem; font-weight: 800; padding: 7px 12px; border-radius: 16px;
-  background: rgba(16, 8, 43, 0.92); color: var(--cp-cyan);
-  border: 1px solid var(--cp-cyan);
-  box-shadow: 0 0 14px rgba(102, 231, 255, 0.45);
+  font-size: 0.72rem; font-weight: 800; padding: 8px 14px; border-radius: 18px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  color: var(--cp-cyan);
+  border: 1px solid rgba(99, 230, 255, 0.6);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 14px rgba(99, 230, 255, 0.35);
   pointer-events: none;
 }
 
-/* カメラが黒いままのときに出る覚え書き。原因を画面から拾えるようにする */
+/* カメラが黒いままのときに出る覚え書き */
 .cam-info {
   position: absolute; left: 50%; top: calc(var(--head-h) + 8px);
   transform: translateX(-50%);
   max-width: calc(100% - var(--rail-w) * 2 - 16px);
   z-index: 15; pointer-events: none;
   font-size: 0.6rem; line-height: 1.45; text-align: center;
-  padding: 8px 10px; border-radius: 12px;
-  background: rgba(16, 8, 43, 0.92);
-  color: var(--cp-yellow); border: 1px solid var(--cp-yellow);
+  padding: 8px 12px; border-radius: 14px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  color: var(--cp-yellow); border: 1px solid rgba(255, 215, 107, 0.6);
 }
 
 /* ============================================================
-   3. 手前のUI層と、上下の帯
+   3. 手前のUI層と、上下の帯（キラキラはここで完結）
    ============================================================ */
 .ui-layer {
   position: absolute; inset: 0;
   z-index: 20; pointer-events: none;
 }
 
-/* 上下の帯。光が横切るが、切り取ってあるので中央には届かない */
+/* 上下の帯。ホログラムのテープ。光が横切るが切り取ってあるので中央には届かない */
 .city-frame {
   position: absolute;
   left: 0; right: 0;
@@ -171,7 +163,11 @@
   overflow: hidden;
   pointer-events: none;
   z-index: 30;
-  background: linear-gradient(90deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple));
+  background: linear-gradient(90deg,
+    var(--cp-cyan) 0%, var(--cp-purple) 30%, var(--cp-pink) 55%,
+    var(--cp-yellow) 78%, var(--cp-cyan) 100%);
+  background-size: 200% 100%;
+  animation: deco-tape 7s linear infinite;
 }
 .city-frame.top { top: 0; }
 .city-frame.bottom { bottom: 0; }
@@ -179,15 +175,19 @@
   content: '';
   position: absolute;
   top: 0; bottom: 0;
-  width: 20%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
-  animation: citypop-shimmer 4.5s linear infinite;
+  width: 22%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  animation: deco-shimmer 4.5s linear infinite;
 }
 .city-frame.bottom::after { animation-delay: 2.2s; }
 
-@keyframes citypop-shimmer {
+@keyframes deco-shimmer {
   from { transform: translateX(-40%); }
   to   { transform: translateX(180%); }
+}
+@keyframes deco-tape {
+  from { background-position: 0% 50%; }
+  to   { background-position: 200% 50%; }
 }
 
 /* ============================================================
@@ -205,36 +205,52 @@
 
 .logo-container { display: flex; align-items: center; gap: 8px; }
 .logo-text {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 900;
-  font-style: italic;
-  font-size: 1.22rem;
-  letter-spacing: 0.5px;
-  color: var(--cp-cyan);
-  text-shadow: 2px 2px 0 var(--cp-pink), 0 0 14px rgba(102, 231, 255, 0.6);
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 800;
+  font-size: 1.32rem;
+  letter-spacing: 0.2px;
+  color: #fff;
+  text-shadow:
+    0 1px 0 var(--cp-pink),
+    2px 2px 0 var(--cp-purple),
+    0 0 16px rgba(255, 95, 180, 0.7);
 }
 
 .header-tools { display: flex; gap: 8px; }
+/* すりガラス丸ボタン。角にラインストーンの艶をひとつ乗せる */
 .tool-btn-small {
+  position: relative;
   width: 38px; height: 38px;
   font-size: 1rem;
   border-radius: 50%;
-  background: rgba(27, 15, 61, 0.9);
-  border: 2px solid rgba(102, 231, 255, 0.55);
+  background:
+    var(--rin-gloss),
+    var(--glass-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
   color: #fff;
   display: flex; justify-content: center; align-items: center;
-  box-shadow: 0 0 10px rgba(102, 231, 255, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(99, 230, 255, 0.3);
   transition: transform 0.1s;
 }
 .tool-btn-small:active { transform: scale(0.86); }
-.discord-btn { border-color: #8b93ff; box-shadow: 0 0 10px rgba(139, 147, 255, 0.45); }
+.discord-btn {
+  border-color: rgba(139, 147, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 0 14px rgba(139, 147, 255, 0.55);
+}
 
 /* ============================================================
    5. 下のバー（試してみる／録画）
    ============================================================ */
 .bottom-controls {
   position: absolute;
-  /* ボタンが4つになったので端まで使う。柱より下なので重ならない */
   bottom: 0; left: 0; right: 0;
   height: var(--foot-h);
   padding-bottom: max(18px, env(safe-area-inset-bottom));
@@ -242,23 +258,27 @@
   pointer-events: auto; z-index: 40;
 }
 
+/* 録画ボタン＝いちばん大きなラインストーン */
 .record-btn-round {
   flex: 0 0 auto;
-  width: 60px; height: 60px; border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.9);
-  background: radial-gradient(circle at 32% 28%, #ff8ec4 0%, var(--cp-pink) 45%, #b8226b 100%);
+  width: 62px; height: 62px; border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.95);
+  background:
+    radial-gradient(130% 130% at 30% 22%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 50% 60%, #ff8ecb 0%, var(--cp-pink) 46%, var(--cp-pink-deep) 100%);
   display: flex; justify-content: center; align-items: center;
   padding: 0;
   box-shadow:
-    0 0 20px rgba(255, 79, 163, 0.65),
-    inset 0 3px 8px rgba(255, 255, 255, 0.5),
-    inset 0 -4px 10px rgba(90, 0, 50, 0.6);
+    inset 0 3px 8px rgba(255, 255, 255, 0.6),
+    inset 0 -5px 12px rgba(120, 6, 66, 0.65),
+    0 5px 0 var(--cp-pink-deep),
+    0 8px 22px rgba(255, 95, 180, 0.7);
   transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.record-btn-round:active { transform: scale(0.9); }
+.record-btn-round:active { transform: scale(0.9) translateY(3px); }
 .record-btn-round .record-inner {
   width: 30px; height: 30px; border-radius: 50%;
-  background: linear-gradient(180deg, #fff 0%, #ffd6ea 100%);
+  background: linear-gradient(180deg, #fff 0%, #ffd6ec 100%);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -266,92 +286,118 @@
   border-radius: 10px; transform: scale(0.6); background: #fff;
 }
 .record-btn-round.recording {
-  animation: citypop-rec 1.4s ease-in-out infinite;
+  animation: deco-rec 1.4s ease-in-out infinite;
 }
-@keyframes citypop-rec {
-  0%, 100% { box-shadow: 0 0 20px rgba(255, 79, 163, 0.65), inset 0 3px 8px rgba(255,255,255,0.5); }
-  50%      { box-shadow: 0 0 34px rgba(255, 79, 163, 1),    inset 0 3px 8px rgba(255,255,255,0.5); }
+@keyframes deco-rec {
+  0%, 100% {
+    box-shadow:
+      inset 0 3px 8px rgba(255,255,255,0.6), inset 0 -5px 12px rgba(120,6,66,0.65),
+      0 5px 0 var(--cp-pink-deep), 0 8px 22px rgba(255, 95, 180, 0.6);
+  }
+  50% {
+    box-shadow:
+      inset 0 3px 8px rgba(255,255,255,0.6), inset 0 -5px 12px rgba(120,6,66,0.65),
+      0 5px 0 var(--cp-pink-deep), 0 8px 34px rgba(255, 95, 180, 1);
+  }
 }
 
-/* 録画ボタンは真ん中。試してみるボタンは、その左に添える。
-   横に並べて全体を中央寄せにすると、録画ボタンが右にずれて見える */
+/* 録画ボタンは真ん中。試してみるボタンは、その左に添える */
 .preview-btn-round {
   position: absolute; left: max(8px, calc(50% - 148px), env(safe-area-inset-left));
   width: 40px; height: 40px; border-radius: 50%;
   font-size: 1rem; color: var(--cp-ink);
   display: flex; justify-content: center; align-items: center;
-  background: linear-gradient(145deg, #c2fbff 0%, var(--cp-cyan) 55%, #45bff0 100%);
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 14px rgba(102, 231, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background:
+    radial-gradient(130% 130% at 30% 22%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 44%),
+    linear-gradient(160deg, #c2fbff 0%, var(--cp-cyan) 55%, var(--cp-cyan-deep) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.85),
+    inset 0 -3px 7px rgba(10, 90, 130, 0.5),
+    0 3px 0 var(--cp-cyan-deep),
+    0 5px 14px rgba(99, 230, 255, 0.5);
 }
 .preview-btn-round:disabled { opacity: 0.35; filter: grayscale(80%); }
-.preview-btn-round:active:not(:disabled) { transform: scale(0.88); }
+.preview-btn-round:active:not(:disabled) { transform: scale(0.88) translateY(2px); }
 
 /* 一時停止。録画ボタンの右に添える */
 .pause-btn-round {
   position: absolute; right: calc(50% - 92px);
   width: 40px; height: 40px; border-radius: 50%;
-  font-size: 0.8rem; font-weight: 900; color: #4a3200;
+  font-size: 0.8rem; font-weight: 900; color: #5a3c00;
   display: flex; justify-content: center; align-items: center;
-  background: linear-gradient(145deg, #ffe9a8 0%, var(--cp-yellow) 55%, #e0a422 100%);
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 14px rgba(255, 217, 100, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background:
+    radial-gradient(130% 130% at 30% 22%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 44%),
+    linear-gradient(160deg, #ffeeb0 0%, var(--cp-yellow) 55%, var(--cp-yellow-deep) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 7px rgba(150, 105, 10, 0.45),
+    0 3px 0 var(--cp-yellow-deep),
+    0 5px 14px rgba(255, 215, 107, 0.5);
 }
 .pause-btn-round:disabled { opacity: 0.3; filter: grayscale(85%); }
-.pause-btn-round:active:not(:disabled) { transform: scale(0.88); }
+.pause-btn-round:active:not(:disabled) { transform: scale(0.88) translateY(2px); }
 .pause-btn-round.on {
-  animation: citypop-pause 1.2s ease-in-out infinite;
+  animation: deco-pause 1.2s ease-in-out infinite;
 }
-@keyframes citypop-pause {
-  0%, 100% { box-shadow: 0 0 14px rgba(255, 217, 100, 0.5); }
-  50%      { box-shadow: 0 0 26px rgba(255, 217, 100, 1); }
+@keyframes deco-pause {
+  0%, 100% { box-shadow: inset 0 2px 3px rgba(255,255,255,0.9), 0 3px 0 var(--cp-yellow-deep), 0 5px 14px rgba(255, 215, 107, 0.5); }
+  50%      { box-shadow: inset 0 2px 3px rgba(255,255,255,0.9), 0 3px 0 var(--cp-yellow-deep), 0 5px 24px rgba(255, 215, 107, 1); }
 }
 
 /* 写真。押した瞬間の画面が、そのまま1枚になる */
-/* 写真と一時停止は、録画ボタンから同じだけ離す。
-   片方を画面の端に貼ると、左右で距離が違って傾いて見える（2026-08-11） */
 .photo-btn-round {
   position: absolute; left: calc(50% - 92px);
   width: 40px; height: 40px; border-radius: 50%;
   font-size: 1rem;
   display: flex; justify-content: center; align-items: center;
-  background: linear-gradient(145deg, #e6d2ff 0%, var(--cp-purple) 55%, #6f44c9 100%);
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 14px rgba(149, 102, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #fff;
+  background:
+    radial-gradient(130% 130% at 30% 22%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 44%),
+    linear-gradient(160deg, #e6d2ff 0%, var(--cp-purple) 55%, var(--cp-purple-deep) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.8),
+    inset 0 -3px 7px rgba(50, 20, 120, 0.45),
+    0 3px 0 var(--cp-purple-deep),
+    0 5px 14px rgba(177, 138, 255, 0.5);
 }
 .photo-btn-round:disabled { opacity: 0.3; filter: grayscale(85%); }
-.photo-btn-round:active:not(:disabled) { transform: scale(0.88); }
+.photo-btn-round:active:not(:disabled) { transform: scale(0.88) translateY(2px); }
 
-/* シャッターの光。画面の上だけを光らせる。
-   canvas に描くと、その白が写真そのものに焼き付いてしまう */
+/* シャッターの光。画面の上だけを光らせる（機能の合図。canvas には焼かない） */
 .shutter-flash {
   position: absolute; inset: 0; z-index: 60;
   background: #fff; pointer-events: none;
-  animation: citypop-shutter 0.22s ease-out forwards;
+  animation: deco-shutter 0.22s ease-out forwards;
 }
-@keyframes citypop-shutter {
+@keyframes deco-shutter {
   0%   { opacity: 0.85; }
   100% { opacity: 0; }
 }
 
-/* 一時停止中だと分かる帯。上に出す（下は録画まわりで埋まっている） */
+/* 一時停止中だと分かる帯。上に出す（すりガラスの案内ピル） */
 .pause-badge {
   position: absolute; top: calc(var(--head-h) - 8px); left: 50%;
   transform: translateX(-50%);
   z-index: 45; pointer-events: none;
   width: max-content; max-width: calc(100% - var(--rail-w) * 2 - 16px);
   text-align: center; line-height: 1.35;
-  font-size: 0.7rem; font-weight: 900; padding: 7px 14px; border-radius: 16px;
-  background: rgba(16, 8, 43, 0.92); color: var(--cp-yellow);
-  border: 1px solid var(--cp-yellow);
-  box-shadow: 0 0 16px rgba(255, 217, 100, 0.5);
+  font-size: 0.7rem; font-weight: 900; padding: 8px 16px; border-radius: 18px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  color: var(--cp-yellow);
+  border: 1px solid rgba(255, 215, 107, 0.7);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px rgba(255, 215, 107, 0.4);
 }
 
 /* 止めているあいだは、録画ボタンの明滅も止める */
 .record-btn-round.recording.paused { animation: none; filter: saturate(0.6); }
 
 /* ============================================================
-   6. 左右の柱（ここでエフェクトを完結させる）
+   6. 左右の柱（ここでキラキラを完結させる）
    ============================================================ */
 .side-panel {
   position: absolute;
@@ -360,101 +406,134 @@
   width: var(--rail-w);
   padding: 4px;
   display: flex; flex-direction: column;
-  /* エフェクトを中央へ飛び出させない */
+  /* キラキラを中央へ飛び出させない */
   overflow: hidden;
   pointer-events: auto; z-index: 25;
 }
-/* 端にぴったり貼ると、角の丸みやノッチに食われて欠ける
-   （2026-08-11、伊波さん「画面はみだし」）。端末が申告する余白ぶん逃がす */
+/* 柱の内側に、切り取られたラインストーンの粒をまたたかせる。
+   overflow:hidden なので中央には決して漏れない（手紙の決まり） */
+.side-panel::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(2px 2px at 22% 12%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(2px 2px at 74% 34%, rgba(255, 173, 219, 0.8), transparent 60%),
+    radial-gradient(1.5px 1.5px at 38% 62%, rgba(160, 232, 255, 0.8), transparent 60%),
+    radial-gradient(2px 2px at 82% 84%, rgba(197, 168, 255, 0.8), transparent 60%),
+    radial-gradient(1.5px 1.5px at 30% 92%, rgba(255, 215, 107, 0.8), transparent 60%);
+  opacity: 0.55;
+  animation: deco-twinkle 3.4s ease-in-out infinite;
+}
+/* 端にぴったり貼ると、角の丸みやノッチに食われて欠ける。端末の余白ぶん逃がす */
 .side-panel.left  { left:  max(6px, env(safe-area-inset-left)); }
 .side-panel.right { right: max(6px, env(safe-area-inset-right)); }
+.side-panel.right::before { animation-delay: 1.6s; }
+
+@keyframes deco-twinkle {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50%      { opacity: 0.7; transform: translateY(-3px); }
+}
 
 .panel-scroll {
+  position: relative; z-index: 1;
   flex: 1; min-height: 0;
   display: flex; flex-direction: column;
   gap: var(--rail-gap);
-  /* 上から詰める。真ん中に寄せると、数の少ない側の段が横にずれる */
+  /* 上から詰める。真ん中に寄せると数の少ない側の段が横にずれる */
   justify-content: flex-start;
-  /* 入りきらない機種だけ送れるようにする。重なるよりは送るほうがまし */
+  /* 入りきらない機種だけ送れるようにする */
   overflow-y: auto; overflow-x: hidden;
   -ms-overflow-style: none; scrollbar-width: none;
 }
 .panel-scroll::-webkit-scrollbar { display: none; }
 
-/* 柱の高さを等分する。flex なので、どれだけ増えても重ならない
-   （2026-08-11、伊波さん「ボタン被りがあったから気を付けて」） */
+/* 柱の高さを等分する。flex なので、どれだけ増えても重ならない */
 .effect-btn {
-  /* 左右どちらの柱でも同じ高さにする。こうしないと段が揃わない */
+  position: relative; z-index: 1;
+  /* 左右どちらの柱でも同じ高さにする */
   flex: 0 0 auto;
   height: calc((100% - (var(--rail-max) - 1) * var(--rail-gap)) / var(--rail-max));
   min-height: 20px;
   max-height: 62px;
   width: 100%;
   padding: 2px;
-  border-radius: 14px;
+  border-radius: 16px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 1px;
-  font-weight: 900;
+  font-weight: 800;
   transition: transform 0.1s, filter 0.1s;
 }
 .effect-btn:active { transform: translateY(2px); filter: brightness(1.12); }
 
-/* 役割ごとに色を変える。CMCUBE と同じ分け方
-   （一発エフェクト＝ピンク、効果音＝水色、文字＝紫）。
-   エフェクトまで水色にしたら見分けがつかなくなった（2026-08-11、伊波さんの指摘） */
+/* 役割ごとに色を変える（一発エフェクト＝ピンク、効果音＝シアン、文字＝ラベンダー）。
+   どれもぷっくりしたラインストーン仕上げ */
 .effect-btn.btn-burst {
-  background: linear-gradient(145deg, #ffb3d8 0%, var(--cp-pink) 50%, #c9256e 100%);
-  border: 2px solid rgba(255, 255, 255, 0.7);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #ffb3da 0%, var(--cp-pink) 50%, var(--cp-pink-deep) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
   color: #fff;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -3px 0 rgba(120, 10, 60, 0.3),
-    0 0 10px rgba(255, 79, 163, 0.5);
+    inset 0 2px 2px rgba(255, 255, 255, 0.85),
+    inset 0 -3px 6px rgba(120, 10, 60, 0.4),
+    0 2px 0 rgba(140, 20, 80, 0.55),
+    0 3px 10px rgba(255, 95, 180, 0.45);
 }
 
 /* 自分の音の枠。入れるまでは点線で「まだ空」と分かるようにする */
 .effect-btn.btn-mine {
-  background: linear-gradient(145deg, #ffe9a8 0%, var(--cp-yellow) 50%, #e0a422 100%);
-  border: 2px solid rgba(255, 255, 255, 0.75);
-  color: #4a3200;
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #ffeeb0 0%, var(--cp-yellow) 50%, var(--cp-yellow-deep) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  color: #5a3c00;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -3px 0 rgba(150, 105, 10, 0.28),
-    0 0 10px rgba(255, 217, 100, 0.45);
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 6px rgba(150, 105, 10, 0.35),
+    0 2px 0 rgba(160, 115, 15, 0.55),
+    0 3px 10px rgba(255, 215, 107, 0.45);
 }
 .effect-btn.btn-mine.empty {
-  background: rgba(255, 217, 100, 0.1);
-  border: 2px dashed rgba(255, 217, 100, 0.65);
+  background: rgba(255, 215, 107, 0.1);
+  border: 2px dashed rgba(255, 215, 107, 0.7);
   color: var(--cp-yellow);
   box-shadow: none;
 }
 
 .effect-btn.btn-sound {
-  background: linear-gradient(145deg, #c2fbff 0%, #68e8ff 50%, #45bff0 100%);
-  border: 2px solid rgba(255, 255, 255, 0.7);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #c2fbff 0%, #68e8ff 50%, var(--cp-cyan-deep) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
   color: var(--cp-ink);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 -3px 0 rgba(20, 100, 150, 0.25),
-    0 0 10px rgba(102, 231, 255, 0.45);
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 6px rgba(20, 100, 150, 0.35),
+    0 2px 0 rgba(15, 110, 150, 0.5),
+    0 3px 10px rgba(99, 230, 255, 0.45);
 }
 .effect-btn.btn-telop {
-  background: linear-gradient(145deg, #cf92ff 0%, #9566ff 48%, #6f44c9 100%);
-  border: 2px solid rgba(255, 255, 255, 0.65);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #d3aaff 0%, var(--cp-purple) 48%, var(--cp-purple-deep) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
   color: #fff;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -3px 0 rgba(50, 20, 120, 0.28),
-    0 0 10px rgba(175, 100, 255, 0.45);
+    inset 0 2px 2px rgba(255, 255, 255, 0.75),
+    inset 0 -3px 6px rgba(50, 20, 120, 0.4),
+    0 2px 0 rgba(70, 40, 130, 0.55),
+    0 3px 10px rgba(177, 138, 255, 0.45);
 }
 .effect-btn.on {
   border-color: #fff;
-  box-shadow: 0 0 16px rgba(255, 79, 163, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.9),
+    0 0 0 2px rgba(255, 255, 255, 0.7),
+    0 0 18px rgba(255, 95, 180, 0.9);
 }
 
-/* 絵柄と、その下の小さな言葉。
-   絵だけだと何のボタンか分からない（2026-08-11、伊波さんの指摘）ので、
-   言葉は必ず残す */
+/* 絵柄と、その下の小さな言葉。言葉は必ず残す */
 .btn-icon {
   font-size: 1.05rem; line-height: 1;
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
@@ -463,21 +542,19 @@
 .btn-label {
   font-size: 0.46rem; line-height: 1.1; letter-spacing: -0.02em;
   max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
-/* 番号だけのボタンは、斜体＋ピンクの影でシティポップらしく */
+/* 番号だけのボタンは、丸っこい書体＋ピンクの影でデコらしく */
 .number-icon {
-  font-family: 'Outfit', 'Arial Rounded MT Bold', sans-serif;
-  font-size: 1.15rem; font-weight: 900; font-style: italic; line-height: 1;
+  font-family: 'Baloo 2', 'Arial Rounded MT Bold', sans-serif;
+  font-size: 1.18rem; font-weight: 800; line-height: 1;
   text-shadow:
-    1px 1px 0 rgba(255, 255, 255, 0.7),
-    2px 2px 0 rgba(255, 79, 163, 0.6);
+    1px 1px 0 rgba(255, 255, 255, 0.75),
+    2px 2px 0 rgba(255, 95, 180, 0.6);
 }
 
-/* 横に持ったとき。柱が短くなるので2列にする。
-   言葉は消さない。テロップは言葉そのものがボタンの中身なので、
-   絵柄だけにすると「やば」と「最高」の区別がつかなくなる */
+/* 横に持ったとき。柱が短くなるので2列にする。言葉は消さない */
 @media (orientation: landscape) and (max-height: 560px) {
   :root { --rail-w: 132px; --head-h: 48px; --foot-h: 72px; }
   .panel-scroll {
@@ -496,55 +573,67 @@
 }
 
 /* ============================================================
-   7. シート（設定・使い方）
+   7. シート（設定・使い方）＝すりガラスのボトムシート
    ============================================================ */
 .sheet-backdrop {
   position: fixed; inset: 0; z-index: 50;
-  background: rgba(16, 8, 43, 0.72);
-  backdrop-filter: blur(8px);
+  background: rgba(8, 6, 30, 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   display: flex; align-items: flex-end; justify-content: center;
 }
 .sheet {
   width: 100%; max-width: 500px; max-height: 90dvh;
   display: flex; flex-direction: column; overflow-y: auto;
-  background: linear-gradient(180deg, #241350 0%, var(--cp-navy) 100%);
+  background:
+    linear-gradient(180deg, rgba(40, 30, 92, 0.92) 0%, rgba(16, 12, 48, 0.96) 100%);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border-top: 3px solid transparent;
-  border-image: linear-gradient(90deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple)) 1;
-  border-radius: 24px 24px 0 0;
+  border-image: linear-gradient(90deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple), var(--cp-yellow)) 1;
+  border-radius: 26px 26px 0 0;
   padding: 16px 16px 28px;
   color: var(--text-main);
-  box-shadow: 0 -12px 40px rgba(149, 102, 255, 0.35);
+  box-shadow: 0 -14px 44px rgba(177, 138, 255, 0.4);
 }
 .sheet h3 {
   margin: 20px 0 6px;
-  font-size: 0.9rem; font-weight: 900;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 0.96rem; font-weight: 800;
   color: var(--cp-cyan);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
 }
 .sheet-head {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 10px;
-  font-size: 1.05rem; font-weight: 900;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 1.1rem; font-weight: 800;
   color: #fff;
 }
 .sheet-head button {
-  background: var(--cp-pink); color: #fff; font-weight: 900;
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #ff8ecb 0%, var(--cp-pink) 55%, var(--cp-pink-deep) 100%);
+  color: #fff; font-weight: 800;
   border-radius: 18px; padding: 8px 18px; font-size: 0.85rem;
-  box-shadow: 0 3px 0 #a8195e;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 3px 0 var(--cp-pink-deep);
   transition: all 0.1s;
 }
-.sheet-head button:active { transform: translateY(3px); box-shadow: 0 0 0 #a8195e; }
+.sheet-head button:active { transform: translateY(3px); box-shadow: 0 0 0 var(--cp-pink-deep); }
 
 .sheet-btn {
   width: 100%; padding: 14px; margin-top: 8px;
-  border-radius: 18px; font-size: 0.95rem; font-weight: 900;
-  background: linear-gradient(145deg, #c2fbff 0%, var(--cp-cyan) 55%, #45bff0 100%);
+  border-radius: 18px; font-size: 0.95rem; font-weight: 800;
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #c2fbff 0%, var(--cp-cyan) 55%, var(--cp-cyan-deep) 100%);
   color: var(--cp-ink);
-  border: 2px solid rgba(255, 255, 255, 0.75);
-  box-shadow: 0 4px 0 rgba(31, 168, 216, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 4px 0 var(--cp-cyan-deep);
   transition: all 0.1s;
 }
-.sheet-btn:active { transform: translateY(4px); box-shadow: 0 0 0 rgba(31, 168, 216, 0.9); }
+.sheet-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--cp-cyan-deep); }
 
 .sheet-note {
   margin: 4px 0 8px;
@@ -554,18 +643,22 @@
 /* 設定の切り替えボタン */
 .shape-switch { display: flex; gap: 8px; margin-top: 6px; }
 .shape-switch button {
-  flex: 1; padding: 11px 4px; font-size: 0.8rem; font-weight: 900;
+  flex: 1; padding: 11px 4px; font-size: 0.8rem; font-weight: 800;
   border-radius: 16px;
-  border: 2px solid rgba(102, 231, 255, 0.4);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   color: var(--text-main);
   transition: all 0.1s;
 }
 .shape-switch button.on {
   border-color: #fff;
-  background: linear-gradient(145deg, #cf92ff 0%, var(--cp-purple) 55%, #6f44c9 100%);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #d3aaff 0%, var(--cp-purple) 55%, var(--cp-purple-deep) 100%);
   color: #fff;
-  box-shadow: 0 0 14px rgba(149, 102, 255, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 0 16px rgba(177, 138, 255, 0.65);
 }
 .shape-switch button:active { transform: translateY(2px); }
 
@@ -573,60 +666,72 @@
 .telop-row { display: flex; align-items: center; gap: 10px; }
 .telop-row .telop-input { flex: 1; min-width: 0; }
 
-/* 柱のボタンと同じ番号・同じ色。設定の欄と、押すボタンを見た目で結ぶ
-   （2026-08-11、伊波さん「設定画面の方もボタンと合わせる」） */
+/* 柱のボタンと同じ番号・同じ色。設定の欄と押すボタンを見た目で結ぶ */
 .slot-no {
   flex: 0 0 auto;
   width: 34px; height: 34px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.05rem; font-weight: 900; font-style: italic; line-height: 1;
-  border: 2px solid rgba(255, 255, 255, 0.75);
-  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.6), 2px 2px 0 rgba(255, 79, 163, 0.5);
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 1.05rem; font-weight: 800; line-height: 1;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.6), 2px 2px 0 rgba(255, 95, 180, 0.5);
 }
 .slot-no.mine {
-  background: linear-gradient(145deg, #ffe9a8 0%, var(--cp-yellow) 55%, #e0a422 100%);
-  color: #4a3200;
-  box-shadow: 0 0 10px rgba(255, 217, 100, 0.45);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #ffeeb0 0%, var(--cp-yellow) 55%, var(--cp-yellow-deep) 100%);
+  color: #5a3c00;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 0 10px rgba(255, 215, 107, 0.5);
 }
 .slot-no.telop {
-  background: linear-gradient(145deg, #cf92ff 0%, var(--cp-purple) 48%, #6f44c9 100%);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #d3aaff 0%, var(--cp-purple) 48%, var(--cp-purple-deep) 100%);
   color: #fff;
-  box-shadow: 0 0 10px rgba(175, 100, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 0 10px rgba(177, 138, 255, 0.5);
 }
 .telop-input {
-  width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 800;
+  width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 700;
   border-radius: 16px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 2px solid rgba(149, 102, 255, 0.55);
+  background: rgba(0, 0, 0, 0.32);
+  border: 1.5px solid rgba(177, 138, 255, 0.55);
   color: #fff; outline: none;
 }
 .telop-input:focus {
   border-color: var(--cp-cyan);
-  box-shadow: 0 0 12px rgba(102, 231, 255, 0.55);
+  box-shadow: 0 0 12px rgba(99, 230, 255, 0.55);
 }
 
 .sound-list { display: flex; flex-direction: column; gap: 8px; }
 .sound-row {
   display: flex; align-items: center; gap: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(102, 231, 255, 0.3);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid var(--glass-brd);
   border-radius: 16px; padding: 8px 10px;
 }
 .sound-try {
   flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%;
-  background: linear-gradient(145deg, #c2fbff, #45bff0);
-  color: var(--cp-ink); font-size: 1rem; font-weight: 900;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #c2fbff, var(--cp-cyan-deep));
+  color: var(--cp-ink); font-size: 1rem; font-weight: 800;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 2px 8px rgba(99, 230, 255, 0.4);
 }
 .sound-try:active { transform: translateY(2px); }
-.sound-name { flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 800; color: #fff; }
+.sound-name { flex: 1; min-width: 0; font-size: 0.86rem; font-weight: 700; color: #fff; }
 .sound-name em { display: block; font-style: normal; font-size: 0.68rem; color: var(--cp-cyan); }
 .sound-set {
   flex: 0 0 auto; padding: 8px 14px; border-radius: 14px;
-  font-size: 0.78rem; font-weight: 900;
-  background: var(--cp-purple); color: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  font-size: 0.78rem; font-weight: 800;
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #d3aaff, var(--cp-purple-deep));
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .sound-set:active { transform: translateY(2px); }
 
@@ -635,15 +740,17 @@
 }
 .frame-tile {
   width: 100%; padding: 0; overflow: hidden;
-  background: rgba(255, 255, 255, 0.06);
-  border: 2px solid rgba(102, 231, 255, 0.35);
-  border-radius: 12px;
-  color: var(--text-main); font-size: 0.62rem; font-weight: 800;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid var(--glass-brd);
+  border-radius: 14px;
+  color: var(--text-main); font-size: 0.62rem; font-weight: 700;
   transition: all 0.1s;
 }
 .frame-tile.on {
   border-color: var(--cp-pink);
-  box-shadow: 0 0 14px rgba(255, 79, 163, 0.65);
+  box-shadow: 0 0 16px rgba(255, 95, 180, 0.7);
 }
 .frame-tile:active { transform: translateY(2px); }
 .frame-tile img {
@@ -666,8 +773,8 @@
 .guide-steps b { color: var(--cp-cyan); }
 
 .guide-warn {
-  background: rgba(255, 79, 163, 0.1);
-  border: 2px solid rgba(255, 79, 163, 0.45);
+  background: rgba(255, 95, 180, 0.1);
+  border: 1.5px solid rgba(255, 95, 180, 0.45);
   border-radius: 16px;
   padding: 12px 14px;
   margin-bottom: 16px;
@@ -685,16 +792,23 @@
 
 /* CMCUBE の案内 */
 .promo {
-  background: linear-gradient(160deg, rgba(102, 231, 255, 0.12), rgba(149, 102, 255, 0.16));
-  border: 2px solid rgba(102, 231, 255, 0.4);
+  background: linear-gradient(160deg, rgba(99, 230, 255, 0.12), rgba(177, 138, 255, 0.18));
+  border: 1.5px solid rgba(99, 230, 255, 0.4);
   border-radius: 18px;
   padding: 14px;
   margin-bottom: 16px;
 }
-.promo-head { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 900; color: #fff; }
+.promo-head {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'Baloo 2', sans-serif;
+  font-size: 1.1rem; font-weight: 800; color: #fff;
+}
 .promo-badge {
-  font-size: 0.62rem; font-weight: 900; padding: 3px 8px; border-radius: 10px;
-  background: var(--cp-pink); color: #fff;
+  font-size: 0.62rem; font-weight: 800; padding: 3px 8px; border-radius: 10px;
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #ff8ecb, var(--cp-pink-deep));
+  color: #fff;
 }
 .promo-lead { margin: 8px 0 6px; font-size: 0.86rem; font-weight: 800; color: var(--cp-cyan); }
 .promo-points { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
@@ -702,22 +816,25 @@
 .promo-link {
   display: block; margin-top: 12px; padding: 12px;
   text-align: center; text-decoration: none;
-  font-size: 0.88rem; font-weight: 900;
+  font-size: 0.88rem; font-weight: 800;
   border-radius: 16px;
-  background: linear-gradient(145deg, #cf92ff 0%, var(--cp-purple) 55%, #6f44c9 100%);
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #d3aaff 0%, var(--cp-purple) 55%, var(--cp-purple-deep) 100%);
   color: #fff;
   border: 2px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 16px rgba(149, 102, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 0 18px rgba(177, 138, 255, 0.55);
 }
 .promo-foot { margin-top: 8px; font-size: 0.66rem; color: var(--text-muted); text-align: center; }
 
 .discord-banner {
   width: 100%; padding: 14px; margin-top: 16px;
   background: linear-gradient(135deg, #5865F2, var(--cp-purple));
-  border-radius: 16px; color: #fff; font-weight: 900; font-size: 0.9rem;
+  border-radius: 16px; color: #fff; font-weight: 800; font-size: 0.9rem;
   display: flex; justify-content: center; align-items: center; gap: 8px;
   text-decoration: none;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.4);
 }
 
 /* ============================================================
@@ -728,57 +845,63 @@
   display: flex; flex-direction: column; justify-content: center; align-items: center;
   gap: 14px; padding: 32px; text-align: center;
   background:
-    radial-gradient(120% 70% at 50% 0%, #2a1358 0%, transparent 60%),
+    radial-gradient(120% 70% at 50% 0%, #2a1a6a 0%, transparent 60%),
+    radial-gradient(120% 60% at 50% 100%, #3a1560 0%, transparent 55%),
     var(--cp-navy);
 }
 .pc-cube {
-  width: 62px; height: 62px; border-radius: 14px;
-  background: linear-gradient(145deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple));
-  box-shadow: 0 0 30px rgba(149, 102, 255, 0.7);
+  width: 64px; height: 64px; border-radius: 16px;
+  background:
+    var(--rin-gloss),
+    linear-gradient(145deg, var(--cp-cyan), var(--cp-pink), var(--cp-purple));
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.7),
+    0 0 34px rgba(177, 138, 255, 0.75);
   transform: rotate(-12deg);
 }
 .pc-notice h1 {
-  font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 900; font-style: italic;
-  color: var(--cp-cyan);
-  text-shadow: 3px 3px 0 var(--cp-pink);
+  font-family: 'Baloo 2', sans-serif; font-size: 2.1rem; font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 0 var(--cp-pink), 3px 3px 0 var(--cp-purple), 0 0 20px rgba(255, 95, 180, 0.6);
 }
-.pc-lead { font-size: 1rem; font-weight: 800; line-height: 1.7; }
+.pc-lead { font-size: 1rem; font-weight: 700; line-height: 1.7; }
 .pc-lead span { color: var(--text-muted); font-size: 0.85rem; }
 .pc-url {
-  font-family: 'Outfit', monospace; font-size: 1.1rem; font-weight: 700;
+  font-family: 'Baloo 2', monospace; font-size: 1.1rem; font-weight: 700;
   padding: 10px 18px; border-radius: 14px;
-  background: rgba(102, 231, 255, 0.12);
-  border: 2px solid rgba(102, 231, 255, 0.5);
+  background: rgba(99, 230, 255, 0.12);
+  border: 1.5px solid rgba(99, 230, 255, 0.5);
   color: var(--cp-cyan);
 }
 .pc-sub { font-size: 0.8rem; line-height: 1.7; color: var(--text-muted); }
 .pc-continue {
   margin-top: 10px; padding: 12px 26px; border-radius: 18px;
-  font-size: 0.85rem; font-weight: 900;
-  background: transparent; color: var(--text-muted);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  font-size: 0.85rem; font-weight: 800;
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--text-muted);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
 }
 .pc-continue:active { transform: translateY(2px); }
 
 /* ============================================================
    10. 解除（¥300 の買い切り）
-
-   フレーム53枚と透かし消しが、ひとつの買い物で両方とも解ける
-   （2026-08-11、伊波さん「両方」）。分けると買い物が2回になる。
+   フレームと透かし消しが、ひとつの買い物で両方とも解ける
    ============================================================ */
 .unlock-box {
   margin: 8px 0 14px;
   padding: 14px;
   border-radius: 18px;
-  background: linear-gradient(160deg, rgba(255, 217, 100, 0.14), rgba(255, 79, 163, 0.14));
-  border: 2px solid rgba(255, 217, 100, 0.55);
+  background: linear-gradient(160deg, rgba(255, 215, 107, 0.14), rgba(255, 95, 180, 0.16));
+  border: 1.5px solid rgba(255, 215, 107, 0.55);
 }
 .unlock-box.done {
-  background: rgba(102, 231, 255, 0.1);
-  border-color: rgba(102, 231, 255, 0.5);
+  background: rgba(99, 230, 255, 0.1);
+  border-color: rgba(99, 230, 255, 0.5);
 }
-.unlock-title { font-size: 0.95rem; font-weight: 900; color: var(--cp-yellow); }
-.unlock-done { font-size: 0.95rem; font-weight: 900; color: var(--cp-cyan); }
+.unlock-title { font-size: 0.95rem; font-weight: 800; color: var(--cp-yellow); }
+.unlock-done { font-size: 0.95rem; font-weight: 800; color: var(--cp-cyan); }
 .unlock-points {
   margin: 8px 0 12px; padding-left: 4px; list-style: none;
   display: flex; flex-direction: column; gap: 6px;
@@ -788,37 +911,43 @@
 .unlock-buy {
   display: block; padding: 13px; margin-bottom: 12px;
   text-align: center; text-decoration: none;
-  font-size: 0.9rem; font-weight: 900;
+  font-size: 0.9rem; font-weight: 800;
   border-radius: 16px;
-  background: linear-gradient(145deg, #ffe9a8 0%, var(--cp-yellow) 55%, #e0a422 100%);
-  color: #4a3200;
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #ffeeb0 0%, var(--cp-yellow) 55%, var(--cp-yellow-deep) 100%);
+  color: #5a3c00;
   border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 16px rgba(255, 217, 100, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 0 18px rgba(255, 215, 107, 0.5);
 }
 
 .unlock-row { display: flex; gap: 8px; }
 .unlock-input {
   flex: 1; min-width: 0;
   padding: 12px; border-radius: 14px;
-  font-size: 0.9rem; font-weight: 800; letter-spacing: 0.06em;
-  background: rgba(0, 0, 0, 0.35);
-  border: 2px solid rgba(255, 217, 100, 0.5);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.06em;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1.5px solid rgba(255, 215, 107, 0.5);
   color: #fff; outline: none;
 }
-.unlock-input:focus { border-color: var(--cp-yellow); box-shadow: 0 0 12px rgba(255, 217, 100, 0.5); }
+.unlock-input:focus { border-color: var(--cp-yellow); box-shadow: 0 0 12px rgba(255, 215, 107, 0.5); }
 .unlock-go {
   flex: 0 0 auto; padding: 12px 16px; border-radius: 14px;
-  font-size: 0.85rem; font-weight: 900;
-  background: var(--cp-pink); color: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem; font-weight: 800;
+  background:
+    var(--rin-gloss),
+    linear-gradient(160deg, #ff8ecb, var(--cp-pink-deep));
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
 }
 .unlock-go:active { transform: translateY(2px); }
-.unlock-ng { margin-top: 8px; font-size: 0.76rem; color: #ffb3d8; line-height: 1.5; }
+.unlock-ng { margin-top: 8px; font-size: 0.76rem; color: #ffb3da; line-height: 1.5; }
 
 .unlock-key {
   margin: 8px 0; padding: 10px; border-radius: 12px;
-  background: rgba(0, 0, 0, 0.35);
-  font-family: 'Outfit', monospace; font-size: 0.9rem; letter-spacing: 0.08em;
+  background: rgba(0, 0, 0, 0.32);
+  font-family: 'Baloo 2', monospace; font-size: 0.9rem; letter-spacing: 0.08em;
   color: var(--cp-cyan); text-align: center;
 }
 .unlock-relock {
@@ -828,9 +957,8 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* 鍵のかかった枠。見せたうえで、押したら買うところへ連れていく。
-   隠してしまうと「何が増えるのか」が分からず、買う理由が伝わらない */
-.frame-tile.locked { position: relative; border-color: rgba(255, 217, 100, 0.5); }
+/* 鍵のかかった枠。見せたうえで、押したら買うところへ連れていく */
+.frame-tile.locked { position: relative; border-color: rgba(255, 215, 107, 0.5); }
 .frame-tile.locked img { filter: saturate(0.35) brightness(0.5); }
 .frame-tile.locked span:not(.lock-mark) { color: var(--text-muted); }
 .lock-mark {

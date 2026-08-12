@@ -1,21 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;600;700;800&display=swap');
 
-/* シティポップの土台。濃紺の上に、水色・ピンク・紫のネオンを置く
-   （2026-08-11、伊波さんの指示） */
+/* ============================================================
+   tinyCUBE — 渋谷デコラティブストリート × オタク文化
+   （推し活デコ ＆ 魔法少女ポップ / 2026-08-12）
+
+   土台は「ディープナイトブルー」。中央の映像がいちばん映えるよう、
+   まわりは深い夜色に沈める。そこへ、痛バッグやアクスタを飾るときの
+   ときめき色（マジカルピンク・ラベンダー・シアン・スターゴールド）を
+   ラインストーンのように散らす。
+
+   素材のルール：
+   - 面（パネル・シート）＝すりガラス（グラスモーフィズム）
+   - ボタン＝ぷっくりしたラインストーン／アクリルチャーム
+   - 光・キラキラは「枠の中」だけ。中央の映像には絶対に被せない
+   ============================================================ */
 :root {
-  --cp-cyan: #66e7ff;
-  --cp-cyan-deep: #1fa8d8;
-  --cp-pink: #ff4fa3;
-  --cp-purple: #9566ff;
-  --cp-yellow: #ffd964;
-  --cp-navy: #10082b;
-  --cp-navy-2: #1b0f3d;
-  --cp-ink: #0b3a55;          /* 水色のボタンに乗せる濃い文字 */
+  /* --- ときめきアクセント（推し色パレット） --- */
+  --cp-cyan: #63e6ff;
+  --cp-cyan-deep: #17a6d6;
+  --cp-pink: #ff5fb4;          /* マジカルピンク（主役） */
+  --cp-pink-deep: #c31f77;
+  --cp-purple: #b18aff;        /* ラベンダーパープル */
+  --cp-purple-deep: #6f44c9;
+  --cp-yellow: #ffd76b;        /* スターゴールド */
+  --cp-yellow-deep: #d89a1f;
+
+  /* --- ディープナイトブルーの土台 --- */
+  --cp-navy: #0a0a2e;
+  --cp-navy-2: #16123f;
+  --cp-ink: #0b2f52;           /* 明るいボタンに乗せる濃い文字 */
+
+  /* --- すりガラス（グラスモーフィズム）--- */
+  --glass: rgba(28, 22, 74, 0.55);
+  --glass-strong: rgba(20, 16, 58, 0.82);
+  --glass-brd: rgba(255, 255, 255, 0.16);
+  --glass-hi: rgba(255, 255, 255, 0.9);
+  --glass-blur: 14px;
+
+  /* ラインストーンの艶（ボタン上部の白いハイライト） */
+  --rin-gloss: radial-gradient(120% 120% at 30% 20%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 45%);
 
   --primary-color: var(--cp-pink);
   --secondary-color: var(--cp-purple);
-  --text-main: #eaf4ff;
-  --text-muted: #a7b6d6;
+  --text-main: #f3ecff;
+  --text-muted: #b3aee0;
 }
 
 * {
@@ -49,10 +77,13 @@ body {
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 60px rgba(149, 102, 255, 0.25);
+  box-shadow: 0 0 60px rgba(177, 138, 255, 0.28);
+  /* ディープナイトブルーに、上はピンク＆ラベンダー、下はシアンの
+     ほのかな光。あくまで下地で、中央の映像を邪魔しない濃さに抑える */
   background:
-    radial-gradient(120% 70% at 50% 0%, #2a1358 0%, transparent 60%),
-    radial-gradient(120% 60% at 50% 100%, #3a1150 0%, transparent 55%),
+    radial-gradient(115% 60% at 18% 0%, rgba(255, 95, 180, 0.20) 0%, transparent 55%),
+    radial-gradient(115% 60% at 82% 4%, rgba(177, 138, 255, 0.22) 0%, transparent 55%),
+    radial-gradient(120% 55% at 50% 100%, rgba(99, 230, 255, 0.16) 0%, transparent 55%),
     var(--cp-navy);
 }
 
