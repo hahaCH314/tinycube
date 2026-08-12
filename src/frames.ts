@@ -178,7 +178,7 @@ export function fitsShape(frame: Frame, shape: OutShape): boolean {
 }
 
 /** 読み込みが終わるまで待つ。録画中に間に合わないと、枠だけ抜けた動画が出てしまう */
-export function loadFrame(frame: Frame): Promise<HTMLImageElement> {
+export function loadFrame(frame: { file: string }): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);

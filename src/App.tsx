@@ -416,7 +416,7 @@ function App() {
   const locked = (f: { paid?: boolean }) => !!f.paid && !unlocked;
   const builtinFrame = FRAMES.find(f => f.id === frameId) ?? null;
   const customFrame = customFrames.find(f => f.id === frameId) ?? null;
-  const frame = builtinFrame || (customFrame ? { id: customFrame.id, name: 'マイフレーム', file: customFrame.dataUrl, anchor: 'wide' as FrameAnchor } : null);
+  const frame: Frame | null = builtinFrame || (customFrame ? { id: customFrame.id, name: 'マイフレーム', file: customFrame.dataUrl, anchor: 'wide' } : null);
 
 
   // 画面に出す係を1つだけ回す。録画していなくても同じ絵が出るので、
@@ -439,7 +439,7 @@ function App() {
     if (!frame || (builtinFrame && locked(builtinFrame))) { liveRef.current.frame = null; return; }
     let alive = true;
     loadFrame(frame).then(img => {
-      if (alive) liveRef.current.frame = { img, anchor: frame.anchor, faceHole: frame.faceHole, faceHoles: (frame as Frame).faceHoles };
+      if (alive) liveRef.current.frame = { img, anchor: frame.anchor, faceHole: frame.faceHole, faceHoles: frame.faceHoles };
     }).catch(() => { /* 読めなければ枠なしで続ける */ });
     return () => { alive = false; };
   }, [frame, shape]);
