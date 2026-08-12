@@ -1595,10 +1595,13 @@ button {
 
 .manner-text {
   margin: 0;
-  font-size: 13.5px;
+  font-size: clamp(12.5px, 3.6vw, 14.5px);
   font-weight: 600;
-  line-height: 2;
-  text-align: left;
+  line-height: 2.05;
+  /* 原文の改行は意図的なもの。<br> を入れなくても、文字列の改行がそのまま出る */
+  white-space: pre-line;
+  text-align: center;
+  text-wrap: pretty;
   color: var(--fg);
 }
 
