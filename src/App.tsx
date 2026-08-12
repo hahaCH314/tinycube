@@ -177,7 +177,7 @@ function App() {
         const dark = new Uint8Array(N);
         for (let i = 0; i < N; i++) {
           const o = i * 4;
-          if (d[o + 3] > 8 && d[o] < 42 && d[o + 1] < 42 && d[o + 2] < 42) dark[i] = 1;
+          if (d[o + 3] > 8 && d[o] < 16 && d[o + 1] < 16 && d[o + 2] < 16) dark[i] = 1;
         }
 
         const label = new Int32Array(N).fill(-1);

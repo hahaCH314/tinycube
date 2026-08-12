@@ -156,11 +156,11 @@ for (let i = 0; i < inputs.length; i++) {
     const d = im.data;
     const N = W * H;
 
-    // 黒い画素。にじみを拾えるよう、少し明るいところまで含める
+    // 黒い画素。服の濃紺や髪の影（RGB 20以上）を誤って抜かないよう、真の黒（穴）のみ判定
     const dark = new Uint8Array(N);
     for (let i = 0; i < N; i++) {
       const o = i * 4;
-      if (d[o + 3] > 8 && d[o] < 42 && d[o + 1] < 42 && d[o + 2] < 42) dark[i] = 1;
+      if (d[o + 3] > 8 && d[o] < 16 && d[o + 1] < 16 && d[o + 2] < 16) dark[i] = 1;
     }
 
     // 繋がっている黒を塊にまとめる
