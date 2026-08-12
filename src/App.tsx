@@ -912,11 +912,49 @@ function App() {
               <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
               <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
             </div>
+            {shape === 'landscape' && portraitDevice && (
+              <p style={{ color: '#fbbf24', fontSize: '13px', textAlign: 'center', margin: '8px 0 16px' }}>
+                ※スマホを横向きにすると広く見えます！📱↺
+              </p>
+            )}
             <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
               <button
                 className={`frame-tile none ${frameId === null ? 'on' : ''}`}
                 onClick={() => { setFrameId(null); setScreen('source'); }}
               >{t('frame_none')}</button>
+
+              <button 
+                className="frame-tile"
+                onClick={() => customFrameInputRef.current?.click()}
+                style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
+                <span style={{ color: '#a855f7', fontSize: '11px', textAlign: 'center' }}>マイフレーム追加</span>
+              </button>
+              <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
+              
+              {customFrames.map(cf => (
+                <button
+                  key={cf.id}
+                  className={`frame-tile ${frameId === cf.id ? 'on' : ''}`}
+                  onClick={() => { setFrameId(cf.id); setScreen('source'); }}
+                  style={{ position: 'relative' }}
+                >
+                  <img src={cf.dataUrl} alt="マイフレーム" />
+                  <div 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (confirm('このフレームを削除しますか？')) {
+                        await deleteCustomFrame(cf.id);
+                        setCustomFrames(prev => prev.filter(p => p.id !== cf.id));
+                        if (frameId === cf.id) setFrameId(null);
+                      }
+                    }}
+                    style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >✕</div>
+                </button>
+              ))}
+
               {/* 縦に横フレーム（切れる）は要らない。形に合うものだけ出す
                   （2026-08-12、伊波さん「縦フレームに横フレームが入っている（切れる）は要らない」） */}
               {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
@@ -964,14 +1002,6 @@ function App() {
               </button>
             </div>
 
-            {/* 素材が決まったら、この決定ボタンで撮影画面へ進む
-                （2026-08-12、伊波さん「cameraを選んだら即決定になるので、決定ボタンを作る」） */}
-            {(videoSrc || camOn) && (
-              <button className="manner-agree-btn" onClick={confirmSource}>
-                この設定で撮る！
-              </button>
-            )}
-
             {/* 「入れられます」と書くだけでは伝わらない。入れる場所そのものを
                 ここに出す。柱の 1 2 と 1 2 3 が、この欄と同じ番号
                 （2026-08-12、伊波さん「ちゃんと１，２の音ファイル
@@ -997,7 +1027,7 @@ function App() {
               })}
             </div>
 
-            <h3 className="setup-section-title">テキスト</h3>
+            <h3 className="setup-section-title">テキスト（テキスト変更）</h3>
             <div className="telop-inputs">
               {myTelops.map((text, i) => (
                 <div className="telop-row" key={i}>
@@ -1020,6 +1050,14 @@ function App() {
               <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
               <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
             </div>
+
+            {/* 素材が決まったら、この決定ボタンで撮影画面へ進む
+                （2026-08-12、伊波さん「cameraを選んだら即決定になるので、決定ボタンを作る」） */}
+            {(videoSrc || camOn) && (
+              <button className="manner-agree-btn" onClick={confirmSource} style={{ marginTop: '24px' }}>
+                決定（この設定で撮る！）
+              </button>
+            )}
           </div>
         </div>
       )}
