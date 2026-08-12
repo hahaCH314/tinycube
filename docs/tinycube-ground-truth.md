@@ -114,7 +114,11 @@ promo / promo-head / promo-badge / promo-lead / promo-points / promo-fold / prom
 - **合成パイプラインは9スライス前提**（角は等倍、辺だけ伸縮）。
   縦横を切り替えたとき角が歪むのを防ぐため。`recorder.ts` の `drawFrame` に実装済み
 - **`backdrop-filter`（枠の後ろの映像をぼかす）は、PNG でも SVG でも再現できない。**
-  canvas に直接描いたときだけ可能。デザインがこれに依存していないか要確認
+  canvas に直接描いたときだけ可能。
+  → **2026-08-12 調査済み（ボタンくん）：v0 の CSS フレーム10種に
+  `backdrop-filter` は1つも無い。** 全種が `border` / `box-shadow` /
+  `background`（＋一部 `mask`）のみ。**canvas への焼き込みは可能**。
+  `mask` を使っている3種も9スライスで再現できる見込み
 - **起動フローが変わる**：いきなりカメラではなく、同意画面 →
   設定（フレーム選択）画面 から始まる
 - 通信するのは Web フォント取得と起動時の更新確認の2つだけ、と製品LPに明記済み。
