@@ -1153,45 +1153,6 @@ function App() {
                 >この設定でOK</button>
               )}
 
-              {/* 買い切りの解除。鍵のかかった枠を見る直前に、何が解けるのかを
-                  読めるようにする（「こまかい設定」を廃したのでここへ移した） */}
-              <div className={`unlock-box ${unlocked ? 'done' : ''}`} ref={unlockRef}>
-                {unlocked ? (
-                  <>
-                    <b className="unlock-done">{t('unlock_done')}</b>
-                    <p className="sheet-note">{t('unlock_done_note')}</p>
-                    {savedKey() && <p className="unlock-key">{savedKey()}</p>}
-                    <button
-                      className="unlock-relock"
-                      onClick={() => { relock(); setUnlocked(false); }}
-                    >{t('unlock_relock')}</button>
-                  </>
-                ) : (
-                  <>
-                    <b className="unlock-title">{t('unlock_title')}</b>
-                    <p className="sheet-note">{t('unlock_lead')}</p>
-                    <ul className="unlock-points">
-                      <li>{t('unlock_p1')}</li>
-                      <li>{t('unlock_p2')}</li>
-                    </ul>
-                    <a className="unlock-buy" href={buyUrl} target="_blank" rel="noopener noreferrer">{t('unlock_buy')}</a>
-                    <div className="unlock-row">
-                      <input
-                        className="unlock-input"
-                        value={keyInput}
-                        placeholder={t('unlock_place')}
-                        autoCapitalize="characters"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
-                      />
-                      <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
-                    </div>
-                    {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
-                  </>
-                )}
-              </div>
-
               {/* 縦・横。この下の見本一覧が縦横で入れ替わるので、真上に置く。
                   小さくして、主役（小窓）の邪魔をしないようにする */}
               <div className="shape-switch shape-switch--mini">
@@ -1254,6 +1215,46 @@ function App() {
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
                   </button>
                 ))}
+              </div>
+
+
+              {/* 買い切りの解除。鍵のかかった枠を見る直前に、何が解けるのかを
+                  読めるようにする（「こまかい設定」を廃したのでここへ移した） */}
+              <div className={`unlock-box ${unlocked ? 'done' : ''}`} ref={unlockRef}>
+                {unlocked ? (
+                  <>
+                    <b className="unlock-done">{t('unlock_done')}</b>
+                    <p className="sheet-note">{t('unlock_done_note')}</p>
+                    {savedKey() && <p className="unlock-key">{savedKey()}</p>}
+                    <button
+                      className="unlock-relock"
+                      onClick={() => { relock(); setUnlocked(false); }}
+                    >{t('unlock_relock')}</button>
+                  </>
+                ) : (
+                  <>
+                    <b className="unlock-title">{t('unlock_title')}</b>
+                    <p className="sheet-note">{t('unlock_lead')}</p>
+                    <ul className="unlock-points">
+                      <li>{t('unlock_p1')}</li>
+                      <li>{t('unlock_p2')}</li>
+                    </ul>
+                    <a className="unlock-buy" href={buyUrl} target="_blank" rel="noopener noreferrer">{t('unlock_buy')}</a>
+                    <div className="unlock-row">
+                      <input
+                        className="unlock-input"
+                        value={keyInput}
+                        placeholder={t('unlock_place')}
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
+                      />
+                      <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
+                    </div>
+                    {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
+                  </>
+                )}
               </div>
 
               <button

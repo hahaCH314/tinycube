@@ -222,7 +222,7 @@ button {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border-bottom: 1px solid var(--glass-line);
+  /* リボンを消したら線だけが浮いて見えたので、境目も消す（2026-08-13） */
   box-shadow: var(--inner-hi), 0 6px 22px rgba(0, 0, 0, 0.34);
 }
 
@@ -495,21 +495,9 @@ button {
   display: none;
 }
 
-.city-frame.top {
-  top: calc(var(--chrome-top) + 6px);
-  border-radius: var(--r-lg) var(--r-lg) 0 0;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35);
-}
-
-.city-frame.bottom {
-  bottom: calc(var(--chrome-bot) + 6px);
-  border-radius: 0 0 var(--r-lg) var(--r-lg);
-  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.35);
-}
-
-.city-frame.bottom::before {
-  animation-direction: reverse;
-}
+/* .city-frame.top / .bottom の位置と影の指定は、本体を消したので不要。
+   影（box-shadow）だけが残ると、リボンの跡が線のように見える
+   （2026-08-13、伊波さん「リボンの後は透明の線ノリみたいに見える」） */
 
 /* --- shutter flash: fires once on mount, then leaves the picture alone --- */
 .shutter-flash {
@@ -746,7 +734,7 @@ button {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border-top: 1px solid var(--glass-line);
+  /* 同上。上バー・下バーとも境目の線は引かない */
   box-shadow: var(--inner-hi), 0 -8px 26px rgba(0, 0, 0, 0.4);
 }
 
