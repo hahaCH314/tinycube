@@ -96,7 +96,10 @@ export const FRAMES: Frame[] = [
   { id: 'fh_18', name: '顔ハメ 13', file: './frames/18.webp', anchor: 'full', faceHole: { x: 43.0, y: 22.7, w: 25.5, h: 14.7 } },
 
   // --- 16:9 の枠（横で書き出すときだけ出る） ---
-  { id: 'green_garden', name: 'グリーンガーデン', file: './frames/green_garden.webp', anchor: 'wide' },
+  // 2026-08-13、伊波さんが元の絵を入れ直してくださった。
+  // それまでは 320x180 まで潰れたものが入っていて、「光の粒を散らしただけ」に
+  // 見えていた（本当はランタンと白薔薇の写真風）。1672x941 から作り直し
+  { id: 'green_garden', name: 'グリーンガーデン', file: './frames/green_garden_hd.webp', anchor: 'wide' },
   { id: 'biotope',      name: 'ビオトープ',       file: './frames/biotope.webp',      anchor: 'wide' },
   { id: 'deep_sea',     name: '深海',            file: './frames/deep_sea.webp',     anchor: 'wide' },
   { id: 'mushroom',     name: 'きのこ',           file: './frames/mushroom.webp',     anchor: 'wide' },
