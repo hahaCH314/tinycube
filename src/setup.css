@@ -240,11 +240,18 @@
 /* 戻るボタン。top: 12px だけだと、iPhone では切り欠きの下に潜って
    半分見えなくなる（2026-08-13、伊波さんの実機テストで発覚）。
    指で押す的も 44px 以上にしておく */
+/* 「←」だけだと何のボタンか分からないので「戻る」と書く
+   （2026-08-13、伊波さん「ボタンなどの文字はわかりやすく」）。
+   44px の丸だと字が入らないので、横に伸びる形にする */
 .setup-screen .setup-close-btn {
   position: absolute;
   top: calc(env(safe-area-inset-top, 0px) + 12px);
   right: calc(env(safe-area-inset-right, 0px) + 12px);
-  width: 44px; height: 44px;
+  width: auto; min-width: 64px; height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  font-size: 14px; font-weight: 700;
+  white-space: nowrap;
 }
 
 .setup-content {
@@ -363,3 +370,33 @@
   color: #fff; font-size: 0.85rem; font-weight: 700;
 }
 .telop-input:focus { border-color: #66e7ff; box-shadow: 0 0 8px rgba(102, 231, 255, 0.3); outline: none; }
+
+/* --- 下バーのボタンに言葉を添える -----------------------------------------
+   絵だけだと何のボタンか分からない。絵の下に必ず言葉を置く
+   （2026-08-13、伊波さん「ボタンなどの文字はわかりやすく」）。 */
+.bottom-controls button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.bottom-controls .ctrl-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.bottom-controls .ctrl-label {
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* 録画・停止は中の丸（.record-inner）が主役なので、言葉は小さめに添える */
+.record-btn-round .ctrl-label {
+  font-size: 9px;
+  margin-top: 2px;
+}

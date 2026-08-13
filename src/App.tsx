@@ -812,16 +812,22 @@ function App() {
 
         {/* 録画ボタン */}
         <footer className="bottom-controls">
-          <button className="preview-btn-round" onClick={() => setScreen('setup')} disabled={isRecording} title="取り直す">
-            ↺
+          <button className="preview-btn-round" onClick={() => setScreen('setup')} disabled={isRecording} title="設定に戻る">
+            <span className="ctrl-icon">↺</span>
+            <span className="ctrl-label">設定</span>
           </button>
-          {/* 写真。押した瞬間の画面が、そのまま1枚になる */}
+          {/* 写真。押した瞬間の画面が、そのまま1枚になる。
+              絵の下に必ず言葉を置く（2026-08-13、伊波さん
+              「ボタンなどの文字はわかりやすく」） */}
           <button
             className="photo-btn-round"
             onClick={shoot}
             disabled={!videoSrc && !camOn}
             title={t('btn_photo')}
-          >📷</button>
+          >
+            <span className="ctrl-icon">📷</span>
+            <span className="ctrl-label">写真</span>
+          </button>
           {/* 録画スタート。撮っている間は出さない（停止と別のボタンにする）。
               前は赤い丸1つが押すたびに意味を変えていて、見ても始まるのか
               止まるのか分からなかった（2026-08-13、伊波さん「停止ボタン追加」） */}
@@ -832,6 +838,7 @@ function App() {
               title={t('btn_record')}
             >
               <div className="record-inner"></div>
+              <span className="ctrl-label">{t('btn_record')}</span>
             </button>
           )}
           {/* 撮っている間だけ「一時停止」と「停止」を出す */}
@@ -843,7 +850,8 @@ function App() {
                 disabled={!canPause}
                 title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
               >
-                {isPaused ? '▶' : '❚❚'}
+                <span className="ctrl-icon">{isPaused ? '▶' : '❚❚'}</span>
+                <span className="ctrl-label">{isPaused ? t('btn_resume') : t('btn_pause')}</span>
               </button>
               <button
                 className="record-btn-round recording"
@@ -851,6 +859,7 @@ function App() {
                 title={t('btn_stop')}
               >
                 <div className="record-inner"></div>
+                <span className="ctrl-label">{t('btn_stop')}</span>
               </button>
             </>
           )}
@@ -979,8 +988,10 @@ function App() {
         <div className="setup-screen">
           <div className="setup-header">
             <h2 className="setup-title">
+              {/* フレームの段は、小窓の中に「フレームを選ぶ」と出るので
+                  上には何も書かない（2026-08-13、伊波さん「形とフレームの文字消して」） */}
               {setupStep === 'mode' ? 'なにを撮りますか？'
-                : setupStep === 'frame' ? '形とフレーム'
+                : setupStep === 'frame' ? ''
                 : setupStep === 'telop' ? 'スタンプの文字'
                 : 'こまかい設定'}
             </h2>
@@ -996,7 +1007,7 @@ function App() {
                 else if (setupStep === 'frame') setSetupStep('mode');
                 else if (camOn || videoSrc) setScreen(backTo);
               }}
-            >←</button>
+            >戻る</button>
           </div>
           
           <div className="setup-content">
