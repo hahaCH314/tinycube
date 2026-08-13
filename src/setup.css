@@ -986,3 +986,7 @@
   background: rgba(255,255,255,0.9);
 }
 .pen-preview svg { width: 100%; height: 100%; display: block; }
+
+/* 説明文で改行を使えるようにする。skin 側は pre-line を持っていないので、
+   '\n' を渡しても1行に潰れる。setup.css はあとから読まれるので、こちらが勝つ */
+.setup-content .sheet-note { white-space: pre-line; }

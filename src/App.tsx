@@ -1886,8 +1886,12 @@ function App() {
 
             {photoStep === 'text' && (
               <div className="setup-section highlight-section">
-                <h3 className="setup-section-title">好きな言葉を入れてね</h3>
-                <p className="sheet-note">入れた文字は、指でつまんで動かせます</p>
+                {/* 入れた文字は、絵のスタンプと同じで指で動かせる。
+                    「言葉を入れる」だと入力欄にしか見えず、それが伝わらない。
+                    スタンプが作れる場所だと先に言う（2026-08-14、伊波さん
+                    「テキスト入力（好きな文字でスタンプ作れるよ」） */}
+                <h3 className="setup-section-title">テキスト入力</h3>
+                <p className="sheet-note">好きな文字でスタンプ作れるよ！{'\n'}入れた文字は指でつまんで動かせます</p>
                 <div className="telop-row">
                   <input
                     className="telop-input"
@@ -1978,7 +1982,7 @@ function App() {
                   style={{ marginTop: 16, width: '100%' }}
                   onClick={() => { addDeco('text', photoText); setPhotoText(''); }}
                   disabled={!photoText.trim()}
-                >この写真に入れる</button>
+                >この文字でスタンプを作る</button>
 
                 <button
                   className="start-btn"
