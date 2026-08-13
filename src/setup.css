@@ -785,8 +785,14 @@
    これが無いと中の写真の高さを無視して 26px まで潰れる。実測で潰れていた
    （2026-08-14、シオン。画面には帯しか出ず、飾りを掴む場所も無くなる）。
    写真そのものが伸び縮みしないよう、高さは中身（img）に決めさせる */
+/* **上に貼り付けておくこと。** 下の操作パネル（特にらくがきの道具）は
+   縦に長いので、普通に置くと写真がスクロールで画面の外へ出る。実測で
+   y=-292px まで上がっていた。描く相手が見えないまま指を動かすことになる
+   （2026-08-14、伊波さん「らくがきスタンプ作ってデコろう」の実装中に発見）。
+   sticky で天井に留めれば、下をどれだけ繰っても写真は残る */
 .shot-big {
-  position: relative; width: 100%; margin: 0 auto 10px;
+  position: sticky; top: 0; z-index: 5;
+  width: 100%; margin: 0 auto 10px;
   flex: 0 0 auto;
   border-radius: 12px; overflow: hidden;
   background: #000; container-type: inline-size;
@@ -941,3 +947,39 @@
 
 /* 傾き。ズームと同じ形にして、操作の作法を揃える */
 .angle-row { display: flex; gap: 8px; align-items: center; }
+
+/* ---- らくがき（指でなぞった線） ---------------------------------- */
+/* スタンプとらくがきの切り替え。別画面に分けると、貼ってから描くたびに
+   行き来することになる（2026-08-14、伊波さん） */
+.deco-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.deco-tab {
+  flex: 1; padding: 12px 8px; border-radius: 12px;
+  font-size: 0.88rem; font-weight: 800; color: #fff;
+  background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
+}
+.deco-tab.on {
+  border-color: #66e7ff; color: #66e7ff;
+  background: rgba(102, 231, 255, 0.16);
+  box-shadow: 0 0 14px rgba(102, 231, 255, 0.4);
+}
+
+/* 線は写真の上に重ねる。指のあたりは下の写真に渡す（描くのは親が受ける） */
+.pen-layer {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* ペンを持っているあいだは、指の意味が変わる。
+   飾りをつまむのではなく、なぞると線になる */
+.shot-big.pen-on { cursor: crosshair; }
+/* 描いている最中に、置いてある飾りを掴んでしまわないようにする */
+.shot-big.pen-on .deco { pointer-events: none; }
+
+/* いまの太さと色の見本。数字だけでは太さが伝わらない */
+.pen-preview {
+  margin-top: 10px; height: 34px;
+  border-radius: 10px; padding: 4px 6px;
+  background: rgba(255,255,255,0.9);
+}
+.pen-preview svg { width: 100%; height: 100%; display: block; }
