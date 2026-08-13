@@ -91,7 +91,8 @@ function App() {
     frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
     mirror: boolean;
-  }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE', mirror: false });
+    zoom: number;
+  }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE', mirror: false, zoom: 1 });
   
   // ボタンから呼ばれる口。中身は effects.ts が持っている。
   // 録画していないときに押しても鳴る（本番前に手応えを確かめられるように）。
@@ -306,7 +307,46 @@ function App() {
   // 起動の順番は「平成大プリクラ」に合わせてある。プリクラ機と同じで、
   // 撮る前にまず枠を決める（docs/tinycube-update-scope.md 0章）。
   // 1画面で決めることは1つだけ。それ以外の設定は ⚙️（setup）に置いたまま
-  const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video'>('agree');
+  // 'photo' は写真を撮ったあとの編集画面（テキスト → デコる → 保存）。
+  // 動画は「先に飾って撮る」、写真は「撮ってから飾る」で順番が逆になる
+  // （2026-08-14、伊波さん「テキスト変更のとこのページみたいに動画とは逆に、
+  // 撮ってから出す」）
+  const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video' | 'photo'>('agree');
+  // 撮るもの。'photo' は3枚連写、'video' は今まで通りの録画。
+  // フレームを選ぶ前に、まずこれを聞く（2026-08-14、伊波さん
+  // 「まず（なにを撮る？）ページ追加【フレーム選択ページの前】」）
+  const [captureKind, setCaptureKind] = useState<'photo' | 'video' | null>(null);
+  // カメラの寄り。顔ハメの穴に顔が入らない人がいる（2026-08-14、伊波さん
+  // 「顔がデカい人は入らないと指摘、ズーム機能調整（インカメ）」）。
+  // 1 が今まで通り。下げると引く（顔が小さくなって穴に収まる）
+  const [camZoom, setCamZoom] = useState(1);
+  useEffect(() => { liveRef.current.zoom = camZoom; }, [camZoom]);
+
+  // ---- 写真（3枚連写 → テキスト → デコる → 保存） --------------------
+  // 撮った3枚。data URL で持つ。編集中に何度も canvas へ描き直すので、
+  // Blob より扱いやすい
+  const [shots, setShots] = useState<string[]>([]);
+  // いま大きく出して編集している1枚（shots の添字）。
+  // タップで入れ替える（2026-08-14、伊波さん「タップでデコる。
+  // 大きい画像の所へ自由に入れ替え」）
+  const [activeShot, setActiveShot] = useState(0);
+  // 写真の編集は2段。テキストを決めてから、スタンプを乗せる
+  const [photoStep, setPhotoStep] = useState<'text' | 'deco'>('text');
+  const [isBursting, setIsBursting] = useState(false);
+  // 写真に乗せる落書き。プリクラの落書き機能を静止画のスタンプとして出す。
+  // 音は鳴らさない（2026-08-14、伊波さん「エフェクト音無し」）
+  type Deco = { id: number; shot: number; kind: 'text' | 'stamp'; value: string; x: number; y: number; size: number; color: string };
+  const [decos, setDecos] = useState<Deco[]>([]);
+  const decoSeq = useRef(0);
+  // 写真のテキスト。動画側の「出現の仕方」は静止画では意味がないので持たず、
+  // 代わりに色を選べるようにした（2026-08-14、伊波さん「出現の仕方の代りに
+  // 色変更増やす。手描きフォントにするほうが当時のプリクラ再現率上がる」）
+  const [photoText, setPhotoText] = useState('');
+  const [photoTextColor, setPhotoTextColor] = useState('#ff4da6');
+  // 当時のプリクラは手描き風の文字。ここはゴシックに戻さないこと
+  const PHOTO_FONT = '"Yusei Magic", "Klee One", "Hachi Maru Pop", cursive';
+  const TEXT_COLORS = ['#ff4da6', '#ffffff', '#000000', '#ffe14d', '#4dd2ff', '#7cff4d', '#ff6b4d', '#c14dff'];
+  const STAMPS = ['💖', '⭐', '🌟', '✨', '🎀', '🌈', '🍓', '🧸', '👑', '🦄', '🌸', '💎', '🍭', '☁️', '🐰', '🎵'];
   // 「同意してはじめる」を押したら、まっすぐフレーム選びへ。
   // 以前はここで使い方のガイド（長い文章）を挟んでいたが、
   // 実際に友達に使ってもらったら「何のアプリか、どう使うか分からない」だった。
@@ -332,17 +372,26 @@ function App() {
   //   2 frame … フレーム選び。ここが主役なので大きく出す
   //   3 more  … その他の設定。押した人だけが見る（普段は開かなくていい）
   //   4 telop … スタンプ（テロップ）の言葉と出し方。フレームの次に聞く
-  const [setupStep, setSetupStep] = useState<'mode' | 'frame' | 'telop'>('mode');
+  //   0 kind  … なにを撮る？（写真／動画）。フレームより前に聞く
+  const [setupStep, setSetupStep] = useState<'kind' | 'mode' | 'frame' | 'telop'>('kind');
   // 枠選び（frame）と素材選び（source）は setup に統合したので、戻り先は video だけ
   const [backTo, setBackTo] = useState<'video'>('video');
   // 2回目以降は「フレームだけ選び直す」ことが多いので、開いたら
   // フレーム選びから始める（毎回1段目を踏ませない）
   const openSetup = (from: 'video') => { setBackTo(from); setSetupStep('frame'); setScreen('setup'); };
+  // 撮るものを決めて次へ。写真はフレームを選んだら撮影画面へ直行する
+  // （テロップは撮ったあとに乗せるので、先に聞かない）
+  const pickKind = (k: 'photo' | 'video') => {
+    setCaptureKind(k);
+    setSetupStep('mode');
+  };
   // 設定の段階を1つ戻す。1段目まで来たら撮影画面へ返す。
   // ヘッダーと小窓の中の両方から呼ぶので、処理はここに1つだけ置く
   const goBackStep = () => {
     if (setupStep === 'telop') setSetupStep('frame');
+    // 写真はテロップの段を通らないので、フレームから mode へ戻る道は同じ
     else if (setupStep === 'frame') setSetupStep('mode');
+    else if (setupStep === 'mode') setSetupStep('kind');
     else if (camOn || videoSrc) setScreen(backTo);
   };
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -603,6 +652,192 @@ function App() {
     if (blob) await save(blob, 'jpg');
   };
 
+  // 3枚連写。プリクラと同じで、数えてから続けて3回撮る。
+  // 撮り終えたら編集画面（テキスト → デコる）へ送る
+  // （2026-08-14、伊波さん「写真を撮る（３枚連写）」）
+  const burstShoot = async () => {
+    const c = canvasRef.current;
+    if (!c || isBursting) return;
+    if (!videoSrc && !camOn) { alert(t('alert_load_first')); return; }
+    setIsBursting(true);
+    setStartHint(false);
+    const taken: string[] = [];
+    try {
+      // 1枚目の前だけ3つ数える。構える間を作る
+      for (let n = 3; n > 0; n--) {
+        setCountdown(n);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      setCountdown(null);
+      for (let i = 0; i < 3; i++) {
+        setFlash(true);
+        setTimeout(() => setFlash(false), 200);
+        taken.push(c.toDataURL('image/jpeg', 0.92));
+        // 3枚が全部同じ顔にならないよう、間を空ける。
+        // 最後の1枚のあとは待たない
+        if (i < 2) {
+          await new Promise(r => setTimeout(r, 900));
+        }
+      }
+    } finally {
+      setCountdown(null);
+      setIsBursting(false);
+    }
+    setShots(taken);
+    setActiveShot(0);
+    setDecos([]);
+    setPhotoText('');
+    setPhotoStep('text');
+    setScreen('photo');
+  };
+
+  // 編集した1枚を canvas に焼く。テキストもスタンプも位置は割合（0〜100）で
+  // 持っているので、書き出す大きさが変わっても同じ場所に乗る
+  const renderShot = (i: number): Promise<HTMLCanvasElement | null> => {
+    return new Promise(resolve => {
+      const src = shots[i];
+      if (!src) return resolve(null);
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.width;
+        c.height = img.height;
+        const g = c.getContext('2d');
+        if (!g) return resolve(null);
+        g.drawImage(img, 0, 0);
+        for (const d of decos.filter(x => x.shot === i)) {
+          const px = c.width * d.x / 100;
+          const py = c.height * d.y / 100;
+          // 文字の大きさは幅を基準にする。縦横で見え方が変わらないように
+          const size = c.width * d.size / 100;
+          g.save();
+          g.textAlign = 'center';
+          g.textBaseline = 'middle';
+          if (d.kind === 'text') {
+            g.font = `700 ${size}px ${PHOTO_FONT}`;
+            // 白い服にも黒い髪にも乗るよう、必ず縁を付ける
+            g.lineWidth = Math.max(2, size * 0.14);
+            g.strokeStyle = d.color === '#ffffff' ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.9)';
+            g.lineJoin = 'round';
+            g.strokeText(d.value, px, py);
+            g.fillStyle = d.color;
+            g.fillText(d.value, px, py);
+          } else {
+            g.font = `${size}px sans-serif`;
+            g.fillText(d.value, px, py);
+          }
+          g.restore();
+        }
+        resolve(c);
+      };
+      img.onerror = () => resolve(null);
+      img.src = src;
+    });
+  };
+
+  // 3枚を縦に並べて1枚にする。縦でも横でも同じ見え方にする
+  // （2026-08-14、伊波さん「３枚の縦長写真（同じ大きさで１６：９）
+  // 縦の時横の時も同じ表示」）。
+  // 1コマを 16:9 の横長で揃え、それを3段積むので、出来上がりは縦長になる
+  const savePhotoSheet = async () => {
+    const rendered = await Promise.all([0, 1, 2].map(i => renderShot(i)));
+    const cells = rendered.filter((c): c is HTMLCanvasElement => !!c);
+    if (cells.length === 0) return;
+    // 1コマの形。3枚とも同じ大きさで縦に積む
+    // （2026-08-14、伊波さん「３枚の縦長写真（同じ大きさで１６：９）
+    // 縦の時横の時も同じ表示」）。
+    //
+    // 「縦の時横の時も同じ表示」を、**撮った写真の形をそのまま使う**と読んだ。
+    // 縦で撮ったものを 16:9 の横長コマへ押し込むと、顔の上下が切れて
+    // 顔ハメが台無しになる。コマの形を写真に合わせれば、縦で撮っても
+    // 横で撮っても「同じ大きさの3枚が縦に並ぶ」見え方は変わらない
+    const CELL_W = 1080;
+    const first = cells[0];
+    const CELL_H = Math.round(CELL_W * first.height / first.width);
+    const GAP = 24;
+    const PAD = 24;
+    const sheet = document.createElement('canvas');
+    sheet.width = CELL_W + PAD * 2;
+    sheet.height = PAD * 2 + CELL_H * cells.length + GAP * (cells.length - 1);
+    const g = sheet.getContext('2d');
+    if (!g) return;
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, sheet.width, sheet.height);
+    cells.forEach((cell, i) => {
+      const dy = PAD + i * (CELL_H + GAP);
+      // 元の写真は縦長（1080x1920）なので、16:9 の枠には中央を切り出して収める。
+      // 縮めて黒帯を出すと、3枚とも帯だらけになる
+      const scale = Math.max(CELL_W / cell.width, CELL_H / cell.height);
+      const w = cell.width * scale, h = cell.height * scale;
+      g.save();
+      g.beginPath();
+      g.rect(PAD, dy, CELL_W, CELL_H);
+      g.clip();
+      g.drawImage(cell, PAD + (CELL_W - w) / 2, dy + (CELL_H - h) / 2, w, h);
+      g.restore();
+    });
+    // 透かしはここでは足さない。1コマ1コマに canvas の時点で焼かれているので、
+    // 用紙にもう一枚置くと同じ文字が二重に出る（実測で下端に重なっていた）
+    const blob = await new Promise<Blob | null>(res => sheet.toBlob(res, 'image/jpeg', 0.92));
+    if (blob) await save(blob, 'jpg');
+  };
+
+  // 撮り直し。撮影画面へ戻して、編集中のものを捨てる
+  const retakePhotos = () => {
+    setShots([]);
+    setDecos([]);
+    setPhotoText('');
+    setScreen('video');
+    setStartHint(true);
+  };
+
+  // デコるを1つ足す。まずは真ん中に置いて、指で動かしてもらう
+  const addDeco = (kind: 'text' | 'stamp', value: string) => {
+    if (!value.trim()) return;
+    decoSeq.current += 1;
+    setDecos(prev => [...prev, {
+      id: decoSeq.current,
+      shot: activeShot,
+      kind,
+      value,
+      x: 50,
+      y: kind === 'text' ? 78 : 50,
+      size: kind === 'text' ? 9 : 14,
+      color: photoTextColor,
+    }]);
+  };
+
+  // 指でつまんで動かす。プリクラの落書きと同じで、置いてから位置を直せないと使えない。
+  // 押している間だけ window で追いかける（指が絵の外へ出ても離さない）
+  const [dragId, setDragId] = useState<number | null>(null);
+  const bigShotRef = useRef<HTMLDivElement>(null);
+  const startDrag = (id: number) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragId(id);
+  };
+  useEffect(() => {
+    if (dragId === null) return;
+    const move = (e: PointerEvent) => {
+      const box = bigShotRef.current?.getBoundingClientRect();
+      if (!box || box.width === 0) return;
+      const x = ((e.clientX - box.left) / box.width) * 100;
+      const y = ((e.clientY - box.top) / box.height) * 100;
+      setDecos(prev => prev.map(d => d.id === dragId
+        ? { ...d, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
+        : d));
+    };
+    const up = () => setDragId(null);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+  }, [dragId]);
+
   // 一時停止。録画も動画も両方止める。
   // 止めているあいだの絵と音は、まったくファイルに入らない
   const togglePause = () => {
@@ -811,10 +1046,25 @@ function App() {
 
         {/* 録画ボタン */}
         <footer className="bottom-controls">
-          <button className="preview-btn-round" onClick={() => setScreen('setup')} disabled={isRecording} title="設定に戻る">
+          <button className="preview-btn-round" onClick={() => setScreen('setup')} disabled={isRecording || isBursting} title="設定に戻る">
             <span className="ctrl-icon">↺</span>
             <span className="ctrl-label">設定</span>
           </button>
+          {/* 写真の道では、押すものを「3枚撮る」1つだけにする。
+              録画のボタンが並んでいると、写真を撮りに来た人がどれを押すか迷う
+              （2026-08-14、伊波さん「写真はフレーム選択の後→camera画面で撮影」） */}
+          {captureKind === 'photo' ? (
+            <button
+              className="photo-btn-round burst"
+              onClick={burstShoot}
+              disabled={(!videoSrc && !camOn) || isBursting}
+              title="3枚つづけて撮る"
+            >
+              <span className="ctrl-icon">📸</span>
+              <span className="ctrl-label">{isBursting ? '撮影中…' : '3枚撮る'}</span>
+            </button>
+          ) : (
+          <>
           {/* 写真。押した瞬間の画面が、そのまま1枚になる。
               絵の下に必ず言葉を置く（2026-08-13、伊波さん
               「ボタンなどの文字はわかりやすく」） */}
@@ -861,7 +1111,43 @@ function App() {
             <div className="record-inner"></div>
             <span className="ctrl-label">{t('btn_stop')}</span>
           </button>
+          </>
+          )}
         </footer>
+        {/* カメラの寄りと前後の切り替え。撮影画面から動かせないと、
+            穴に顔が入らないことに撮ってから気づく（2026-08-14、伊波さん
+            「顔がデカい人は入らないと指摘、ズーム機能調整（インカメ）」）。
+            前後の切り替えもここに置く。設定まで戻らずに直せる */}
+        {camOn && !isRecording && (
+          <div className="cam-tune">
+            <div className="cam-tune-row">
+              <button
+                className={`cam-face-btn ${camFront ? 'on' : ''}`}
+                onClick={() => startCam(true)}
+              >🤳 自分</button>
+              <button
+                className={`cam-face-btn ${!camFront ? 'on' : ''}`}
+                onClick={() => startCam(false)}
+              >📷 前</button>
+            </div>
+            <div className="cam-tune-row zoom">
+              <button className="zoom-btn" onClick={() => setCamZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))}>−</button>
+              <input
+                className="zoom-range"
+                type="range"
+                min={0.5}
+                max={2}
+                step={0.05}
+                value={camZoom}
+                onChange={e => setCamZoom(Number(e.target.value))}
+              />
+              <button className="zoom-btn" onClick={() => setCamZoom(z => Math.min(2, +(z + 0.1).toFixed(2)))}>＋</button>
+            </div>
+            <div className="cam-tune-label">
+              顔が入らないときは「−」で引いてね（{Math.round(camZoom * 100)}%）
+            </div>
+          </div>
+        )}
         {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
         {/* シャッターの光。CSS なので写真にも動画にも入らない */}
         {flash && <div className="shutter-flash" />}
@@ -1005,7 +1291,8 @@ function App() {
               {/* フレームの段は、小窓の中に「フレームを選ぶ」と出るので
                   上には何も書かない。空けた場所には小窓を上げる
                   （2026-08-13、伊波さん「上の無駄なスペースにモニター置けばいい」） */}
-              {setupStep === 'mode' ? 'なにを撮りますか？'
+              {setupStep === 'kind' ? 'なにを撮る？'
+                : setupStep === 'mode' ? 'どのカメラで撮りますか？'
                 : setupStep === 'telop' ? 'スタンプの文字'
                 : ''}
             </h2>
@@ -1022,22 +1309,60 @@ function App() {
             {/* ① なにを撮りますか？ 選ぶまで他の設定は出さない。
                 利き手とアプリの紹介文は、ここでは出さない（毎回読むものではない）。
                 利き手は「その他の設定」へ移した（2026-08-13、伊波さん） */}
+            {/* ⓪ なにを撮る？ 写真と動画で、このあとの道が分かれる。
+                写真は「撮ってから飾る」、動画は「飾ってから撮る」
+                （2026-08-14、伊波さん「まず（なにを撮る？）ページ追加」） */}
+            {setupStep === 'kind' && (
+            <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
+              <h3 className="setup-section-title">なにを撮る？</h3>
+              <div className="kind-picker">
+                <button
+                  className={`kind-btn ${captureKind === 'photo' ? 'on' : ''}`}
+                  onClick={() => pickKind('photo')}
+                >
+                  <span className="kind-icon">📸</span>
+                  <span className="kind-title">写真を撮る</span>
+                  <span className="kind-note">3枚つづけて撮ります{'\n'}撮ったあとに文字とスタンプで飾れます</span>
+                </button>
+                <button
+                  className={`kind-btn ${captureKind === 'video' ? 'on' : ''}`}
+                  onClick={() => pickKind('video')}
+                >
+                  <span className="kind-icon">🎬</span>
+                  <span className="kind-title">動画を撮る</span>
+                  <span className="kind-note">先に飾りを決めてから撮ります{'\n'}撮りながらスタンプを出せます</span>
+                </button>
+              </div>
+              <div style={{ textAlign: 'center', padding: '24px 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
+                <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                  ©２０２６CUBICENGINEstudio
+                </a>
+              </div>
+            </div>
+            )}
+
             {setupStep === 'mode' && (
             <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
-              <h3 className="setup-section-title">なにを撮りますか？</h3>
+              <h3 className="setup-section-title">どのカメラで撮りますか？</h3>
               {/* カメラ2つが主役。動画ファイルは「持っている人だけ」が使うものなので、
                   同じ列に並べず、下に説明を添えて置く（2026-08-13、伊波さん） */}
+              {/* 「インカメ／アウトカメ」では通じない。何が写るかで書く
+                  （2026-08-14、伊波さん「cameraの選択がわからない（ユーザー50代から）」） */}
               <div className="source-picker">
                 <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
                   <span className="source-icon">🤳</span>
-                  <span className="source-text">{t('cam_front')}</span>
+                  <span className="source-text">自分を写す</span>
+                  <span className="source-sub">画面side（インカメラ）</span>
                 </button>
                 <button className={`source-btn ${camOn && !camFront ? 'on' : ''}`} onClick={() => startCam(false)}>
                   <span className="source-icon">📷</span>
-                  <span className="source-text">{t('cam_back')}</span>
+                  <span className="source-text">前を写す</span>
+                  <span className="source-sub">背面side（アウトカメラ）</span>
                 </button>
               </div>
 
+              {/* 動画ファイルは動画を撮る人だけのもの。写真の道では出さない */}
+              {captureKind === 'video' && (
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
                 <button
                   className={`source-btn ${videoSrc ? 'on' : ''}`}
@@ -1051,7 +1376,8 @@ function App() {
                   ゲームplayの動画などを予め録画してご用意いただき<br />アップロードしてください
                 </p>
               </div>
-              {videoSrc && (
+              )}
+              {captureKind === 'video' && videoSrc && (
                 <div className="shape-switch" style={{ marginTop: '12px' }}>
                   <button className={!loopVideo ? 'on' : ''} onClick={() => setLoopVideo(false)}>ループしない</button>
                   <button className={loopVideo ? 'on' : ''} onClick={() => setLoopVideo(true)}>ループする🔁</button>
@@ -1102,6 +1428,15 @@ function App() {
 
               {/* 縦・横。この下の見本一覧が縦横で入れ替わるので、真上に置く。
                   小さくして、主役（小窓）の邪魔をしないようにする */}
+              {/* 決定は一覧の**上**。下に置くと129件をスクロールし切らないと
+                  見えず、「決定ボタンがない」になる（2026-08-14、伊波さん
+                  「フレーム選択ページの決定ボタンをスクロール下からトップへ移動」）。
+                  いつも出す。「フレームなし」を選んだ人も進めないと困る */}
+              <button
+                className="start-btn frame-decide"
+                onClick={() => (captureKind === 'photo' ? setScreen('video') : setSetupStep('telop'))}
+              >フレーム決定</button>
+
               <div className="shape-switch shape-switch--mini">
                 <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
                 <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
@@ -1167,15 +1502,8 @@ function App() {
                 ))}
               </div>
 
-              {/* 一覧のすぐ下。**いつも出す**。
-                  前は「フレームを選んだら出す」にしていたが、
-                  「フレームなし」を選んだ人には出ず、先へ進めなかった
-                  （2026-08-13、伊波さん「決定ボタンない」） */}
-              <button
-                className="start-btn"
-                style={{ width: '100%', marginTop: 12, minHeight: 46, fontSize: 15 }}
-                onClick={() => setSetupStep('telop')}
-              >この設定でOK</button>
+              {/* 決定ボタンは一覧の**上**へ移した（2026-08-14）。
+                  ここに二重で置かない */}
 
               {/* 買い切りの解除。鍵のかかった枠を見る直前に、何が解けるのかを
                   読めるようにする（「こまかい設定」を廃したのでここへ移した） */}
@@ -1298,6 +1626,166 @@ function App() {
               フレームを選んでいる途中でも押せて意味が分からなかった
               （2026-08-13、伊波さん「この設定で撮るはどうゆうこと？」）。
               いまは各段階の中に「撮る」を置いてある */}
+        </div>
+      )}
+
+      {/* 写真の編集。撮ってから飾る（2026-08-14、伊波さん
+          「写真→テキスト変更→デコる→保存」）。
+          テキストの段は動画側と別に持つ。静止画に「出現の仕方」は無いので、
+          そのぶんを色に置き換えてある */}
+      {screen === 'photo' && shots.length > 0 && (
+        <div className="setup-screen photo-screen">
+          <div className="setup-header compact">
+            <h2 className="setup-title">
+              {photoStep === 'text' ? '文字を入れる' : 'デコる'}
+            </h2>
+            <button
+              className="setup-close-btn"
+              title="もどる"
+              onClick={() => (photoStep === 'deco' ? setPhotoStep('text') : retakePhotos())}
+            >{photoStep === 'deco' ? '戻る' : '撮り直す'}</button>
+          </div>
+
+          <div className="setup-content">
+            {/* 大きい1枚。ここに乗せたものが写真に焼かれる */}
+            <div className="shot-big" ref={bigShotRef}>
+              <img src={shots[activeShot]} alt={`${activeShot + 1}枚目`} />
+              {decos.filter(d => d.shot === activeShot).map(d => (
+                <div
+                  key={d.id}
+                  className={`deco deco-${d.kind} ${dragId === d.id ? 'dragging' : ''}`}
+                  style={{
+                    left: `${d.x}%`,
+                    top: `${d.y}%`,
+                    fontSize: `${d.size}cqw`,
+                    color: d.kind === 'text' ? d.color : undefined,
+                    fontFamily: d.kind === 'text' ? PHOTO_FONT : undefined,
+                    // 白い文字は白い服に沈むので、必ず縁を付ける
+                    WebkitTextStroke: d.kind === 'text'
+                      ? `0.08em ${d.color === '#ffffff' ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.9)'}`
+                      : undefined,
+                    paintOrder: 'stroke fill',
+                  } as React.CSSProperties}
+                  onPointerDown={startDrag(d.id)}
+                >
+                  {d.value}
+                  {/* 消す口。置いてから要らなくなったものを外せないと詰む */}
+                  <button
+                    className="deco-x"
+                    onPointerDown={e => e.stopPropagation()}
+                    onClick={() => setDecos(prev => prev.filter(x => x.id !== d.id))}
+                  >✕</button>
+                </div>
+              ))}
+            </div>
+
+            {/* 小さい2枚。タップで大きいほうと入れ替える
+                （2026-08-14、伊波さん「タップでデコる。大きい画像の所へ自由に入れ替え」）。
+                3枚とも出す（撮ったものが全部見えていないと選べない） */}
+            <div
+              className="shot-strip"
+              style={{ '--shot-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}
+            >
+              {shots.map((s, i) => (
+                <button
+                  key={i}
+                  className={`shot-thumb ${i === activeShot ? 'on' : ''}`}
+                  onClick={() => setActiveShot(i)}
+                >
+                  <img src={s} alt={`${i + 1}枚目`} />
+                  <span className="shot-no">{i + 1}</span>
+                  {decos.some(d => d.shot === i) && <span className="shot-dot">●</span>}
+                </button>
+              ))}
+            </div>
+
+            {photoStep === 'text' && (
+              <div className="setup-section highlight-section">
+                <h3 className="setup-section-title">好きな言葉を入れてね</h3>
+                <p className="sheet-note">入れた文字は、指でつまんで動かせます</p>
+                <div className="telop-row">
+                  <input
+                    className="telop-input"
+                    value={photoText}
+                    maxLength={20}
+                    placeholder="なかよし／たのしかった など"
+                    onChange={e => setPhotoText(e.target.value)}
+                  />
+                </div>
+
+                <h3 className="setup-section-title" style={{ marginTop: 16 }}>文字の色</h3>
+                <div className="color-picker">
+                  {TEXT_COLORS.map(c => (
+                    <button
+                      key={c}
+                      className={`color-dot ${photoTextColor === c ? 'on' : ''}`}
+                      style={{ background: c }}
+                      onClick={() => {
+                        setPhotoTextColor(c);
+                        // すでに置いた文字の色も一緒に変える。
+                        // 置き直しをさせない
+                        setDecos(prev => prev.map(d =>
+                          d.shot === activeShot && d.kind === 'text' ? { ...d, color: c } : d));
+                      }}
+                      title={c}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  className="start-btn"
+                  style={{ marginTop: 16, width: '100%' }}
+                  onClick={() => { addDeco('text', photoText); setPhotoText(''); }}
+                  disabled={!photoText.trim()}
+                >この写真に入れる</button>
+
+                <button
+                  className="start-btn"
+                  style={{ marginTop: 10, width: '100%' }}
+                  onClick={() => setPhotoStep('deco')}
+                >つぎ（デコる）へ</button>
+              </div>
+            )}
+
+            {photoStep === 'deco' && (
+              <div className="setup-section highlight-section">
+                <h3 className="setup-section-title">スタンプを貼ろう</h3>
+                <p className="sheet-note">押すと写真の真ん中に出ます。指でつまんで動かせます</p>
+                <div className="stamp-picker">
+                  {STAMPS.map(s => (
+                    <button key={s} className="stamp-btn" onClick={() => addDeco('stamp', s)}>{s}</button>
+                  ))}
+                </div>
+
+                <h3 className="setup-section-title" style={{ marginTop: 16 }}>大きさ</h3>
+                <div className="shape-switch">
+                  <button onClick={() => setDecos(prev => prev.map(d =>
+                    d.shot === activeShot ? { ...d, size: Math.max(4, +(d.size - 2).toFixed(1)) } : d))}>小さく</button>
+                  <button onClick={() => setDecos(prev => prev.map(d =>
+                    d.shot === activeShot ? { ...d, size: Math.min(40, +(d.size + 2).toFixed(1)) } : d))}>大きく</button>
+                </div>
+
+                <button
+                  className="start-btn"
+                  style={{ marginTop: 16, width: '100%' }}
+                  onClick={() => setDecos(prev => prev.filter(d => d.shot !== activeShot))}
+                  disabled={!decos.some(d => d.shot === activeShot)}
+                >この写真の飾りを全部消す</button>
+
+                <button
+                  className="start-btn save-btn"
+                  style={{ marginTop: 10, width: '100%' }}
+                  onClick={savePhotoSheet}
+                >3枚を保存する</button>
+
+                <button
+                  className="start-btn"
+                  style={{ marginTop: 10, width: '100%' }}
+                  onClick={retakePhotos}
+                >撮り直す</button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

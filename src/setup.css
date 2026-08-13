@@ -689,3 +689,192 @@
   box-shadow: 0 0 0 2px #66e7ff, 0 0 16px rgba(102, 231, 255, 0.5);
   transform: scale(1.02);
 }
+
+/* ===================================================================
+   2026-08-14 スマホ版の直し（伊波さんの指示）
+   - なにを撮る？（写真／動画）を最初に聞く
+   - フレームの決定ボタンを一覧の上へ
+   - カメラの前後とズームを撮影画面から動かせるように
+   - 写真：3枚連写 → 文字 → デコる → 保存
+   =================================================================== */
+
+/* ---- なにを撮る？ ------------------------------------------------ */
+/* 写真と動画で道が分かれる入口。押す場所が2つしかないので大きく出す。
+   対象は40〜50代と子ども。何が起きるかを絵と言葉の両方で出す */
+.kind-picker { display: flex; flex-direction: column; gap: 12px; }
+.kind-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 20px 14px; border-radius: 14px;
+  background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
+  color: #fff; transition: all 0.2s; text-align: center;
+}
+.kind-btn.on {
+  border-color: #66e7ff;
+  background: linear-gradient(145deg, rgba(31,168,216,0.32), rgba(102,231,255,0.12));
+  box-shadow: 0 0 16px rgba(102,231,255,0.35);
+}
+.kind-icon { font-size: 2.4rem; line-height: 1; }
+.kind-title { font-size: 1.05rem; font-weight: 900; }
+/* 改行は JSX 側で '\n' を渡している。<br> を入れずに済ませる */
+.kind-note {
+  font-size: 0.72rem; line-height: 1.5; color: #d7e3f5;
+  white-space: pre-line;
+}
+
+/* カメラの前後。「インカメ／アウトカメ」では通じないという指摘があったので、
+   何が写るかを主にして、機械の呼び名は小さく添える */
+.source-sub {
+  font-size: 0.62rem; color: #a9bad2; font-weight: 600; letter-spacing: 0.02em;
+}
+
+/* ---- フレームの決定ボタン ---------------------------------------- */
+/* 一覧の**上**。下に置くと129件をスクロールし切るまで見えない */
+.frame-decide {
+  width: 100%; margin: 0 0 12px; min-height: 50px; font-size: 1rem;
+  position: sticky; top: 0; z-index: 6;
+}
+
+/* ---- 撮影画面のカメラ調整 ---------------------------------------- */
+/* 録画ボタンの上に浮かせる。撮る前にしか触らないので、録画中は出さない */
+.cam-tune {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 128px; z-index: 40;
+  width: min(320px, calc(100% - 32px));
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 12px; border-radius: 14px;
+  background: rgba(8, 4, 24, 0.72);
+  border: 1px solid rgba(102, 231, 255, 0.3);
+  backdrop-filter: blur(6px);
+}
+.cam-tune-row { display: flex; gap: 8px; align-items: center; }
+.cam-face-btn {
+  flex: 1; padding: 8px 4px; border-radius: 10px; font-size: 0.8rem; font-weight: 800;
+  background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.2); color: #fff;
+}
+.cam-face-btn.on {
+  border-color: #66e7ff; color: #66e7ff;
+  background: rgba(102, 231, 255, 0.14);
+}
+/* ＋−は指で押すもの。小さいと押し損なう */
+.zoom-btn {
+  width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
+  font-size: 1.2rem; font-weight: 900; line-height: 1;
+  background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25); color: #fff;
+}
+.zoom-range { flex: 1; accent-color: #66e7ff; }
+.cam-tune-label {
+  font-size: 0.68rem; color: #cfe0f5; text-align: center; line-height: 1.4;
+}
+
+/* 3枚連写のボタン。押すものが1つだけなので大きく見せる */
+.photo-btn-round.burst {
+  background: linear-gradient(145deg, #ff4fa3, #c9256e);
+  border-color: rgba(255,255,255,0.85);
+  box-shadow: 0 4px 16px rgba(255, 79, 163, 0.55);
+}
+
+/* ---- 写真の編集（文字 → デコる） --------------------------------- */
+/* 大きい1枚。cqw で文字を測るので、ここが基準の箱になる。
+   **flex-shrink: 0 を外さないこと。** 親（.setup-content）は縦の flex なので、
+   これが無いと中の写真の高さを無視して 26px まで潰れる。実測で潰れていた
+   （2026-08-14、シオン。画面には帯しか出ず、飾りを掴む場所も無くなる）。
+   写真そのものが伸び縮みしないよう、高さは中身（img）に決めさせる */
+.shot-big {
+  position: relative; width: 100%; margin: 0 auto 10px;
+  flex: 0 0 auto;
+  border-radius: 12px; overflow: hidden;
+  background: #000; container-type: inline-size;
+  touch-action: none;              /* 指で飾りを動かすので、ここでは画面を送らせない */
+  border: 1px solid rgba(255,255,255,0.16);
+  /* 縦長の写真だと画面からはみ出す。下の操作パネルが見えなくなるので、
+     高さの上限を切って、その中に収める */
+  max-height: 52dvh;
+  display: flex; align-items: center; justify-content: center;
+}
+/* 写真の形（縦・横）はそのまま。箱の中に収まるまで縮める */
+.shot-big > img {
+  max-width: 100%; max-height: 52dvh;
+  width: auto; height: auto; display: block;
+}
+
+/* 乗せた飾り。位置は割合で持っているので、画面の大きさが変わってもずれない */
+.deco {
+  position: absolute; transform: translate(-50%, -50%);
+  cursor: grab; user-select: none; line-height: 1.2;
+  white-space: nowrap; touch-action: none;
+}
+.deco-text { font-weight: 700; }
+.deco.dragging { cursor: grabbing; filter: drop-shadow(0 0 8px rgba(102,231,255,0.9)); }
+/* 消す口。飾りの右上に小さく出す */
+.deco-x {
+  position: absolute; top: -10px; right: -14px;
+  width: 22px; height: 22px; border-radius: 50%;
+  font-size: 11px; line-height: 1; color: #fff;
+  background: rgba(220, 38, 90, 0.92); border: 1px solid rgba(255,255,255,0.7);
+  display: flex; align-items: center; justify-content: center;
+  -webkit-text-stroke: 0;
+}
+
+/* 小さい3枚。タップで大きいほうと入れ替える */
+.shot-strip { display: flex; gap: 8px; margin-bottom: 14px; }
+/* 形は撮った写真に合わせる。縦のときに 16:9 の枠へ入れると顔が切れる。
+   --shot-ar は App.tsx が渡す */
+.shot-thumb {
+  position: relative; flex: 1; border-radius: 10px; overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.2); background: #000; padding: 0;
+  aspect-ratio: var(--shot-ar, 9 / 16);
+}
+.shot-thumb > img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot-thumb.on {
+  border-color: #66e7ff;
+  box-shadow: 0 0 0 2px #66e7ff, 0 0 14px rgba(102,231,255,0.5);
+}
+.shot-no {
+  position: absolute; top: 4px; left: 4px;
+  min-width: 18px; height: 18px; border-radius: 50%;
+  font-size: 11px; font-weight: 900; color: #fff;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+}
+/* 飾りを付けた写真に印。どれを触ったか一目で分かるように */
+.shot-dot {
+  position: absolute; bottom: 4px; right: 5px;
+  font-size: 9px; color: #66e7ff; text-shadow: 0 0 6px rgba(102,231,255,0.9);
+}
+
+/* 文字の色。丸を並べるだけ。名前で選ばせない（色は見たほうが早い） */
+.color-picker { display: flex; flex-wrap: wrap; gap: 10px; }
+.color-dot {
+  width: 38px; height: 38px; border-radius: 50%; padding: 0;
+  border: 2px solid rgba(255,255,255,0.35);
+}
+.color-dot.on {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px #66e7ff, 0 0 14px rgba(102,231,255,0.6);
+  transform: scale(1.08);
+}
+
+/* スタンプ。プリクラの落書きにあたるもの。音は鳴らさない */
+.stamp-picker {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px;
+}
+.stamp-btn {
+  aspect-ratio: 1; border-radius: 10px; font-size: 1.4rem; line-height: 1; padding: 0;
+  background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
+}
+.stamp-btn:active { transform: scale(0.92); }
+
+/* 保存は終わりの操作。ほかのボタンと同じ色だと見つからない */
+.start-btn.save-btn {
+  background: linear-gradient(145deg, #ff4fa3, #c9256e);
+  border-color: rgba(255,255,255,0.8);
+  box-shadow: 0 4px 16px rgba(255, 79, 163, 0.55);
+}
+
+/* 編集画面は上下の余白を詰める。写真そのものを大きく見せたい */
+.photo-screen .setup-content { padding-top: 8px; }
+
+/* 画面が小さいときはスタンプを2段に */
+@media (max-width: 380px) {
+  .stamp-picker { grid-template-columns: repeat(6, 1fr); }
+}

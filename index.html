@@ -27,6 +27,17 @@
 
     <meta name="description" content="撮ってある動画に、声とエフェクトを一発撮りで乗せる。編集画面はありません。" />
 
+    <!-- 写真に乗せる文字の手描きフォント。ゴシックだと当時のプリクラに見えない
+         （2026-08-14、伊波さん「手描きフォントにするほうが当時のプリクラ
+         再現率上がる」）。写真の編集でしか使わないので display=swap で待たせない。
+         ここは Web アプリなので外から読んでよい（CMCUBE 本体とは事情が違う） -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Yusei+Magic&family=Hachi+Maru+Pop&display=swap"
+      rel="stylesheet"
+    />
+
     <title>tinyCUBE</title>
   </head>
   <body>

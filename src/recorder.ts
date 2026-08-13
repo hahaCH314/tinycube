@@ -102,6 +102,11 @@ export type StageOptions = {
      *  鏡になっていないと、右に動いたつもりが画面では左へ動くので、
      *  顔ハメの穴に顔を合わせられない（2026-08-11、伊波さん「合わせにくい」） */
     mirror?: boolean;
+    /** カメラの寄り具合。1 で今まで通り。利用者がその場で動かせる。
+     *  顔の大きい人は顔ハメの穴に収まらないという声があった
+     *  （2026-08-14、伊波さん「顔がデカい人は入らない」）。
+     *  1 未満で引く（顔が小さくなり穴に収まる）、1 超で寄る */
+    zoom?: number;
     shape: OutShape;
     frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
@@ -143,7 +148,8 @@ export function startStage(opts: StageOptions): () => void {
   const draw = () => {
     if (!running) return;
     try {
-    const { video, shape, frame, watermark, mirror } = read();
+    const { video, shape, frame, watermark, mirror, zoom } = read();
+    const camZoom = zoom && zoom > 0 ? zoom : 1;
     const { w: OUT_W, h: OUT_H } = SIZES[shape];
     if (canvas.width !== OUT_W) canvas.width = OUT_W;
     if (canvas.height !== OUT_H) canvas.height = OUT_H;
@@ -170,7 +176,7 @@ export function startStage(opts: StageOptions): () => void {
       if (isSplit4) {
         const halfW = OUT_W / 2;
         const halfH = OUT_H / 2;
-        const scale = fill ? Math.max(halfW / vw, halfH / vh) : Math.min(halfW / vw, halfH / vh);
+        const scale = (fill ? Math.max(halfW / vw, halfH / vh) : Math.min(halfW / vw, halfH / vh)) * camZoom;
         const w = vw * scale, h = vh * scale;
         g.save();
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
@@ -182,9 +188,9 @@ export function startStage(opts: StageOptions): () => void {
         g.drawImage(video, halfW + dx, halfH + dy, w, h);
         g.restore();
       } else {
-        const scale = fill
+        const scale = (fill
           ? Math.max(OUT_W / vw, OUT_H / vh)
-          : Math.min(OUT_W / vw, OUT_H / vh);
+          : Math.min(OUT_W / vw, OUT_H / vh)) * camZoom;
         const w = vw * scale, h = vh * scale;
         g.save();
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
@@ -259,10 +265,14 @@ export function startStage(opts: StageOptions): () => void {
         //
         // 穴が2つある枠では、2人が並んだ幅ぶんは必ず映っていないと
         // 片方の穴が空になる。寄せるのは「穴がぜんぶ収まる」ところまでにする。
+        //
+        // camZoom は利用者がその場で動かせるつまみ。顔の大きい人が穴に
+        // 入らないという声があったので、引けるようにした（2026-08-14、伊波さん）。
+        // need を下回らせない縛りはそのまま効くので、引きすぎて穴が空くことはない
         const base = Math.max(OUT_W / vw, OUT_H / vh);
         // 穴がぜんぶ収まるのに要る最低の大きさ。これを下回ると穴が空く
         const need = Math.max((rx * 2) / vw, (ry * 2) / vh);
-        const s2 = Math.max(base * FACE_ZOOM, need);
+        const s2 = Math.max(base * FACE_ZOOM * camZoom, need);
         const w2 = vw * s2, h2 = vh * s2;
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
         const dx = mirror ? OUT_W - cx : cx;
