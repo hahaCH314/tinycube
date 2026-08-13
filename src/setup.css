@@ -505,3 +505,48 @@
   background: rgba(102, 231, 255, 0.18);
   border-color: #66e7ff;
 }
+
+/* --- 下バーとレールの高さを実態に合わせる ---------------------------------
+   ⚠️ 録画ボタンが画面からはみ出して押せなくなっていた
+   （2026-08-13、伊波さん「撮影画面はみだし（かなり、録画ボタン見えない）」）。
+   原因は2つ：
+     1. ボタンに言葉を添えたぶん、下バーが 92px では足りなくなった
+     2. レールを下寄りにしたので、下バーと重なった
+   下バーの高さを実態に合わせ、レールはその上で止める。 */
+:root {
+  --bottom-h: 112px;
+}
+
+.bottom-controls {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+}
+
+/* レールは下バーに被らないところで止める */
+.side-panel {
+  bottom: calc(var(--chrome-bot) + 8px) !important;
+  max-height: 44dvh;
+}
+
+/* --- 小窓の中の「この設定でOK」 --------------------------------------------
+   外（下）に置くと、その高さぶん小窓が押し上げられて隠れる。
+   小窓は**老眼の方がフレームを見て決めるためのもの**なので、
+   大きさを削ってはいけない（2026-08-13、伊波さん）。
+   小窓の中に重ねれば、場所を取らずに済む。 */
+.preview-ok-btn {
+  position: absolute;
+  left: 12px; right: 12px; bottom: 12px;
+  z-index: 2;
+  min-height: 48px;
+  border-radius: 24px;
+  font-size: 15px; font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #ff4fa3, #a855f7);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(255, 79, 163, 0.5);
+}
+.preview-ok-btn:active { transform: scale(0.97); }
+
+/* 小窓は見て決めるためのもの。できるだけ大きく */
+.setup-content .frame-preview {
+  max-height: 62vh !important;
+}
