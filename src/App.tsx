@@ -827,41 +827,40 @@ function App() {
             <span className="ctrl-icon">📷</span>
             <span className="ctrl-label">写真</span>
           </button>
-          {/* 録画スタート。撮っている間は出さない（停止と別のボタンにする）。
+          {/* 録画スタート・一時停止・停止は**いつも4つとも出す**。
+              そのときに押せないものは薄くして押せなくするだけにする。
+              消してしまうと「さっきあったボタンが無い」と探すことになる
+              （2026-08-13、伊波さん「停止、一時停止は初めからボタンとして
+              あったほうがイイ」）。
               前は赤い丸1つが押すたびに意味を変えていて、見ても始まるのか
-              止まるのか分からなかった（2026-08-13、伊波さん「停止ボタン追加」） */}
-          {!isRecording && (
-            <button
-              className="record-btn-round"
-              onClick={toggleRecording}
-              title={t('btn_record')}
-            >
-              <div className="record-inner"></div>
-              <span className="ctrl-label">{t('btn_record')}</span>
-            </button>
-          )}
-          {/* 撮っている間だけ「一時停止」と「停止」を出す */}
-          {isRecording && (
-            <>
-              <button
-                className={`pause-btn-round ${isPaused ? 'on' : ''}`}
-                onClick={togglePause}
-                disabled={!canPause}
-                title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
-              >
-                <span className="ctrl-icon">{isPaused ? '▶' : '❚❚'}</span>
-                <span className="ctrl-label">{isPaused ? t('btn_resume') : t('btn_pause')}</span>
-              </button>
-              <button
-                className="record-btn-round recording"
-                onClick={toggleRecording}
-                title={t('btn_stop')}
-              >
-                <div className="record-inner"></div>
-                <span className="ctrl-label">{t('btn_stop')}</span>
-              </button>
-            </>
-          )}
+              止まるのか分からなかった（同日「停止ボタン追加」） */}
+          <button
+            className="record-btn-round"
+            onClick={toggleRecording}
+            disabled={isRecording}
+            title={t('btn_record')}
+          >
+            <div className="record-inner"></div>
+            <span className="ctrl-label">{t('btn_record')}</span>
+          </button>
+          <button
+            className={`pause-btn-round ${isPaused ? 'on' : ''}`}
+            onClick={togglePause}
+            disabled={!isRecording || !canPause}
+            title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
+          >
+            <span className="ctrl-icon">{isPaused ? '▶' : '❚❚'}</span>
+            <span className="ctrl-label">{isPaused ? t('btn_resume') : t('btn_pause')}</span>
+          </button>
+          <button
+            className={`record-btn-round stop-btn ${isRecording ? 'recording' : ''}`}
+            onClick={toggleRecording}
+            disabled={!isRecording}
+            title={t('btn_stop')}
+          >
+            <div className="record-inner"></div>
+            <span className="ctrl-label">{t('btn_stop')}</span>
+          </button>
         </footer>
         {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
         {/* シャッターの光。CSS なので写真にも動画にも入らない */}

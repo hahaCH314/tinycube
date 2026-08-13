@@ -606,3 +606,19 @@
   text-align: center;
   overflow: hidden;
 }
+
+/* --- 下バーの4つは、いつも全部出す ----------------------------------------
+   押せないときは薄くするだけ。消すと「さっきあったボタンが無い」と
+   探すことになる（2026-08-13、伊波さん）。 */
+.bottom-controls button:disabled {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
+
+/* 停止ボタンの中身は、録画していなくても四角（■）に見せる。
+   録画ボタン（●）と形で見分けられるように */
+.stop-btn .record-inner {
+  width: 40%;
+  height: 40%;
+  border-radius: 7px;
+}

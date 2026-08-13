@@ -240,15 +240,11 @@ button {
   min-width: 0;
 }
 
+/* ロゴの隣に出していた虹色の四角。**消した**。
+   App.tsx 側にキューブの SVG があるので、並ぶと印が2つに見える
+   （2026-08-13、伊波さん「なぜキューブが2こ？」） */
 .logo-container::before {
-  content: "";
-  flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
-  border-radius: 5px;
-  background: conic-gradient(from 210deg, var(--pink), var(--violet), var(--cyan), var(--pink));
-  box-shadow: 0 0 12px rgba(255, 61, 139, 0.55);
-  transform: rotate(12deg);
+  display: none;
 }
 
 .logo-text {
