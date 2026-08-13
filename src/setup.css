@@ -551,7 +551,7 @@
    「フレーム選択できないかも」）。
    小窓は 46vh までにして、一覧の高さを明示的に確保する。 */
 .setup-content .frame-picker {
-  max-height: 30dvh;
+  max-height: 46dvh;
   min-height: 120px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -585,15 +585,6 @@
   overflow: hidden;
 }
 
-/* 絵は箱の中に収める。溢れさせない */
-.setup-content .frame-picker .frame-tile img {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  display: block;
-}
 
 /* 文字だけのタイル（マイフレーム追加・フレームなし）は字を小さくして収める */
 .setup-content .frame-picker .frame-tile span {
@@ -627,4 +618,24 @@
 }
 .frame-picker.ar-landscape .frame-tile {
   aspect-ratio: 16 / 9 !important;
+}
+
+/* --- 横（16:9）のときはタイルを大きく -------------------------------------
+   ⚠️ 96px 幅のままだと、16:9 では高さが 57px しか無く、**絵が何も見えない**
+   （2026-08-13、伊波さん「フレーム全然見えんやんけ」）。
+   横のときは1行に2枚だけ並べて、ちゃんと絵が見える大きさにする。 */
+.frame-picker.ar-landscape {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+}
+
+/* 縦（9:16）は3枚並べる。細長いので、そのほうが見やすい */
+.frame-picker.ar-portrait {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+}
+
+/* 一覧そのものも、もっと見えるように高くする */
+.setup-content .frame-picker {
+  max-height: 46dvh !important;
 }
