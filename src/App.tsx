@@ -954,7 +954,7 @@ function App() {
           <div className="setup-header">
             <h2 className="setup-title">
               {setupStep === 'mode' ? 'なにを撮りますか？'
-                : setupStep === 'frame' ? 'フレームを選ぶ'
+                : setupStep === 'frame' ? '形とフレームを選ぶ'
                 : 'こまかい設定'}
             </h2>
             {backTo && <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>}
@@ -1006,7 +1006,7 @@ function App() {
                   className="start-btn"
                   style={{ marginTop: 16 }}
                   onClick={() => setSetupStep('frame')}
-                >つぎへ：フレームを選ぶ →</button>
+                >フレームを選ぶ</button>
               )}
             </div>
             )}
@@ -1014,6 +1014,50 @@ function App() {
             {/* ② フレーム選び。ここが主役 */}
             {setupStep === 'frame' && (
             <div className="setup-section highlight-section">
+              {/* 先に縦・横を決める。フレームは形で見え方が変わるので、
+                  形が決まってから選ぶほうが分かりやすい（2026-08-13、伊波さん） */}
+              <h3 className="setup-section-title">{t('setting_shape')}</h3>
+              {srcIsWide && (
+                <p className="sheet-note">{t('setting_shape_wide_note')}</p>
+              )}
+              <div className="shape-switch" style={{ marginBottom: 20 }}>
+                <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
+                <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
+              </div>
+
+              {/* 選んだフレームを上に映す。これが無いと、選んだものが
+                  どんな絵なのか分からないまま撮りに行くことになる
+                  （2026-08-13、伊波さん「選んだフレームを上に映したとこで、
+                  この設定で撮る」）。カメラ映像は出さない（起動が重くなる） */}
+              <div
+                className="frame-preview"
+                style={{
+                  aspectRatio: shape === 'portrait' ? '9 / 16' : '16 / 9',
+                  maxHeight: '38vh',
+                  margin: '0 auto 16px',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  background: '#000',
+                  position: 'relative',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                {(() => {
+                  const f = FRAMES.find(x => x.id === frameId);
+                  if (!f) {
+                    return <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{t('frame_none')}</span>;
+                  }
+                  return (
+                    <>
+                      {f.bgFile && (
+                        <img src={f.bgFile} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      )}
+                      <img src={f.file} alt={f.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                    </>
+                  );
+                })()}
+              </div>
+
               <h3 className="setup-section-title">フレームを選ぶ</h3>
 
 
@@ -1065,17 +1109,25 @@ function App() {
                   </button>
                 ))}
               </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              {/* フレームまで決まれば、あとは撮るだけ。「こまかい設定」は
+                  いじりたい人だけが押すものなので、目立たせない。
+                  上にフレームが映っているので「この設定で」が何を指すか分かる */}
+              <button
+                className="start-btn"
+                style={{ marginTop: 16, width: '100%' }}
+                onClick={() => setScreen('video')}
+              >この設定で撮る</button>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button
                   className="start-btn"
-                  style={{ flex: '0 0 auto', background: 'rgba(255,255,255,0.12)' }}
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.12)' }}
                   onClick={() => setSetupStep('mode')}
-                >← もどる</button>
+                >もどる</button>
                 <button
                   className="start-btn"
-                  style={{ flex: 1 }}
+                  style={{ flex: 1, background: 'rgba(255,255,255,0.12)' }}
                   onClick={() => setSetupStep('more')}
-                >こまかい設定 →</button>
+                >こまかい設定</button>
               </div>
             </div>
             )}
@@ -1111,14 +1163,9 @@ function App() {
               <button className={useSrcAudio === 'off' ? 'on' : ''} onClick={() => pickSrcAudio('off')}>{t('srcaudio_off')}</button>
             </div>
 
-            <h3 className="setup-section-title">{t('setting_shape')}</h3>
-            {srcIsWide && (
-              <p className="sheet-note">{t('setting_shape_wide_note')}</p>
-            )}
-            <div className="shape-switch">
-              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
-              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
-            </div>
+            {/* 縦・横の選択はフレーム選びの上へ移した（2026-08-13、伊波さん
+                「縦、横を選び→フレームを選ぶ」）。フレームは形で見え方が
+                変わるので、先に形が決まっているほうが選びやすい */}
 
             <h3 className="setup-section-title">{t('setting_teloppos')}</h3>
             <div className="shape-switch">
@@ -1261,9 +1308,14 @@ function App() {
 
             <button
               className="start-btn"
-              style={{ marginTop: 16, background: 'rgba(255,255,255,0.12)' }}
+              style={{ marginTop: 16, width: '100%' }}
+              onClick={() => setScreen('video')}
+            >撮る</button>
+            <button
+              className="start-btn"
+              style={{ marginTop: 8, width: '100%', background: 'rgba(255,255,255,0.12)' }}
               onClick={() => setSetupStep('frame')}
-            >← フレーム選びにもどる</button>
+            >もどる</button>
 
             <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
               <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -1273,15 +1325,11 @@ function App() {
             </>
             )}
           </div>
-          {/* 撮りに行くボタンは、なにを撮るか決まってから出す。
-              決まっていないのに押せると、真っ黒の画面へ進んでしまう */}
-          {(camOn || videoSrc) && (
-            <div className="setup-footer">
-              <button className="start-btn" onClick={() => setScreen('video')}>
-                この設定で撮る！
-              </button>
-            </div>
-          )}
+          {/* 画面の下に居座る「この設定で撮る！」は外した。
+              3段階に分ける前の名残で、どの段階にいても撮影画面へ飛ぶため、
+              フレームを選んでいる途中でも押せて意味が分からなかった
+              （2026-08-13、伊波さん「この設定で撮るはどうゆうこと？」）。
+              いまは各段階の中に「撮る」を置いてある */}
         </div>
       )}
 
