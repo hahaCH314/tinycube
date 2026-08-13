@@ -432,7 +432,6 @@
   border-radius: 10px;
 }
 
-/* .preview-back-btn は廃止（戻るはヘッダーへ戻した、2026-08-13） */
 
 /* 「戻る」をヘッダーへ戻したので、その高さは確保する（2026-08-13） */
 .setup-header.compact {
@@ -508,7 +507,6 @@
   max-height: 44dvh;
 }
 
-/* .preview-ok-btn は廃止（小窓の下へ出した、2026-08-13） */
 
 /* 小窓は見て決めるためのもの。できるだけ大きく */
 .setup-content .frame-preview {
