@@ -639,3 +639,26 @@
 .setup-content .frame-picker {
   max-height: 46dvh !important;
 }
+
+/* --- タイルの中身が見えるようにする ---------------------------------------
+   ⚠️ フレームの絵は**中央が透明**。タイルの背景が暗い半透明だったので、
+   暗い上に暗いものが重なって**何も見えなかった**
+   （2026-08-13、伊波さん「フレーム全然見えんやんけ」「縦も横も関係なく」）。
+   市松模様（透明を表す一般的な見せ方）を敷いて、絵の形が分かるようにする。 */
+.frame-picker .frame-tile {
+  background-color: #6b7280 !important;
+  background-image:
+    linear-gradient(45deg, #9ca3af 25%, transparent 25%),
+    linear-gradient(-45deg, #9ca3af 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #9ca3af 75%),
+    linear-gradient(-45deg, transparent 75%, #9ca3af 75%) !important;
+  background-size: 12px 12px !important;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0px !important;
+}
+
+/* 文字だけのタイル（マイフレーム追加・フレームなし）は市松にしない */
+.frame-picker .frame-tile.none,
+.frame-picker .frame-tile:not(:has(img)) {
+  background-image: none !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}

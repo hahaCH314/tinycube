@@ -1103,7 +1103,17 @@ function App() {
                   margin: '0 auto 16px',
                   borderRadius: 12,
                   overflow: 'hidden',
-                  background: '#000',
+                  // ⚠️ 黒にすると、中央が透明なフレームは何も見えない
+                  //（2026-08-13、伊波さん「小窓の意味なし」）。
+                  // 市松模様を敷いて、絵の形が分かるようにする
+                  backgroundColor: '#6b7280',
+                  backgroundImage:
+                    'linear-gradient(45deg, #9ca3af 25%, transparent 25%),' +
+                    'linear-gradient(-45deg, #9ca3af 25%, transparent 25%),' +
+                    'linear-gradient(45deg, transparent 75%, #9ca3af 75%),' +
+                    'linear-gradient(-45deg, transparent 75%, #9ca3af 75%)',
+                  backgroundSize: '20px 20px',
+                  backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
                   position: 'relative',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
