@@ -336,10 +336,13 @@ button {
 .preview-stage {
   position: absolute;
   z-index: 10;
-  top: calc(var(--chrome-top) + 6px);
-  bottom: calc(var(--chrome-bot) + 6px);
-  left: calc(var(--sal) + var(--gutter));
-  right: calc(var(--sar) + var(--gutter));
+  /* カメラは画面いっぱいに映す（2026-08-13、伊波さん「画面全体camera
+     の画像にして」）。以前は上下バーとレールを避けて内側に置いていたが、
+     自撮りなのに映像が小さく、顔ハメの穴に顔を合わせづらかった。
+     ボタン類（レール・上下バー）は z-index で上に乗るので押せる。
+     canvas は object-fit:contain なので、**録画される中身の比率は
+     変わらない**。大きく見えるようになるだけ */
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
