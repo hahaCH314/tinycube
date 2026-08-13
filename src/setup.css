@@ -417,12 +417,67 @@
   max-height: 58vh !important;
 }
 
-/* --- 見本のタイルは小さく、選んだ絵の小窓は大きく -------------------------
-   小窓が見本と同じくらいの大きさだと、選んだものを確かめる役に立たない
-   （2026-08-13、伊波さん「見本より選んだフレームが見える小窓は
-   大きくないと意味ない」）。一覧は「選ぶための見本」なので小さくてよい。 */
-.setup-content .frame-picker {
-  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+
+/* --- 縦横の切り替えは小さく ------------------------------------------------
+   見本一覧のすぐ上に置く小さな切り替え。主役は小窓なので、
+   ここは目立たせない（2026-08-13、伊波さん「もう少し小さく」）。 */
+.shape-switch--mini {
+  margin: 0 0 8px;
   gap: 6px;
-  max-height: 26dvh;
+}
+.shape-switch--mini button {
+  padding: 6px 10px;
+  font-size: 12px;
+  min-height: 32px;
+  border-radius: 10px;
+}
+
+/* --- 小窓の中の「戻る」 ----------------------------------------------------
+   ヘッダーに置くと、そのために1行ぶんの高さが要る。小窓の左上に重ねれば
+   場所を取らず、そのぶん小窓を大きくできる
+   （2026-08-13、伊波さん「戻るのボタンはその枠の中に入らない？」）。 */
+.preview-back-btn {
+  position: absolute;
+  top: 8px; left: 8px;
+  z-index: 2;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  font-size: 13px; font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.preview-back-btn:active { transform: scale(0.96); }
+
+/* 「戻る」が中に入ったので、フレームの段のヘッダーは高さが要らない */
+.setup-header.compact {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: 0;
+  min-height: 0;
+}
+
+/* --- レールは下寄り・大きめに ---------------------------------------------
+   音・エフェクト・テキストは撮りながら押すもの。画面の上のほうにあると
+   指が届かない。**画面の下半分**に集めて、的も大きくする
+   （2026-08-13、伊波さん「音、エフェクトとテキスト透明ボタンなら
+   もう少し大きく、画面下中央辺りがそうさしやすい」）。 */
+.side-panel {
+  top: auto !important;
+  bottom: calc(var(--chrome-bot) + 12px) !important;
+  height: auto !important;
+  max-height: 52dvh;
+  width: 62px;
+}
+
+.side-panel .panel-scroll {
+  gap: 6px;
+}
+
+/* 的を大きく。指で押すものなので 52px は確保する */
+.side-panel .effect-btn {
+  min-height: 52px;
+  font-size: 11px;
 }

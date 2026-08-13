@@ -1,17 +1,15 @@
 export type Lang = 'ja' | 'en';
 
-let currentLang: Lang = (localStorage.getItem('tinycube.lang') as Lang) || 'ja';
-
-// 初回起動時の自動判定 (システム言語が日本語以外なら英語)
-if (!localStorage.getItem('tinycube.lang')) {
-  if (navigator.language && !navigator.language.startsWith('ja')) {
-    currentLang = 'en';
-    localStorage.setItem('tinycube.lang', 'en');
-  } else {
-    currentLang = 'ja';
-    localStorage.setItem('tinycube.lang', 'ja');
-  }
-}
+// 自分で選んだ言語だけを保存する。
+//
+// ⚠️ 以前は「システム言語からの自動判定」の結果まで保存していた。
+//    一度でも英語と判定されると保存されて固定され、しかも画面に
+//    切り替える場所が無いので、日本語に戻せなくなっていた
+//    （2026-08-13、伊波さん「これ、私見てるの英語版かなぁ？」）。
+//    自動判定は毎回その場で行い、保存はしない。
+const saved = localStorage.getItem('tinycube.lang') as Lang | null;
+let currentLang: Lang = saved
+  ?? (navigator.language && !navigator.language.startsWith('ja') ? 'en' : 'ja');
 
 export const setLang = (lang: Lang) => {
   currentLang = lang;

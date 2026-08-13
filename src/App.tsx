@@ -4,7 +4,7 @@ import './setup.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
 import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
-import { t, getLang } from './i18n'
+import { t, getLang, setLang } from './i18n'
 import { isUnlocked, tryUnlock, savedKey, relock } from './unlock'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
@@ -346,6 +346,14 @@ function App() {
   // 2回目以降は「フレームだけ選び直す」ことが多いので、開いたら
   // フレーム選びから始める（毎回1段目を踏ませない）
   const openSetup = (from: 'video') => { setBackTo(from); setSetupStep('frame'); setScreen('setup'); };
+  // 設定の段階を1つ戻す。1段目まで来たら撮影画面へ返す。
+  // ヘッダーと小窓の中の両方から呼ぶので、処理はここに1つだけ置く
+  const goBackStep = () => {
+    if (setupStep === 'more') setSetupStep('telop');
+    else if (setupStep === 'telop') setSetupStep('frame');
+    else if (setupStep === 'frame') setSetupStep('mode');
+    else if (camOn || videoSrc) setScreen(backTo);
+  };
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [loopVideo, setLoopVideo] = useState(true);
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
@@ -999,16 +1007,12 @@ function App() {
             {/* 段階を1つ戻す。前は「撮影画面へ飛ぶ」だけだったので、
                 設定の途中で押しても戻れなかった（2026-08-13、伊波さん
                 「戻るが戻れない」）。1段目のときだけ撮影画面へ返す */}
-            <button
-              className="setup-close-btn"
-              title="もどる"
-              onClick={() => {
-                if (setupStep === 'more') setSetupStep('telop');
-                else if (setupStep === 'telop') setSetupStep('frame');
-                else if (setupStep === 'frame') setSetupStep('mode');
-                else if (camOn || videoSrc) setScreen(backTo);
-              }}
-            >戻る</button>
+            {/* フレームの段では、この位置に出さない（小窓の中に置いてある）。
+                上に空きを作らないため（2026-08-13、伊波さん
+                「戻るのボタンはその枠の中に入らない？」） */}
+            {setupStep !== 'frame' && (
+              <button className="setup-close-btn" title="もどる" onClick={goBackStep}>戻る</button>
+            )}
           </div>
           
           <div className="setup-content">
@@ -1059,6 +1063,11 @@ function App() {
                   onClick={() => setSetupStep('frame')}
                 >フレームを選ぶ</button>
               )}
+              <div style={{ textAlign: 'center', padding: '24px 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
+                <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                  ©２０２６CUBICENGINEstudio
+                </a>
+              </div>
             </div>
             )}
 
@@ -1075,14 +1084,9 @@ function App() {
                   {t('turn_hint')}
                 </p>
               )}
-              <h3 className="setup-section-title">{t('setting_shape')}</h3>
-              {srcIsWide && (
-                <p className="sheet-note">{t('setting_shape_wide_note')}</p>
-              )}
-              <div className="shape-switch" style={{ marginBottom: 20 }}>
-                <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
-                <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
-              </div>
+              {/* 縦・横の選択は見本一覧のすぐ上へ移した（2026-08-13、伊波さん
+                  「縦横の選択を見本のすぐ上に移動もう少し小さく」）。
+                  一覧の中身が縦横で切り替わるので、その真上にあるほうが繋がる */}
 
               {/* 選んだフレームを上に映す。これが無いと、選んだものが
                   どんな絵なのか分からないまま撮りに行くことになる
@@ -1101,6 +1105,9 @@ function App() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
+                {/* 「戻る」は小窓の中（左上）に置く。上に別の行を作らずに済み、
+                    そのぶん小窓を大きくできる（2026-08-13、伊波さん） */}
+                <button className="preview-back-btn" onClick={goBackStep}>戻る</button>
                 {(() => {
                   // FRAMES だけを見ると、マイフレーム（自分で入れた絵）を選んだとき
                   // 見つからず、前に選んでいた絵が残って見える。
@@ -1144,6 +1151,55 @@ function App() {
                   style={{ width: '100%', marginBottom: 20 }}
                   onClick={() => setSetupStep('telop')}
                 >この設定でOK</button>
+              )}
+
+              {/* 買い切りの解除。鍵のかかった枠を見る直前に、何が解けるのかを
+                  読めるようにする（「こまかい設定」を廃したのでここへ移した） */}
+              <div className={`unlock-box ${unlocked ? 'done' : ''}`} ref={unlockRef}>
+                {unlocked ? (
+                  <>
+                    <b className="unlock-done">{t('unlock_done')}</b>
+                    <p className="sheet-note">{t('unlock_done_note')}</p>
+                    {savedKey() && <p className="unlock-key">{savedKey()}</p>}
+                    <button
+                      className="unlock-relock"
+                      onClick={() => { relock(); setUnlocked(false); }}
+                    >{t('unlock_relock')}</button>
+                  </>
+                ) : (
+                  <>
+                    <b className="unlock-title">{t('unlock_title')}</b>
+                    <p className="sheet-note">{t('unlock_lead')}</p>
+                    <ul className="unlock-points">
+                      <li>{t('unlock_p1')}</li>
+                      <li>{t('unlock_p2')}</li>
+                    </ul>
+                    <a className="unlock-buy" href={buyUrl} target="_blank" rel="noopener noreferrer">{t('unlock_buy')}</a>
+                    <div className="unlock-row">
+                      <input
+                        className="unlock-input"
+                        value={keyInput}
+                        placeholder={t('unlock_place')}
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
+                      />
+                      <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
+                    </div>
+                    {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
+                  </>
+                )}
+              </div>
+
+              {/* 縦・横。この下の見本一覧が縦横で入れ替わるので、真上に置く。
+                  小さくして、主役（小窓）の邪魔をしないようにする */}
+              <div className="shape-switch shape-switch--mini">
+                <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
+                <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>{t('setting_shape_land')}</button>
+              </div>
+              {srcIsWide && (
+                <p className="sheet-note" style={{ marginTop: 6 }}>{t('setting_shape_wide_note')}</p>
               )}
 
               {/* 「フレームを選ぶ」の見出しは小窓の中に入れたので、ここには置かない */}
@@ -1246,201 +1302,52 @@ function App() {
                 style={{ marginTop: 20, width: '100%' }}
                 onClick={() => setScreen('video')}
               >この設定で撮る</button>
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              {/* 「こまかい設定」への脇道は無くした。中身は他の段と重複して
+                  いたか、この流れの中に置ける（2026-08-13、伊波さん
+                  「細かい設定にまとめるものなんてないよ？」「全部誘導線に乗せる」） */}
+              <button
+                className="start-btn"
+                style={{ marginTop: 8, width: '100%', background: 'rgba(255,255,255,0.12)' }}
+                onClick={() => setSetupStep('frame')}
+              >もどる</button>
+
+              {/* 言語。自動判定が英語に振れたときに戻す場所が無かった
+                  （2026-08-13、伊波さん「これ、私見てるの英語版かなぁ？」） */}
+              <h3 className="setup-section-title" style={{ marginTop: 24 }}>言語 / Language</h3>
+              <div className="shape-switch">
                 <button
-                  className="start-btn"
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.12)' }}
-                  onClick={() => setSetupStep('frame')}
-                >もどる</button>
+                  className={getLang() === 'ja' ? 'on' : ''}
+                  onClick={() => { setLang('ja'); location.reload(); }}
+                >日本語</button>
                 <button
-                  className="start-btn"
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.12)' }}
-                  onClick={() => setSetupStep('more')}
-                >こまかい設定</button>
+                  className={getLang() === 'en' ? 'on' : ''}
+                  onClick={() => { setLang('en'); location.reload(); }}
+                >English</button>
               </div>
+
+              {/* 利き手。録画ボタンを持つ手に合わせる */}
+              <h3 className="setup-section-title" style={{ marginTop: 20 }}>ボタンの位置</h3>
+              <div className="hand-setting">
+                <label><input type="radio" name="hand" value="right" checked={hand === 'right'} onChange={() => setHand('right')} /> 右</label>
+                <label><input type="radio" name="hand" value="left" checked={hand === 'left'} onChange={() => setHand('left')} /> 左</label>
+              </div>
+
+              {/* 動画の音の扱い。動画を読み込んだ人にだけ関わる */}
+              {videoSrc && (
+                <>
+                  <h3 className="setup-section-title" style={{ marginTop: 20 }}>{t('setting_srcaudio')}</h3>
+                  <p className="sheet-note">{t('srcaudio_note')}</p>
+                  <div className="shape-switch">
+                    <button className={useSrcAudio === 'mic' ? 'on' : ''} onClick={() => pickSrcAudio('mic')}>{t('srcaudio_mic')}</button>
+                    <button className={useSrcAudio === 'mix' ? 'on' : ''} onClick={() => pickSrcAudio('mix')}>{t('srcaudio_mix')}</button>
+                    <button className={useSrcAudio === 'off' ? 'on' : ''} onClick={() => pickSrcAudio('off')}>{t('srcaudio_off')}</button>
+                  </div>
+                </>
+              )}
             </div>
             )}
 
             {/* ③ その他の設定。普段は開かなくていいものを全部ここへ */}
-            {setupStep === 'more' && (
-            <>
-            <div className="hand-setting">
-              <label><input type="radio" name="hand" value="right" checked={hand === 'right'} onChange={() => setHand('right')} /> 右</label>
-              <label><input type="radio" name="hand" value="left" checked={hand === 'left'} onChange={() => setHand('left')} /> 左</label>
-            </div>
-
-            {/* 音は3つに固定。ファイルの読み込みは廃止した（08cf11c「かんたん化」）。
-                ここは「どの番号がどの音か」を確かめて、試し押しできるだけの欄にする */}
-            <h3 className="setup-section-title">{t('setting_sounds')}</h3>
-            <div className="sound-list">
-              {(['clap', 'drum', 'blip'] as const).map((id, n) => (
-                <div key={id} className="sound-row">
-                  {/* 柱のボタンと同じ番号・同じ色。どの欄がどのボタンか、
-                      見ただけで結びつくように（2026-08-11、伊波さん） */}
-                  <span className="slot-no mine">{n + 1}</span>
-                  <button className="sound-try" onClick={() => fireEffect(id)}>▶</button>
-                  <span className="sound-name">{t(('eff_' + id) as never)}</span>
-                </div>
-              ))}
-            </div>
-
-            <h3 className="setup-section-title">{t('setting_srcaudio')}</h3>
-            <p className="sheet-note">{t('srcaudio_note')}</p>
-            <div className="shape-switch">
-              <button className={useSrcAudio === 'mic' ? 'on' : ''} onClick={() => pickSrcAudio('mic')}>{t('srcaudio_mic')}</button>
-              <button className={useSrcAudio === 'mix' ? 'on' : ''} onClick={() => pickSrcAudio('mix')}>{t('srcaudio_mix')}</button>
-              <button className={useSrcAudio === 'off' ? 'on' : ''} onClick={() => pickSrcAudio('off')}>{t('srcaudio_off')}</button>
-            </div>
-
-            {/* 縦・横の選択はフレーム選びの上へ移した（2026-08-13、伊波さん
-                「縦、横を選び→フレームを選ぶ」）。フレームは形で見え方が
-                変わるので、先に形が決まっているほうが選びやすい */}
-
-            <h3 className="setup-section-title">{t('setting_teloppos')}</h3>
-            <div className="shape-switch">
-              <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
-              <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
-            </div>
-
-            <h3 className="setup-section-title">{t('setting_telopcolor')}</h3>
-            <div className="shape-switch">
-              <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
-              <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
-            </div>
-
-            {/* テロップの言葉はフレーム選びの段へ移した。
-                奥に隠すと「書き換えられる」ことに気づかない
-                （2026-08-13、伊波さん「ちゃんとテキスト修正案内入れなきゃ」） */}
-
-            <h3 className="setup-section-title">{t('setting_frame')}</h3>
-
-            {/* 買い切りの解除。枠の一覧のすぐ上に置く。
-                何が解けるのかを、鍵のかかった枠を見る直前に読めるように */}
-            <div className={`unlock-box ${unlocked ? 'done' : ''}`} ref={unlockRef}>
-              {unlocked ? (
-                <>
-                  <b className="unlock-done">{t('unlock_done')}</b>
-                  <p className="sheet-note">{t('unlock_done_note')}</p>
-                  {savedKey() && <p className="unlock-key">{savedKey()}</p>}
-                  <button
-                    className="unlock-relock"
-                    onClick={() => { relock(); setUnlocked(false); }}
-                  >{t('unlock_relock')}</button>
-                </>
-              ) : (
-                <>
-                  <b className="unlock-title">{t('unlock_title')}</b>
-                  <p className="sheet-note">{t('unlock_lead')}</p>
-                  <ul className="unlock-points">
-                    <li>{t('unlock_p1')}</li>
-                    <li>{t('unlock_p2')}</li>
-                  </ul>
-                  <a
-                    className="unlock-buy"
-                    href={buyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >{t('unlock_buy')}</a>
-                  <div className="unlock-row">
-                    <input
-                      className="unlock-input"
-                      value={keyInput}
-                      placeholder={t('unlock_place')}
-                      autoCapitalize="characters"
-                      autoCorrect="off"
-                      spellCheck={false}
-                      onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
-                    />
-                    <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
-                  </div>
-                  {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
-                </>
-              )}
-            </div>
-            <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(168, 85, 247, 0.1)', borderLeft: '3px solid #a855f7', borderRadius: '4px' }}>
-              <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.4', color: '#e2e8f0' }}>
-                <strong>みんながクリエイター！✨</strong><br/>
-                ※AIと一緒に簡単に自作フレームが作れます<br/>
-                素敵なオリジナルフレームや、おもしろフレームなど、あなたが作った作品をSNSで見れるのを楽しみにしています♡
-              </p>
-            </div>
-            <div className="frame-picker" style={{ marginBottom: '12px' }}>
-              <button 
-                className="frame-tile"
-                onClick={() => customFrameInputRef.current?.click()}
-                style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)' }}
-              >
-                <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
-                <span style={{ color: '#a855f7', lineHeight: 1.3 }}>マイフレーム<br />追加</span>
-              </button>
-              <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
-              
-              {customFrames.map(cf => (
-                <button
-                  key={cf.id}
-                  className={`frame-tile ${frameId === cf.id ? 'on' : ''}`}
-                  onClick={() => setFrameId(cf.id)}
-                  style={{ position: 'relative' }}
-                >
-                  <img src={cf.dataUrl} alt="マイフレーム" />
-                  <span>マイフレーム</span>
-                  <div 
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (confirm('このフレームを削除しますか？')) {
-                        await deleteCustomFrame(cf.id);
-                        setCustomFrames(prev => prev.filter(p => p.id !== cf.id));
-                        if (frameId === cf.id) setFrameId(null);
-                      }
-                    }}
-                    style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >✕</div>
-                </button>
-              ))}
-            </div>
-
-            <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
-              <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
-              {FRAMES.map(f => (
-                <button
-                  key={f.id}
-                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
-                  onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
-                  title={locked(f) ? t('locked_hint') : f.name}
-                >
-                  {f.bgFile ? (
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <img src={f.bgFile + '?v=20260813_raw'} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
-                      <img src={f.file + '?v=20260813_raw'} alt={f.name} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }} />
-                    </div>
-                  ) : (
-                    <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
-                  )}
-                  {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
-                  {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
-                      見やすいよ」）。読み上げ用に img の alt には残してある */}
-                </button>
-              ))}
-            </div>
-
-            <button
-              className="start-btn"
-              style={{ marginTop: 16, width: '100%' }}
-              onClick={() => setScreen('video')}
-            >撮る</button>
-            <button
-              className="start-btn"
-              style={{ marginTop: 8, width: '100%', background: 'rgba(255,255,255,0.12)' }}
-              onClick={() => setSetupStep('frame')}
-            >もどる</button>
-
-            <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
-              <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                ©２０２６CUBICENGINEstudio
-              </a>
-            </div>
-            </>
-            )}
           </div>
           {/* 画面の下に居座る「この設定で撮る！」は外した。
               3段階に分ける前の名残で、どの段階にいても撮影画面へ飛ぶため、
