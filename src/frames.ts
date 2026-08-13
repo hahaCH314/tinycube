@@ -22,6 +22,8 @@ export type Frame = {
   file: string;
   bgFile?: string;
   anchor: FrameAnchor;
+  /** 9スライス用の設定（上下左右の不可侵エリアのピクセル数） */
+  slice?: { t: number; r: number; b: number; l: number };
   /** 顔ハメ枠の穴の位置（キャンバス全体に対する%）。
    *  穴は透明ではなく黒く塗ってあるので、カメラは枠より後から重ね描く必要がある。
    *  x, y は左上の座標、w, h は幅・高さ（いずれも %） */
@@ -35,6 +37,9 @@ export type Frame = {
 
 export const FRAMES: Frame[] = [
 
+  // --- v0 生成フレーム（9スライス） ---
+  { id: 'v0_shibuya_decora', name: '渋谷デコラ', file: './frames/shibuya_decora.svg', anchor: 'full', slice: { t: 240, r: 240, b: 240, l: 240 } },
+
   // --- 812CMcube 追加分（2026-08-12） ---
   { id: 'frame_01',         name: 'E9',                 file: './frames/frame_01.webp',         anchor: 'full', faceHole: { x: 31.0, y: 22.0, w: 38.0, h: 32.0 } },
   { id: 'frame_02',         name: 'N9',                 file: './frames/frame_02.webp',         anchor: 'full', faceHole: { x: 32.0, y: 20.0, w: 36.0, h: 30.0 } },
@@ -45,7 +50,7 @@ export const FRAMES: Frame[] = [
   { id: 'frame_07',         name: 'アイドルメンズ9',        file: './frames/frame_07.webp',         anchor: 'full', faceHole: { x: 30.0, y: 14.0, w: 40.0, h: 36.0 } },
   { id: 'frame_08',         name: 'ギャル男16',            file: './frames/frame_08.webp',         anchor: 'wide', faceHoles: [{ x: 26.0, y: 26.0, w: 23.0, h: 44.0 }, { x: 54.0, y: 26.0, w: 23.0, h: 44.0 }] },
   { id: 'frame_09',         name: 'ヒーロー9',             file: './frames/frame_09.webp',         anchor: 'full', faceHole: { x: 32.0, y: 18.0, w: 36.0, h: 30.0 } },
-  { id: 'frame_10',         name: 'ファンシー9',           file: './frames/frame_10.webp',         anchor: 'full', faceHole: { x: 32.0, y: 20.0, w: 36.0, h: 30.0 } },
+  { id: 'frame_10',         name: 'ファンシー9',           file: './frames/frame_10.webp',         anchor: 'full' },
   { id: 'white',            name: '白ギャル16',            file: './frames/white.webp',            anchor: 'wide', faceHoles: [{ x: 25.0, y: 26.0, w: 23.0, h: 44.0 }, { x: 53.0, y: 26.0, w: 23.0, h: 44.0 }] },
   { id: 'black',            name: '黒ギャル16',            file: './frames/black.webp',            anchor: 'wide', faceHoles: [{ x: 25.0, y: 26.0, w: 23.0, h: 44.0 }, { x: 53.0, y: 26.0, w: 23.0, h: 44.0 }] },
   { id: 'frame_13',         name: 'sアイドル16',           file: './frames/frame_13.webp',         anchor: 'wide', faceHole: { x: 34.0, y: 16.0, w: 32.0, h: 54.0 } },

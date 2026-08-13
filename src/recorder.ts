@@ -110,21 +110,6 @@ export function startStage(opts: StageOptions): () => void {
     if (!gg) return null;
     drawFrame(gg, img, anchor, W, H, slice);
 
-    if (isFaceHole) {
-      // コマンドの多重実行で開いてしまった不要な透明穴（髪や服）を塞ぐため、
-      // 顔はめ枠の場合は透明なピクセルをすべて「黒（#000）」で塗りつぶす！
-      // これにより、余計な穴から背景が透けてお化けのようになるのを防ぎます。
-      const im = gg.getImageData(0, 0, W, H);
-      const d = im.data;
-      for (let i = 0; i < d.length; i += 4) {
-        // 完全な透明（alpha=0）は「意図的な真ん中の抜き」として残し、
-        // 半透明のゴミ（alpha > 0 かつ alpha < 255）だけを黒で塞ぐ！
-        if (d[i + 3] > 0 && d[i + 3] < 255) {
-          d[i] = 0; d[i + 1] = 0; d[i + 2] = 0; d[i + 3] = 255;
-        }
-      }
-      gg.putImageData(im, 0, 0);
-    }
 
     baked = { img, w: W, h: H, canvas: c, isFaceHole };
     return c;

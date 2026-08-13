@@ -2229,3 +2229,50 @@ button {
     opacity: 0;
   }
 }
+
+/* --- missing buttons restored for Shibuya skin --- */
+.preview-btn-round, .photo-btn-round, .pause-btn-round {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(40px, 11vw, 48px);
+  height: clamp(40px, 11vw, 48px);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  font-size: 16px;
+  background: var(--glass-bg-strong);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--inner-hi), 0 4px 14px rgba(0, 0, 0, 0.35);
+  color: var(--fg);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.preview-btn-round:disabled, .photo-btn-round:disabled, .pause-btn-round:disabled {
+  opacity: 0.35;
+  filter: grayscale(80%);
+  pointer-events: none;
+}
+
+.preview-btn-round:active, .photo-btn-round:active, .pause-btn-round:active {
+  transform: scale(0.9);
+  background: var(--glass-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.pause-btn-round.on {
+  border-color: rgba(255, 228, 92, 0.8);
+  box-shadow: 0 0 14px rgba(255, 228, 92, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: var(--lemon);
+  animation: tc-pause-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes tc-pause-pulse {
+  0%, 100% { box-shadow: 0 0 14px rgba(255, 228, 92, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(255, 228, 92, 0.7); }
+}
+
+.record-btn-round.recording.paused {
+  animation: none;
+  filter: saturate(0.6);
+}
