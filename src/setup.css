@@ -400,3 +400,29 @@
   font-size: 9px;
   margin-top: 2px;
 }
+
+/* --- 見出しが無い段（フレーム選び）はヘッダーを詰める ----------------------
+   タイトルを消したぶんが空白として残ると、その下の小窓が押し下げられて
+   もったいない（2026-08-13、伊波さん「上の無駄なスペースにモニター置けばいい」）。
+   「戻る」は position:absolute なので、高さを詰めても消えない。 */
+.setup-header.compact {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  padding-bottom: 8px;
+  min-height: calc(env(safe-area-inset-top, 0px) + 52px);
+  border-bottom: none;
+}
+
+/* 空いた場所を小窓に回す。縦のときは大きく見せたい */
+.setup-content .frame-preview {
+  max-height: 58vh !important;
+}
+
+/* --- 見本のタイルは小さく、選んだ絵の小窓は大きく -------------------------
+   小窓が見本と同じくらいの大きさだと、選んだものを確かめる役に立たない
+   （2026-08-13、伊波さん「見本より選んだフレームが見える小窓は
+   大きくないと意味ない」）。一覧は「選ぶための見本」なので小さくてよい。 */
+.setup-content .frame-picker {
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 6px;
+  max-height: 26dvh;
+}

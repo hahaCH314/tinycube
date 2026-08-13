@@ -986,14 +986,15 @@ function App() {
       {/* 設定。事前準備はすべてここに入れる */}
       {screen === 'setup' && (
         <div className="setup-screen">
-          <div className="setup-header">
+          <div className={`setup-header${setupStep === 'frame' ? ' compact' : ''}`}>
             <h2 className="setup-title">
               {/* フレームの段は、小窓の中に「フレームを選ぶ」と出るので
-                  上には何も書かない（2026-08-13、伊波さん「形とフレームの文字消して」） */}
+                  上には何も書かない。空けた場所には小窓を上げる
+                  （2026-08-13、伊波さん「上の無駄なスペースにモニター置けばいい」） */}
               {setupStep === 'mode' ? 'なにを撮りますか？'
-                : setupStep === 'frame' ? ''
                 : setupStep === 'telop' ? 'スタンプの文字'
-                : 'こまかい設定'}
+                : setupStep === 'more' ? 'こまかい設定'
+                : ''}
             </h2>
             {/* 段階を1つ戻す。前は「撮影画面へ飛ぶ」だけだったので、
                 設定の途中で押しても戻れなかった（2026-08-13、伊波さん
