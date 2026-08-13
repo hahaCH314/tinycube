@@ -1091,71 +1091,9 @@ function App() {
                   「縦横の選択を見本のすぐ上に移動もう少し小さく」）。
                   一覧の中身が縦横で切り替わるので、その真上にあるほうが繋がる */}
 
-              {/* 選んだフレームを上に映す。これが無いと、選んだものが
-                  どんな絵なのか分からないまま撮りに行くことになる
-                  （2026-08-13、伊波さん「選んだフレームを上に映したとこで、
-                  この設定で撮る」）。カメラ映像は出さない（起動が重くなる） */}
-              <div
-                className="frame-preview"
-                style={{
-                  aspectRatio: shape === 'portrait' ? '9 / 16' : '16 / 9',
-                  maxHeight: '38vh',
-                  margin: '0 auto 16px',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  // ⚠️ 黒にすると、中央が透明なフレームは何も見えない
-                  //（2026-08-13、伊波さん「小窓の意味なし」）。
-                  // 市松模様を敷いて、絵の形が分かるようにする
-                  backgroundColor: '#6b7280',
-                  backgroundImage:
-                    'linear-gradient(45deg, #9ca3af 25%, transparent 25%),' +
-                    'linear-gradient(-45deg, #9ca3af 25%, transparent 25%),' +
-                    'linear-gradient(45deg, transparent 75%, #9ca3af 75%),' +
-                    'linear-gradient(-45deg, transparent 75%, #9ca3af 75%)',
-                  backgroundSize: '20px 20px',
-                  backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-                  position: 'relative',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                {/* 「戻る」は小窓の中に入れていたが、**気づかれなかった**ので
-                    ヘッダー（他の段と同じ場所）へ戻した。置き場所が段ごとに
-                    変わると、そこにあると思って探せない
-                    （2026-08-13、伊波さん「フレーム選択の戻るボタン
-                    気づかなかったよ？元の場所へ」） */}
-                {(() => {
-                  // FRAMES だけを見ると、マイフレーム（自分で入れた絵）を選んだとき
-                  // 見つからず、前に選んでいた絵が残って見える。
-                  // 429 行で組み立てている frame は両方に対応している
-                  // （2026-08-13、伊波さん「選んだフレームと違う絵が出る」）
-                  const f = frame;
-                  if (!f) {
-                    // 何も選んでいないときは、この小窓そのものが案内になる。
-                    // 見出しを別に置くより、選んだ絵が出る場所に書いてあるほうが
-                    // 何をすればいいか分かる（2026-08-13、伊波さん）
-                    return (
-                      <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.05em' }}>
-                        フレームを選ぶ
-                      </span>
-                    );
-                  }
-                  return (
-                    <>
-                      {/* 一覧のタイルと同じ URL で読む。片方だけ ?v= を付けると
-                          別物として扱われ、古い絵が出ることがある */}
-                      {f.bgFile && (
-                        <img src={f.bgFile + '?v=20260813_raw'} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                      )}
-                      <img
-                        key={f.id}
-                        src={f.file.startsWith('data:') ? f.file : f.file + '?v=20260813_raw'}
-                        alt={f.name}
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
-                      />
-                    </>
-                  );
-                })()}
-              </div>
+              {/* 小窓（選んだフレームを大きく映す窓）は廃止した。
+                  一覧のタイルで絵が見えるようになったので、二重に見せる
+                  必要がなくなった（2026-08-13、伊波さん「もう小窓要らない」） */}
 
               {/* 「この設定でOK」は一覧の**あと**へ移した。小窓と一覧の間に
                   置くと、選ぶ前から場所を取って一覧を下へ押し、
@@ -1229,16 +1167,15 @@ function App() {
                 ))}
               </div>
 
-              {/* 一覧のすぐ下。選んでから押す場所なので、ここが自然な位置。
-                  小窓と一覧の間に置くと、一覧を下へ押してフレームが
-                  見えなくなる（2026-08-13、伊波さん） */}
-              {frameId !== null && (
-                <button
-                  className="start-btn"
-                  style={{ width: '100%', marginTop: 12, minHeight: 46, fontSize: 15 }}
-                  onClick={() => setSetupStep('telop')}
-                >この設定でOK</button>
-              )}
+              {/* 一覧のすぐ下。**いつも出す**。
+                  前は「フレームを選んだら出す」にしていたが、
+                  「フレームなし」を選んだ人には出ず、先へ進めなかった
+                  （2026-08-13、伊波さん「決定ボタンない」） */}
+              <button
+                className="start-btn"
+                style={{ width: '100%', marginTop: 12, minHeight: 46, fontSize: 15 }}
+                onClick={() => setSetupStep('telop')}
+              >この設定でOK</button>
 
               {/* 買い切りの解除。鍵のかかった枠を見る直前に、何が解けるのかを
                   読めるようにする（「こまかい設定」を廃したのでここへ移した） */}
@@ -1279,11 +1216,9 @@ function App() {
                 )}
               </div>
 
-              <button
-                className="start-btn"
-                style={{ marginTop: 16, width: '100%', background: 'rgba(255,255,255,0.12)' }}
-                onClick={() => setSetupStep('mode')}
-              >もどる</button>
+              {/* 下の大きな「もどる」は削除。ヘッダー右上に「戻る」があり
+                  二重だった（2026-08-13、伊波さん「1番下に謎の大きな戻る
+                  ボタンあったよ」） */}
             </div>
             )}
 
@@ -1328,11 +1263,7 @@ function App() {
               {/* 「こまかい設定」への脇道は無くした。中身は他の段と重複して
                   いたか、この流れの中に置ける（2026-08-13、伊波さん
                   「細かい設定にまとめるものなんてないよ？」「全部誘導線に乗せる」） */}
-              <button
-                className="start-btn"
-                style={{ marginTop: 8, width: '100%', background: 'rgba(255,255,255,0.12)' }}
-                onClick={() => setSetupStep('frame')}
-              >もどる</button>
+              {/* 同上。戻るはヘッダーに一本化 */}
 
               {/* 言語の切り替えは一番最初の画面（agree）へ移した。
                   英語で開いた人が、読める場所で切り替えられるように

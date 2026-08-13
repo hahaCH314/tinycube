@@ -413,9 +413,6 @@
 }
 
 /* 空いた場所を小窓に回す。縦のときは大きく見せたい */
-.setup-content .frame-preview {
-  max-height: 58vh !important;
-}
 
 
 /* --- 縦横の切り替えは小さく ------------------------------------------------
@@ -509,9 +506,6 @@
 
 
 /* 小窓は見て決めるためのもの。できるだけ大きく */
-.setup-content .frame-preview {
-  max-height: 46vh !important;
-}
 
 /* --- レールのボタンは映像の上でも読めること -------------------------------
    ⚠️ 背景が rgba 0.05〜0.20 と薄く、カメラを全画面にしたら映像に溶けて
@@ -667,9 +661,6 @@
    フレームを見せないと選べない（2026-08-13、伊波さん「フレーム見せないと
    意味ないじゃん」「綺麗に並べて見せてね」）。
    小窓は場所を譲り、一覧を大きく・整然と並べる。 */
-.setup-content .frame-preview {
-  max-height: 26vh !important;
-}
 
 .setup-content .frame-picker {
   max-height: none !important;   /* 切らずに全部並べる */
