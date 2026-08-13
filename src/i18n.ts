@@ -57,13 +57,9 @@ type I18nDict = {
 
   // Effects (Burst)
   eff_flash: string;
-  eff_glitch: string;
+  eff_mirrorball: string;
 
   // Effects (Sound)
-  eff_bam: string;
-  eff_ding: string;
-  eff_pon: string;
-  eff_buzz: string;
   turn_hint: string;
   promo_open: string;
   setting_teloppos: string;
@@ -73,10 +69,6 @@ type I18nDict = {
   telop_white: string;
   telop_black: string;
   setting_sounds: string;
-  sounds_note: string;
-  sound_load: string;
-  sound_change: string;
-  sound_fail: string;
   setting_camera: string;
   setting_srcaudio: string;
   srcaudio_mic: string;
@@ -91,13 +83,6 @@ type I18nDict = {
   eff_clap: string;
   eff_drum: string;
   eff_blip: string;
-  eff_dread: string;
-  eff_slash: string;
-  eff_fanfare: string;
-  eff_my1: string;
-  eff_my2: string;
-  my_note: string;
-  my_empty: string;
 
   // Guide Sheet
   guide_title: string;
@@ -156,8 +141,10 @@ const dictJa: I18nDict = {
   
   btn_preview: '▶ 試してみる（録画無し）',
   btn_preview_stop: '⏸ とめる',
-  btn_record: '● 録画スタート',
-  btn_stop: '■ 停止',
+  // 絵はボタン側（.ctrl-icon）で出すので、言葉だけ持つ。
+  // ここに ● や ■ を付けると、ボタンの上で二重に出る（2026-08-13）
+  btn_record: '録画スタート',
+  btn_stop: '停止',
   unlock_title: 'ぜんぶ使う（¥300・買い切り）',
   unlock_lead: '一度きりの買い物で、次の2つが両方とも解けます。',
   unlock_p1: '🖼 フレームが53枚ふえる（推し色・顔ハメなど）',
@@ -181,11 +168,7 @@ const dictJa: I18nDict = {
   pause_na: 'この端末では一時停止が使えません',
   
   eff_flash: '💥 フラッシュ',
-  eff_glitch: '⚡ グリッチ',
-  eff_bam: '🥁 どんっ',
-  eff_ding: '✨ きらっ',
-  eff_pon: '🫧 ぽん',
-  eff_buzz: '📢 ぶー',
+  eff_mirrorball: '🪩 ミラーボール',
   turn_hint: '📱↻ 16:9 の場合は横向きでご利用ください',
   promo_open: 'CMCUBE を見る →',
   setting_teloppos: '文字の出る場所',
@@ -194,11 +177,7 @@ const dictJa: I18nDict = {
   setting_telopcolor: '文字の色',
   telop_white: '⬜ 白文字',
   telop_black: '⬛ 黒文字',
-  setting_sounds: '効果音の差し替え',
-  sounds_note: '番号の付いた2つに、自分の音を入れられます。ほかの効果音は差し替えできません。',
-  sound_load: '入れる',
-  sound_change: '変える',
-  sound_fail: 'この音は読み込めませんでした。別のファイルを試してください。',
+  setting_sounds: '効果音（3つ）',
   setting_camera: 'カメラ',
   setting_srcaudio: '動画の音',
   srcaudio_mic: '📱 スピーカー',
@@ -212,14 +191,7 @@ const dictJa: I18nDict = {
   eff_emotional: '🌸 エモい',
   eff_clap: '👏 拍手',
   eff_drum: '🥁 ドラム',
-  eff_blip: '🔹 ぴこ',
-  eff_dread: '🌑 ずーん',
-  eff_slash: '⚔️ しゃきん',
-  eff_fanfare: '🎉 ジャーン',
-  eff_my1: 'マイ音1',
-  eff_my2: 'マイ音2',
-  my_note: '入れるまでは鳴りません。',
-  my_empty: '空',
+  eff_blip: '🔹 電子音',
 
   guide_title: 'tinyCUBE の使い方',
   guide_step1_title: '動画を読み込む',
@@ -257,7 +229,7 @@ const dictJa: I18nDict = {
   setting_shape_land: '横（16:9）',
   setting_shape_port: '縦（9:16）',
   setting_telop: 'テロップの言葉',
-  setting_telop_note: '番号の付いた3つが、あなたの言葉です。書き換えると、そのまま動画に出ます。空にすると、そのボタンは出なくなります。',
+  setting_telop_note: '5つとも、あなたの言葉です。書き換えると、そのまま動画に出ます。',
   setting_frame: '枠',
   frame_none: 'なし',
   frame_crop: '端が欠けます',
@@ -275,8 +247,8 @@ const dictEn: I18nDict = {
   
   btn_preview: '▶ Preview (No recording)',
   btn_preview_stop: '⏸ Stop',
-  btn_record: '● Start Recording',
-  btn_stop: '■ Stop',
+  btn_record: 'Record',
+  btn_stop: 'Stop',
   unlock_title: 'Unlock everything (¥300, one-time)',
   unlock_lead: 'One purchase unlocks both of these.',
   unlock_p1: '🖼 53 more frames (fan colours, face cut-outs and more)',
@@ -300,11 +272,7 @@ const dictEn: I18nDict = {
   pause_na: 'Pause is not available on this device',
   
   eff_flash: '💥 Flash',
-  eff_glitch: '⚡ Glitch',
-  eff_bam: '🥁 Bam',
-  eff_ding: '✨ Ding',
-  eff_pon: '🫧 Pon',
-  eff_buzz: '📢 Buzz',
+  eff_mirrorball: '🪩 Mirror ball',
   turn_hint: '📱↻ For 16:9, please turn your phone sideways',
   promo_open: 'See CMCUBE →',
   setting_teloppos: 'Caption position',
@@ -313,11 +281,7 @@ const dictEn: I18nDict = {
   setting_telopcolor: 'Caption colour',
   telop_white: '⬜ White',
   telop_black: '⬛ Black',
-  setting_sounds: 'Replace sounds',
-  sounds_note: 'The two numbered buttons take your own audio. The other sounds cannot be replaced.',
-  sound_load: 'Load',
-  sound_change: 'Change',
-  sound_fail: 'That file could not be read. Try another one.',
+  setting_sounds: 'Sounds (3)',
   setting_camera: 'Camera',
   setting_srcaudio: 'Video sound',
   srcaudio_mic: '📱 Speaker',
@@ -331,14 +295,7 @@ const dictEn: I18nDict = {
   eff_emotional: '🌸 Dreamy',
   eff_clap: '👏 Clap',
   eff_drum: '🥁 Drum',
-  eff_blip: '🔹 Blip',
-  eff_dread: '🌑 Dread',
-  eff_slash: '⚔️ Slash',
-  eff_fanfare: '🎉 Fanfare',
-  eff_my1: 'My Sound 1',
-  eff_my2: 'My Sound 2',
-  my_note: 'They stay silent until you load a file.',
-  my_empty: 'Empty',
+  eff_blip: '🔹 Electronic',
 
   guide_title: 'How to use tinyCUBE',
   guide_step1_title: 'Load a video',
@@ -376,7 +333,7 @@ const dictEn: I18nDict = {
   setting_shape_land: 'Landscape (16:9)',
   setting_shape_port: 'Portrait (9:16)',
   setting_telop: 'Caption Texts',
-  setting_telop_note: 'The three numbered buttons are yours. Change them to display custom text. Emptying a field hides the button.',
+  setting_telop_note: 'All five are yours. Change them to display custom text.',
   setting_frame: 'Frames',
   frame_none: 'None',
   frame_crop: 'Edges cropped',

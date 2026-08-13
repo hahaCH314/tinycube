@@ -162,12 +162,26 @@
 .manner-screen,
 .setup-screen {
   position: fixed; inset: 0; z-index: 130;
+  /* iOS Safari はアドレスバーの出入りで表示領域が変わる。
+     inset: 0 だけだと、その伸び縮みに合わせて中身がはみ出す
+     （2026-08-13、伊波さんの実機テスト「画面のはみ出し」）。
+     dvh は「いま見えている高さ」。vh は使わない
+     （アドレスバーを含んだ高さになり、下がはみ出す） */
+  height: 100dvh;
+  max-height: 100dvh;
   background: linear-gradient(180deg, #10082b 0%, #0d0a20 100%);
   display: flex; flex-direction: column;
   overflow: hidden;
 }
 
-.manner-screen { align-items: center; justify-content: center; padding: 24px 18px; }
+/* 切り欠きとホームバーのぶんを空ける。同意ボタンが隠れると先へ進めない */
+.manner-screen {
+  align-items: center; justify-content: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 24px)
+           calc(env(safe-area-inset-right, 0px) + 18px)
+           calc(env(safe-area-inset-bottom, 0px) + 24px)
+           calc(env(safe-area-inset-left, 0px) + 18px);
+}
 
 .manner-content {
   width: 100%; max-width: 460px; max-height: 100%;
@@ -206,7 +220,12 @@
   width: 100%; max-width: 600px;
   flex: 0 0 auto;
   display: flex; justify-content: center; align-items: center;
-  padding: 18px 60px 12px;
+  /* iPhone の切り欠き・ステータスバーのぶんを空ける。
+     18px 固定だと、その下に見出しと戻るボタンが潜り込む
+     （2026-08-13、伊波さんの実機テストで発覚） */
+  padding: calc(env(safe-area-inset-top, 0px) + 18px)
+           calc(env(safe-area-inset-right, 0px) + 60px) 12px
+           calc(env(safe-area-inset-left, 0px) + 60px);
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
@@ -218,25 +237,43 @@
   text-shadow: 2px 2px 0 #ff4fa3, 0 0 14px rgba(102, 231, 255, 0.6);
 }
 
+/* 戻るボタン。top: 12px だけだと、iPhone では切り欠きの下に潜って
+   半分見えなくなる（2026-08-13、伊波さんの実機テストで発覚）。
+   指で押す的も 44px 以上にしておく */
 .setup-screen .setup-close-btn {
-  position: absolute; top: 12px; right: 12px;
-  width: 40px; height: 40px;
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  width: 44px; height: 44px;
 }
 
 .setup-content {
   flex: 1 1 auto; min-height: 0;
   width: 100%; max-width: 600px;
-  padding: 16px 16px 24px;
+  /* 横向きの iPhone は左右にも切り欠きが来る */
+  padding: 16px calc(env(safe-area-inset-right, 0px) + 16px) 24px
+           calc(env(safe-area-inset-left, 0px) + 16px);
   display: flex; flex-direction: column; gap: 20px;
   overflow-y: auto; overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
+/* ⚠️ .setup-footer はこのファイルに2回書かれていて、上のほうは
+   position: fixed; bottom: 0 になっている。打ち消しておかないと、
+   そちらが残って iOS のアドレスバーと重なる
+   （2026-08-13、伊波さんの実機テスト「画面のはみ出し」）。
+   設定画面は縦に並べる作りなので、ここは流れの中に置く */
 .setup-footer {
+  position: relative;
+  inset: auto;
   flex: 0 0 auto;
   width: 100%; max-width: 600px;
-  padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 14px);
+  padding: 12px calc(env(safe-area-inset-right, 0px) + 16px)
+           calc(env(safe-area-inset-bottom, 0px) + 14px)
+           calc(env(safe-area-inset-left, 0px) + 16px);
   border-top: 1px solid rgba(255,255,255,0.12);
   background: rgba(16, 8, 43, 0.86);
+  pointer-events: auto;
 }
 
 .start-btn {

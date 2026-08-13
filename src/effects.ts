@@ -10,23 +10,18 @@
 // 音は recorder が持っている AudioContext を借りる。録画に混ぜるためで、
 // 自前で AudioContext を作ると、鳴っても動画に入らない。
 
+// 音は3つだけ。拍手・ドラム・電子音
+// （2026-08-13、伊波さん「音数を、１．拍手２．ドラム３電子音 にしぼり操作しやすくする」）。
+// 前は効果音10個＋自分で入れる枠2個の12個あって、対象（40〜50代と子ども）には多すぎた。
+//
+// 音ファイルの読み込みも同じ指示で廃止。sounds.ts ごと消してある
+// （「音ぼファイル挿入廃止」）。
 export type EffectId =
   | 'flash'         // 白く弾ける
-  | 'glitch'        // 画面がずれて色が割れる
-  | 'bam'           // 効果音（低くて重い）
-  | 'ding'          // 効果音（高くて短い）
-  | 'pon'           // 効果音（軽く跳ねる）
-  | 'buzz'          // 効果音（外れ・ブー）
+  | 'mirrorball'    // 光の粒が回りながら流れる（音は鳴らさない）
   | 'clap'          // 効果音（拍手）
-  | 'drum'          // 効果音（ドラムロール）
-  | 'blip'          // 効果音（ぴこ）
-  | 'dread'         // 効果音（ずーん）
-  | 'slash'         // 効果音（しゃきーん）
-  | 'fanfare'       // 効果音（ジャーン）
-  // 自分の音を入れる枠。こちらの音は用意しない。
-  // 入れるまで押しても鳴らない（2026-08-11、伊波さん「音１，２がユーザーが追加できる機能」）
-  | 'my1'
-  | 'my2'
+  | 'drum'          // 効果音（ドラム）
+  | 'blip'          // 効果音（電子音）
   | 'telop';        // 文字を出す（中身は利用者が決める）
 
 type Live = {
@@ -40,19 +35,12 @@ const live: Live[] = [];
 /** 効果の長さ（ミリ秒）。音だけのものは絵を持たないので 0 */
 const DUR: Record<EffectId, number> = {
   flash: 260,
-  glitch: 420,
-  bam: 0,
-  ding: 0,
-  pon: 0,
-  buzz: 0,
+  // ミラーボールはひと回りする長さが要る。420ms だと光が流れきる前に消えて、
+  // 何が起きたのか分からない（2026-08-13、A案「光の粒が回りながら流れる」）
+  mirrorball: 2200,
   clap: 0,
   drum: 0,
   blip: 0,
-  dread: 0,
-  slash: 0,
-  fanfare: 0,
-  my1: 0,
-  my2: 0,
   telop: 1500,
 };
 
@@ -88,12 +76,8 @@ export function audioContext(): AudioContext | null {
   return getCtx();
 }
 
-// 利用者が入れた音があれば、そちらを鳴らす。
-// 差し替えの管理は sounds.ts が持つ（読み込み・保存・消去）
-let getCustom: ((id: EffectId) => AudioBuffer | null) | null = null;
-export function useCustomSounds(fn: (id: EffectId) => AudioBuffer | null) {
-  getCustom = fn;
-}
+// 音ファイルの読み込みは廃止した（2026-08-13、伊波さん「音ぼファイル挿入廃止」）。
+// sounds.ts も消してある。鳴るのは、ここで作る3つの音だけ
 
 export function fireEffect(id: EffectId, text?: string, dark?: boolean, x?: number, y?: number) {
   const dur = DUR[id] ?? 300;
@@ -275,7 +259,7 @@ export function drawEffects(g: CanvasRenderingContext2D, W: number, H: number) {
     if (t >= 1) { live.splice(i, 1); continue; }
     switch (e.id) {
       case 'flash':  drawFlash(g, W, H, t); break;
-      case 'glitch': drawGlitch(g, W, H, t); break;
+      case 'mirrorball': drawMirrorball(g, W, H, t); break;
       case 'telop': drawTelop(g, W, H, t, e.text ?? '', e.dark ?? false, e.x ?? 0.5, e.y ?? 0.5); break;
       default: break;
     }
@@ -293,25 +277,85 @@ function drawFlash(g: CanvasRenderingContext2D, W: number, H: number, t: number)
   g.restore();
 }
 
-/** 横に切って、ずらして、色を割る */
-function drawGlitch(g: CanvasRenderingContext2D, W: number, H: number, t: number) {
-  const strength = 1 - t;                        // だんだん収まる
-  const bands = 6;
+// ミラーボールの光の粒。
+//
+// 90年代ディスコ（2026-08-13、伊波さんの指示）。ヒマワリさんとの決定で A案
+// 「光の粒が回りながら流れる」を採った。中央に球は描かない。
+// 顔ハメ枠のあるアプリなので、真ん中に物を置くと顔と重なるため。
+//
+// 粒の位置は毎フレーム計算で出す。乱数で散らすと、フレームごとに別の場所へ
+// 飛んで「回っている」ように見えない（フラッシュやグリッチのような一瞬の
+// 演出なら乱数でよいが、2.2秒かけて回すものは位置が続かないと成立しない）。
+const BALL_SPOTS = 28;
+
+/** 粒ひとつぶんの、いまの居場所と明るさ。
+ *
+ *  ⚠️ 粒ごとに「別の輪」を回らせること。全部を1つの角度から出すと、
+ *  どんなに散らし方を工夫しても**1本の曲線の上に並ぶ**。
+ *  実際に2回そうなった（2026-08-13、描いて確かめた）。
+ *  本物のミラーボールは、高さの違う輪がいくつもあって、
+ *  輪ごとに大きさも速さも違う。それを真似る。 */
+function spotAt(i: number, spin: number, W: number, H: number) {
+  // この粒が乗っている輪。7本の輪に配る（1本あたり4粒）
+  const ring = i % 7;
+  // 輪の高さ。上から下へ等間隔に置く
+  const y = H * (0.10 + (ring / 6) * 0.80);
+  // 輪の大きさ。真ん中の輪ほど大きく、上下の端は小さい（球の形）
+  const spread = 0.30 + Math.sin((ring / 6) * Math.PI) * 0.40;
+  // 輪ごとに回る速さと出だしの位置を変える。揃うと縞に見える
+  const speed = 1 + ring * 0.13;
+  const a = (i * 2.39996) + spin * speed + ring * 1.7;
+  const x = W * (0.5 + Math.sin(a) * spread);
+  // 手前に来たときだけ明るい。奥へ回ったら消える
+  const face = Math.cos(a);
+  return { x, y, face };
+}
+
+/** 光の粒が回りながら流れる。映像はそのまま見えて、光を足すだけ */
+function drawMirrorball(g: CanvasRenderingContext2D, W: number, H: number, t: number) {
+  const unit = Math.min(W, H);
+  // 出るのは速く、消えるのはゆっくり。ふっと現れてすっと引く
+  const fade = t < 0.12 ? t / 0.12 : t > 0.72 ? (1 - t) / 0.28 : 1;
+  const spin = t * Math.PI * 2.4;               // 2.2秒で1回転ちょっと
+
   g.save();
-  for (let i = 0; i < bands; i++) {
-    const h = H / bands;
-    const y = i * h;
-    const dx = (Math.random() - 0.5) * W * 0.12 * strength;
-    // すでに描いてある絵を、その帯だけ横へずらして描き足す
-    g.drawImage(g.canvas, 0, y, W, h, dx, y, W, h);
+  // 光を足す形で重ねる。暗い映像でも沈まない（エモーショナルと同じ理由）
+  g.globalCompositeOperation = 'lighter';
+
+  for (let i = 0; i < BALL_SPOTS; i++) {
+    const { x, y, face } = spotAt(i, spin, W, H);
+    if (face <= 0.02) continue;                 // 奥へ回った粒は描かない
+
+    // 手前ほど大きく明るい。奥のものは小さく淡い
+    const r = unit * (0.035 + face * 0.055);
+    const a = fade * face * 0.85;
+
+    // ディスコの照明の色。ピンク・水色・紫を粒ごとに配る
+    const hue = (i * 47) % 360 < 120 ? 320 : (i % 3 === 0 ? 190 : 275);
+
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0,    `hsla(${hue}, 100%, 92%, ${a})`);
+    grad.addColorStop(0.45, `hsla(${hue}, 95%, 78%, ${a * 0.42})`);
+    grad.addColorStop(1,    `hsla(${hue}, 90%, 70%, 0)`);
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+
+    // 中心の芯。四角く置くと、鏡の破片が光っているように見える
+    const core = r * 0.18;
+    g.fillStyle = `hsla(${hue}, 100%, 97%, ${a * 0.9})`;
+    g.fillRect(x - core, y - core, core * 2, core * 2);
   }
-  // 色割れ。赤と青緑を薄く重ねる
-  g.globalCompositeOperation = 'screen';
-  g.globalAlpha = 0.18 * strength;
-  g.fillStyle = '#ff0040';
-  g.fillRect(-W * 0.01, 0, W, H);
-  g.fillStyle = '#00e5ff';
-  g.fillRect(W * 0.01, 0, W, H);
+
+  // 全体にうっすら色を乗せる。粒だけだと点の集まりに見える
+  g.globalAlpha = fade * 0.10;
+  const veil = g.createLinearGradient(0, 0, W, H);
+  veil.addColorStop(0, 'hsla(320, 90%, 70%, 1)');
+  veil.addColorStop(0.5, 'hsla(275, 90%, 70%, 1)');
+  veil.addColorStop(1, 'hsla(190, 90%, 70%, 1)');
+  g.fillStyle = veil;
+  g.fillRect(0, 0, W, H);
   g.restore();
 }
 
@@ -441,18 +485,6 @@ function voice(
   o.stop(end + 0.05);
 }
 
-/** アナログシンセらしく、同じ音を少しずらして2つ重ねる */
-function fat(
-  ctx: AudioContext, out: AudioNode, type: OscillatorType,
-  hz: number, now: number, env: Env,
-  opts: { to?: number; glide?: number; delay?: number; spread?: number } = {},
-) {
-  const { spread = 9, ...rest } = opts;
-  const half = { ...env, level: env.level * 0.6 };
-  voice(ctx, out, type, hz, now, half, { ...rest, detune: -spread });
-  voice(ctx, out, type, hz, now, half, { ...rest, detune: spread });
-}
-
 /** 音程を持たない音。削り方で叩き物にも金物にもなる */
 function hit(
   ctx: AudioContext, out: AudioNode, now: number, seconds: number,
@@ -483,56 +515,18 @@ function hit(
 /** 効果音。ファイルを持たずにその場で作る（読み込み待ちが無く、容量も増えない） */
 function playSoundFor(id: EffectId) {
   // 文字を出すボタンは鳴らさない。押すたびに動画へ音が乗ってしまい、
-  // 効果音を自分で選ぶ意味が薄れる（2026-08-10、伊波さんの指示）
-  if (id === 'telop') return;
+  // 効果音を自分で選ぶ意味が薄れる（2026-08-10、伊波さんの指示）。
+  // ミラーボールも鳴らさない。光の演出は音のボタンと役割を分ける
+  // （2026-08-13、伊波さん・ヒマワリさんの決定）
+  if (id === 'telop' || id === 'mirrorball') return;
   const ctx = getCtx();
   if (!ctx) return;
-
-  // 入れてある音があれば、それをそのまま鳴らす。
-  // こちらで作った音は、既製の音源には敵わない（伊波さんの「音色がチープ」）
-  const mine = getCustom?.(id);
-  if (mine) {
-    const src = ctx.createBufferSource();
-    const gain = ctx.createGain();
-    src.buffer = mine;
-    gain.gain.value = 0.9;
-    src.connect(gain);
-    gain.connect(ctx.destination);
-    if (recDest) gain.connect(recDest);
-    src.start();
-    return;
-  }
 
   const now = ctx.currentTime;
   // 耳にも届かせ、録画中なら動画にも入れる
   const out = bus80s(ctx);
 
   switch (id) {
-    case 'bam':
-      // どんっ。80年代のドラムマシンのタム。高いところから一気に落とす
-      voice(ctx, out, 'sine', 210, now, { release: 0.30, level: 0.55 }, { to: 52, glide: 0.22 });
-      hit(ctx, out, now, 0.12, 'lowpass', 2200, 0.7, { release: 0.06, level: 0.30 }, { to: 400 });
-      break;
-
-    case 'ding':
-      // きらっ。FMシンセのベル。5度上と2オクターブ上を薄く足すと金属に聞こえる
-      voice(ctx, out, 'triangle', 1046, now, { release: 0.70, level: 0.26 });
-      voice(ctx, out, 'triangle', 1568, now, { release: 0.50, level: 0.13 }, { detune: 7 });
-      voice(ctx, out, 'sine', 3136, now, { release: 0.22, level: 0.09 });
-      break;
-
-    case 'pon':
-      // ぽん。木琴のような短い音。硬い出だしに丸い胴を足す
-      voice(ctx, out, 'sine', 784, now, { attack: 0.002, release: 0.22, level: 0.34 });
-      voice(ctx, out, 'triangle', 1568, now, { attack: 0.001, release: 0.06, level: 0.14 });
-      break;
-
-    case 'buzz':
-      // ぶー。アナログのブラス。太い2声を下へ滑らせる
-      fat(ctx, out, 'sawtooth', 165, now, { attack: 0.01, hold: 0.12, release: 0.30, level: 0.34 },
-        { to: 98, glide: 0.40 });
-      break;
-
     case 'clap':
       // 拍手。当時のドラムマシンと同じで、細かく3回叩いてから余韻を残す
       for (let i = 0; i < 3; i++) {
@@ -560,30 +554,6 @@ function playSoundFor(id: EffectId) {
         { delay: 0.055 });
       break;
 
-    case 'dread':
-      // ずーん。低いところへ長く落とす。太い2声を重ねて濁らせる
-      voice(ctx, out, 'sine', 120, now, { release: 1.30, level: 0.45 }, { to: 30, glide: 1.20 });
-      fat(ctx, out, 'sawtooth', 60, now, { attack: 0.05, release: 1.20, level: 0.20 },
-        { to: 22, glide: 1.10, spread: 14 });
-      break;
-
-    case 'slash':
-      // しゃきん。金属をこすった音。削る位置を一気に上へ動かす
-      hit(ctx, out, now, 0.30, 'highpass', 1800, 0.9,
-        { attack: 0.002, release: 0.24, level: 0.26 }, { to: 9000 });
-      voice(ctx, out, 'sawtooth', 1600, now, { attack: 0.001, release: 0.16, level: 0.10 },
-        { to: 4200, glide: 0.10 });
-      break;
-
-    case 'fanfare':
-      // ジャーン。シティポップのシンセブラス。9thを足した和音を一発で置く
-      // ド・ミ・ソ・シ・レ
-      [523, 659, 784, 988, 1175].forEach((hz, i) => {
-        fat(ctx, out, 'sawtooth', hz, now,
-          { attack: 0.02, hold: 0.14, release: 0.85, level: 0.20 - i * 0.02 });
-      });
-      break;
-
     case 'flash':
       // 光と一緒に鳴る音。下から一気に持ち上げて弾けさせる
       hit(ctx, out, now, 0.24, 'highpass', 600, 0.8,
@@ -591,13 +561,9 @@ function playSoundFor(id: EffectId) {
       voice(ctx, out, 'triangle', 1568, now, { release: 0.45, level: 0.18 }, { delay: 0.10 });
       break;
 
-    case 'glitch':
-      // テープが止まるときの音。音程ごと引きずり下ろす
-      fat(ctx, out, 'square', 260, now, { attack: 0.004, release: 0.34, level: 0.16 },
-        { to: 42, glide: 0.30, spread: 22 });
-      hit(ctx, out, now, 0.30, 'bandpass', 2400, 2.2,
-        { release: 0.26, level: 0.14 }, { to: 300 });
-      break;
+    // ミラーボールは鳴らさない。光の演出のボタンと、音のボタン（拍手・ドラム・
+    // 電子音）で役割をはっきり分ける（2026-08-13、伊波さん・ヒマワリさんの決定）。
+    // 早期に return しているので、ここに case は無い
 
     default:
       break;
