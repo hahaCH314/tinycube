@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import '../docs/tinycube-skin-shibuya.css'
 import './setup.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, loadFrame, type Frame, type FrameAnchor, type FaceHole } from './frames'
+import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
 import { t, getLang } from './i18n'
 import { isUnlocked, tryUnlock, savedKey, relock } from './unlock'
@@ -261,7 +261,16 @@ function App() {
   // 9:16 を選んだのに 16:9 に戻る（2026-08-10、伊波さんの指摘）。
   // 新しい映像を読み込んだときだけ、自動で合わせ直す
   const shapePicked = useRef(false);
-  const pickShape = (v: OutShape) => { shapePicked.current = true; setShape(v); };
+  const pickShape = (v: OutShape) => {
+    shapePicked.current = true;
+    setShape(v);
+    // 形を変えたら、その形に合わない枠は選んだままにしない。
+    // 残すと、一覧に出ていないものが選択されている状態になる
+    setFrameId(prev => {
+      const f = FRAMES.find(x => x.id === prev);
+      return f && !fitsShape(f, v) ? null : prev;
+    });
+  };
   const camStreamRef = useRef<MediaStream | null>(null);
   // カメラを取り直すたびに増やす。前後を切り替えたときは camOn が true のままなので、
   // これが無いと <video> が古い（止めた）映像を指したままになり、真っ黒になる
@@ -1095,7 +1104,11 @@ function App() {
                 ))}
                 
                 <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
-                {FRAMES.map(f => (
+                {/* いま選んでいる形（縦／横）に合うものだけを出す。
+                    全部出すと129件が並び、しかも形の合わないものは端が
+                    切れて壊れて見える（2026-08-13、伊波さん「フレームが
+                    アホほど入ってるし、壊れてる」） */}
+                {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
                   <button
                     key={f.id}
                     className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
