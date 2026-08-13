@@ -1176,7 +1176,10 @@ function App() {
               )}
 
               {/* 「フレームを選ぶ」の見出しは小窓の中に入れたので、ここには置かない */}
-              <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
+              {/* タイルの形はクラスで切り替える。CSS 変数（--tile-ar）だと
+                  skin 側の指定と競合して効かないことがあった
+                  （2026-08-13、伊波さん「これなおしてくれないの？」） */}
+              <div className={`frame-picker ${shape === 'portrait' ? 'ar-portrait' : 'ar-landscape'}`}>
                 <button 
                   className="frame-tile"
                   onClick={() => customFrameInputRef.current?.click()}

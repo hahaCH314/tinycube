@@ -620,3 +620,13 @@
   height: 40%;
   border-radius: 7px;
 }
+
+/* --- タイルの形（クラスで指定・最優先） -----------------------------------
+   CSS 変数（--tile-ar）だと skin 側の指定と競合して効かないことがあった。
+   クラス＋!important で確実に効かせる（2026-08-13、伊波さん）。 */
+.frame-picker.ar-portrait .frame-tile {
+  aspect-ratio: 9 / 16 !important;
+}
+.frame-picker.ar-landscape .frame-tile {
+  aspect-ratio: 16 / 9 !important;
+}
