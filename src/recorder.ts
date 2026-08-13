@@ -135,7 +135,8 @@ export function startStage(opts: StageOptions): () => void {
     }
 
     const vw = video?.videoWidth ?? 0, vh = video?.videoHeight ?? 0;
-    if (video && vw && vh) {
+    const isFaceHole = frame && ((frame.faceHoles && frame.faceHoles.length > 0) || !!frame.faceHole);
+    if (video && vw && vh && !isFaceHole) {
       // カメラは画面いっぱいに広げる（はみ出した側を切る）。
       // 黒帯を出すと、自撮りなのに画面の半分が黒くなって使えない
       // （2026-08-10、伊波さんの指示）。
@@ -240,7 +241,8 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
     }
 
     const vw = video.videoWidth, vh = video.videoHeight;
-    if (vw && vh) {
+    const isFaceHole = frame && ((frame.faceHoles && frame.faceHoles.length > 0) || !!frame.faceHole);
+    if (vw && vh && !isFaceHole) {
       if (frame?.anchor === 'split4') {
         const halfW = OUT_W / 2;
         const halfH = OUT_H / 2;

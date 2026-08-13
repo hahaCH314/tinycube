@@ -82,7 +82,6 @@ const ZIGZAG = (
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
-  const [recordedData, setRecordedData] = useState<{blob: Blob, ext: string} | null>(null);
   // 一時停止。止めているあいだは動画も進めない。
   // 録画側を止めるだけだと、再開したときに動画だけ先へ進んでいて話が飛ぶ
   const [isPaused, setIsPaused] = useState(false);
@@ -321,9 +320,8 @@ function App() {
   // 一度きりにしたい場合は、下の初期値を localStorage で分岐させれば済む
   // 起動の順番は「平成大プリクラ」に合わせてある。プリクラ機と同じで、
   // 撮る前にまず枠を決める（docs/tinycube-update-scope.md 0章）。
-  //   agree（お願い）→ frame（①わくをえらぶ）→ source（②なにを撮る）→ video
   // 1画面で決めることは1つだけ。それ以外の設定は ⚙️（setup）に置いたまま
-  const [screen, setScreen] = useState<'agree' | 'manner' | 'frame' | 'source' | 'setup' | 'video'>('agree');
+  const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video'>('agree');
   // 「同意してはじめる」を押したら、まっすぐフレーム選びへ。
   // 以前はここで使い方のガイド（長い文章）を挟んでいたが、
   // 実際に友達に使ってもらったら「何のアプリか、どう使うか分からない」だった。
@@ -332,7 +330,7 @@ function App() {
   // ガイド自体は消していない。ヘッダーの ❓ からいつでも読める
   const afterAgree = () => {
     try { localStorage.setItem('tinycube.guideSeen', '1'); } catch { /* 保存できなくても動く */ }
-    setScreen('frame');
+    setScreen('setup');
   };
   const [hand, setHand] = useState<'right' | 'left'>('right');
   // 初めて撮影画面に来た人に、押す場所だけ示すための旗
@@ -678,7 +676,7 @@ function App() {
         shape,
         srcAudio: useSrcAudio,
         watermark: unlocked ? null : 'tinyCUBE',
-        onFinish: (blob, ext) => setRecordedData({ blob, ext }),
+        onFinish: (blob, ext) => save(blob, ext),
         onError: (e) => alert(t('alert_rec_fail') + e.message),
       });
       // 録画開始と同じタイミングで動画も最初から再生する
@@ -908,37 +906,6 @@ function App() {
         </div>
       </div>
 
-      {/* 録画後の保存確認 */}
-      {recordedData && (
-        <div className="manner-screen" style={{ zIndex: 9999 }}>
-          <div className="manner-content" style={{ textAlign: 'center' }}>
-            <h2 className="manner-title">録画完了！</h2>
-            <p className="manner-text" style={{ whiteSpace: 'normal', marginBottom: '24px' }}>
-              動画を保存しますか？
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-              <button 
-                className="manner-agree-btn" 
-                style={{ background: '#a855f7', margin: 0, flex: 1 }}
-                onClick={() => {
-                  save(recordedData.blob, recordedData.ext);
-                  setRecordedData(null);
-                }}
-              >
-                保存する
-              </button>
-              <button 
-                className="manner-agree-btn" 
-                style={{ background: '#64748b', margin: 0, flex: 1 }}
-                onClick={() => setRecordedData(null)}
-              >
-                やり直す
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 開いたときのお願い。平成大プリクラの入口＝ここから枠を選びにいく */}
       {screen === 'agree' && (
         <div className="manner-screen">
@@ -1001,203 +968,14 @@ function App() {
         </div>
       )}
 
-      {/* ① わくをえらぶ。プリクラ機と同じで、撮る前にまず枠を決める。
-          ここで決めることは「どの枠か」だけ。他は何も聞かない */}
-      {screen === 'frame' && (
-        <div className="setup-screen">
-          <div className="setup-header" style={{ position: 'relative' }}>
-            <h2 className="setup-title">＊撮影用のフレームを選ぶ</h2>
-            <button 
-              onClick={() => {
-                setLang(getLang() === 'ja' ? 'en' : 'ja');
-                window.location.reload();
-              }}
-              style={{ position: 'absolute', right: 16, background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', borderRadius: '4px', padding: '4px 8px', fontSize: '12px' }}
-            >
-              {getLang() === 'ja' ? 'English' : '日本語'}
-            </button>
-          </div>
-          <div className="setup-content">
-            {/* 縦に横フレーム（切れる）は要らない。形に合うものだけ出す
-                （2026-08-12、伊波さん「フレームを選ぶところで縦横もきまったら？」） */}
-            <div className="shape-switch">
-              <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>縦 (9:16)</button>
-              <button className={shape === 'landscape' ? 'on' : ''} onClick={() => pickShape('landscape')}>横 (16:9)</button>
-            </div>
-            {shape === 'landscape' && (
-              <div style={{ textAlign: 'center', color: '#ff69b4', fontSize: '12px', marginTop: '8px', fontWeight: 'bold' }}>
-                ※横向きフレームが選択されておりますので、スマホを横向きにしてご利用ください。
-              </div>
-            )}
-            <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
-              <button
-                className={`frame-tile none ${frameId === null ? 'on' : ''}`}
-                onClick={() => { setFrameId(null); setScreen('source'); }}
-              >{t('frame_none')}</button>
 
-              <button 
-                className="frame-tile"
-                onClick={() => customFrameInputRef.current?.click()}
-                style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
-                <span style={{ color: '#a855f7', fontSize: '11px', textAlign: 'center' }}>マイフレーム追加</span>
-              </button>
-              <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
-              
-              {customFrames.map(cf => (
-                <button
-                  key={cf.id}
-                  className={`frame-tile ${frameId === cf.id ? 'on' : ''}`}
-                  onClick={() => { setFrameId(cf.id); setScreen('source'); }}
-                  style={{ position: 'relative' }}
-                >
-                  <img src={cf.dataUrl} alt="マイフレーム" />
-                  <div 
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (confirm('このフレームを削除しますか？')) {
-                        await deleteCustomFrame(cf.id);
-                        setCustomFrames(prev => prev.filter(p => p.id !== cf.id));
-                        if (frameId === cf.id) setFrameId(null);
-                      }
-                    }}
-                    style={{ position: 'absolute', top: 2, right: 2, background: 'red', color: 'white', borderRadius: '50%', width: 16, height: 16, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  >✕</div>
-                </button>
-              ))}
-
-              {/* 縦に横フレーム（切れる）は要らない。形に合うものだけ出す
-                  （2026-08-12、伊波さん「縦フレームに横フレームが入っている（切れる）は要らない」） */}
-              {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
-                <button
-                  key={f.id}
-                  className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
-                  onClick={() => {
-                    // 鍵つきを押しても何も起きないと壊れて見える。買うところまで連れていく
-                    if (locked(f)) { openSetup('frame'); showUnlock(); }
-                    else { setFrameId(f.id); setScreen('source'); }
-                  }}
-                  title={locked(f) ? t('locked_hint') : f.name}
-                >
-                  {f.bgFile ? (
-                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                      <img src={f.bgFile + '?v=20260813_raw'} alt="" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
-                      <img src={f.file + '?v=20260813_raw'} alt={f.name} style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }} />
-                    </div>
-                  ) : (
-                    <img src={f.file ? f.file + '?v=20260813_raw' : undefined} alt={f.name} />
-                  )}
-                  {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
-                  {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
-                      見やすいよ」）。読み上げ用に img の alt には残してある */}
-                </button>
-              ))}
-            </div>
-            
-            <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
-              <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                ©２０２６CUBICENGINEstudio　
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ② なにを撮るか。カメラか、すでにある動画か。それだけ */}
-      {screen === 'source' && (
-        <div className="setup-screen">
-          <div className="setup-header">
-            <h2 className="setup-title">カメラか動画を選ぶ</h2>
-            <button className="setup-close-btn" onClick={() => setScreen('frame')} title="もどる">←</button>
-          </div>
-          <div className="setup-content">
-            <div className="source-picker">
-              <button className="source-btn" onClick={() => startCam(true)}>
-                <span className="source-text">{t('cam_front')}</span>
-              </button>
-              <button className="source-btn" onClick={() => startCam(false)}>
-                <span className="source-text">{t('cam_back')}</span>
-              </button>
-              <button className="source-btn" onClick={() => fileInputRef.current?.click()}>
-                <span className="source-text">{t('setting_video_load')}</span>
-              </button>
-            </div>
-
-            {/* 「入れられます」と書くだけでは伝わらない。入れる場所そのものを
-                ここに出す。柱の 1 2 と 1 2 3 が、この欄と同じ番号
-                （2026-08-12、伊波さん「ちゃんと１，２の音ファイル
-                １，２，３，のテキストファイル見せなきゃ」） */}
-            <h3 className="setup-section-title">音ファイル</h3>
-            <div className="sound-list">
-              {SOUND_SLOTS.map((id, n) => {
-                const name = customName(id);
-                return (
-                  <div key={id + soundVer} className="sound-row">
-                    <span className="slot-no mine">{n + 1}</span>
-                    <button className="sound-try" onClick={() => fireEffect(id)}>▶</button>
-                    <span className="sound-name">
-                      {t(('eff_' + id) as never)}
-                      {name && <em>{name}</em>}
-                    </span>
-                    <button
-                      className="sound-set"
-                      onClick={() => { setSoundSlot(id); soundInputRef.current?.click(); }}
-                    >{name ? t('sound_change') : t('sound_load')}</button>
-                  </div>
-                );
-              })}
-            </div>
-
-            <h3 className="setup-section-title">テキスト（テキスト変更）</h3>
-            <div className="telop-inputs">
-              {myTelops.map((text, i) => (
-                <div className="telop-row" key={i}>
-                  <span className="slot-no telop">{i + 1}</span>
-                  <input
-                    className="telop-input"
-                    value={text}
-                    maxLength={20}
-                    placeholder="自由に変更できます"
-                    onChange={e => setTelop(i, e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* 持つ手で録画ボタンの位置を変える
-                （2026-08-12、伊波さん「右利き左利きの録画位置もあるよ」） */}
-            <h3 className="setup-section-title">利き手</h3>
-            <div className="shape-switch">
-              <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
-              <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
-            </div>
-
-            {/* 素材が決まったら、この決定ボタンで撮影画面へ進む
-                （2026-08-12、伊波さん「cameraを選んだら即決定になるので、決定ボタンを作る」） */}
-          </div>
-          
-          {/* 決定ボタンはスクロール無しで出せるように、下に固定する */}
-          {(videoSrc || camOn) && (
-            <div style={{ position: 'sticky', bottom: 0, padding: '16px', background: 'var(--bg)', borderTop: '1px solid rgba(255,255,255,0.1)', zIndex: 10 }}>
-              <button className="manner-agree-btn" onClick={confirmSource} style={{ margin: 0 }}>
-                決定（この設定で撮る！）
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* 設定。事前準備はすべてここに入れる */}
       {screen === 'setup' && (
         <div className="setup-screen">
           <div className="setup-header">
-            <h2 className="setup-title">設定してね</h2>
-            {/* 戻るボタンは必ず出す。以前は映像を選んだあとしか出ておらず、
-                素材を選ぶ前にここへ入ると出られなくなっていた
-                （2026-08-12、伊波さん「戻るボタンがほしいね」）。
-                行き先は来た場所。撮影画面へ飛ばすと②に戻れない */}
-            <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>
+            <h2 className="setup-title">動画用のフレームを選ぶ</h2>
+            {backTo && <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>}
           </div>
           
           <div className="setup-content">
@@ -1241,6 +1019,9 @@ function App() {
                   <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
                 </button>
               </div>
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#e2e8f0', textAlign: 'center' }}>
+                （ゲームplayの動画などを予め録画してご用意いただきアップロードしてください）
+              </div>
               {videoSrc && (
                 <div className="shape-switch" style={{ marginTop: '12px' }}>
                   <button className={!loopVideo ? 'on' : ''} onClick={() => setLoopVideo(false)}>ループしない</button>
@@ -1259,7 +1040,9 @@ function App() {
                   素敵なオリジナルフレームや、おもしろフレームなど、あなたが作った作品をSNSで見れるのを楽しみにしています♡
                 </p>
               </div>
-              <div className="frame-picker" style={{ marginBottom: '12px' }}>
+
+
+              <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
                 <button 
                   className="frame-tile"
                   onClick={() => customFrameInputRef.current?.click()}
@@ -1278,7 +1061,6 @@ function App() {
                     style={{ position: 'relative' }}
                   >
                     <img src={cf.dataUrl} alt="マイフレーム" />
-                    <span>マイフレーム</span>
                     <div 
                       onClick={async (e) => {
                         e.stopPropagation();
@@ -1292,9 +1074,7 @@ function App() {
                     >✕</div>
                   </button>
                 ))}
-              </div>
-
-              <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
+                
                 <button className={`frame-tile none ${frameId === null ? 'on' : ''}`} onClick={() => setFrameId(null)}>{t('frame_none')}</button>
                 {FRAMES.map(f => (
                   <button
@@ -1506,14 +1286,16 @@ function App() {
               ))}
             </div>
 
-            <div className="setup-footer">
-              {/* 素材は②の画面で選ぶようになったので、ここで急かさない。
-                  塞ぐと戻れなくなる（2026-08-12、伊波さん「まずはカメラを
-                  つけてねはほんとにいらない」） */}
-              <button className="start-btn" onClick={() => setScreen('video')}>
-                この設定で撮る！
-              </button>
+            <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
+              <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
+                ©２０２６CUBICENGINEstudio　
+              </a>
             </div>
+          </div>
+          <div className="setup-footer">
+            <button className="start-btn" onClick={() => setScreen('video')}>
+              この設定で撮る！
+            </button>
           </div>
         </div>
       )}
