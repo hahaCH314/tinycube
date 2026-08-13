@@ -1774,9 +1774,11 @@ function App() {
       {screen === 'photo' && shots.length > 0 && (
         <div className="setup-screen photo-screen">
           <div className="setup-header compact">
-            <h2 className="setup-title">
-              {photoStep === 'text' ? '文字を入れる' : 'デコる'}
-            </h2>
+            {/* 題は出さない。下の見出し（「好きな言葉を入れてね」など）で
+                何をする画面かは分かるので、二重になっていた。
+                写真を大きく見せる場所を空けるほうが役に立つ
+                （2026-08-14、伊波さんのスクショ「削除」） */}
+            <h2 className="setup-title" />
             <button
               className="setup-close-btn"
               title="もどる"
