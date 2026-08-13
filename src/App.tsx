@@ -339,7 +339,8 @@ function App() {
   //   1 mode  … なにを撮りますか？（カメラ／動画）。選ぶまで先へ進ませない
   //   2 frame … フレーム選び。ここが主役なので大きく出す
   //   3 more  … その他の設定。押した人だけが見る（普段は開かなくていい）
-  const [setupStep, setSetupStep] = useState<'mode' | 'frame' | 'more'>('mode');
+  //   4 telop … スタンプ（テロップ）の言葉と出し方。フレームの次に聞く
+  const [setupStep, setSetupStep] = useState<'mode' | 'frame' | 'telop' | 'more'>('mode');
   // 枠選び（frame）と素材選び（source）は setup に統合したので、戻り先は video だけ
   const [backTo, setBackTo] = useState<'video'>('video');
   // 2回目以降は「フレームだけ選び直す」ことが多いので、開いたら
@@ -979,10 +980,23 @@ function App() {
           <div className="setup-header">
             <h2 className="setup-title">
               {setupStep === 'mode' ? 'なにを撮りますか？'
-                : setupStep === 'frame' ? '形とフレームを選ぶ'
+                : setupStep === 'frame' ? '形とフレーム'
+                : setupStep === 'telop' ? 'スタンプの文字'
                 : 'こまかい設定'}
             </h2>
-            {backTo && <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>}
+            {/* 段階を1つ戻す。前は「撮影画面へ飛ぶ」だけだったので、
+                設定の途中で押しても戻れなかった（2026-08-13、伊波さん
+                「戻るが戻れない」）。1段目のときだけ撮影画面へ返す */}
+            <button
+              className="setup-close-btn"
+              title="もどる"
+              onClick={() => {
+                if (setupStep === 'more') setSetupStep('telop');
+                else if (setupStep === 'telop') setSetupStep('frame');
+                else if (setupStep === 'frame') setSetupStep('mode');
+                else if (camOn || videoSrc) setScreen(backTo);
+              }}
+            >←</button>
           </div>
           
           <div className="setup-content">
@@ -1076,24 +1090,51 @@ function App() {
                 }}
               >
                 {(() => {
-                  const f = FRAMES.find(x => x.id === frameId);
+                  // FRAMES だけを見ると、マイフレーム（自分で入れた絵）を選んだとき
+                  // 見つからず、前に選んでいた絵が残って見える。
+                  // 429 行で組み立てている frame は両方に対応している
+                  // （2026-08-13、伊波さん「選んだフレームと違う絵が出る」）
+                  const f = frame;
                   if (!f) {
-                    return <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{t('frame_none')}</span>;
+                    // 何も選んでいないときは、この小窓そのものが案内になる。
+                    // 見出しを別に置くより、選んだ絵が出る場所に書いてあるほうが
+                    // 何をすればいいか分かる（2026-08-13、伊波さん）
+                    return (
+                      <span style={{ fontSize: 15, fontWeight: 700, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.05em' }}>
+                        フレームを選ぶ
+                      </span>
+                    );
                   }
                   return (
                     <>
+                      {/* 一覧のタイルと同じ URL で読む。片方だけ ?v= を付けると
+                          別物として扱われ、古い絵が出ることがある */}
                       {f.bgFile && (
-                        <img src={f.bgFile} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={f.bgFile + '?v=20260813_raw'} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                       )}
-                      <img src={f.file} alt={f.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                      <img
+                        key={f.id}
+                        src={f.file.startsWith('data:') ? f.file : f.file + '?v=20260813_raw'}
+                        alt={f.name}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
                     </>
                   );
                 })()}
               </div>
 
-              <h3 className="setup-section-title">フレームを選ぶ</h3>
+              {/* 小窓のすぐ下に置く。選んだ絵を見たその場で決められるように
+                  （2026-08-13、伊波さん「そのすぐ下に（この設定でOK）」）。
+                  選ぶ前は出さない。何も映っていない状態で押させない */}
+              {frameId !== null && (
+                <button
+                  className="start-btn"
+                  style={{ width: '100%', marginBottom: 20 }}
+                  onClick={() => setSetupStep('telop')}
+                >この設定でOK</button>
+              )}
 
-
+              {/* 「フレームを選ぶ」の見出しは小窓の中に入れたので、ここには置かない */}
               <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
                 <button 
                   className="frame-tile"
@@ -1139,7 +1180,7 @@ function App() {
                     onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                     title={locked(f) ? t('locked_hint') : f.name}
                   >
-                    <img src={f.file} alt={f.name} />
+                    <img src={f.file + '?v=20260813_raw'} alt={f.name} />
                     {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
                     {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}
@@ -1147,10 +1188,20 @@ function App() {
                 ))}
               </div>
 
-              {/* テロップの言葉。奥に隠すと「自分の言葉に書き換えられる」ことに
-                  気づかないまま終わる。フレームと同じ段に置いて、撮りに行く前に
-                  必ず目に入るようにする（2026-08-13、伊波さん） */}
-              <h3 className="setup-section-title" style={{ marginTop: 24 }}>{t('setting_telop')}</h3>
+              <button
+                className="start-btn"
+                style={{ marginTop: 16, width: '100%', background: 'rgba(255,255,255,0.12)' }}
+                onClick={() => setSetupStep('mode')}
+              >もどる</button>
+            </div>
+            )}
+
+            {/* ④ スタンプ（テロップ）。フレームの次に聞く。
+                言葉と「どう出るか」は同じ場所で決めたい（2026-08-13、伊波さん
+                「次（スタンプテキスト変更しますか？」「テキストの出現の仕方忘れずに」） */}
+            {setupStep === 'telop' && (
+            <div className="setup-section highlight-section">
+              <h3 className="setup-section-title">スタンプの文字を変えますか？</h3>
               <p className="sheet-note">{t('setting_telop_note')}</p>
               <div className="telop-inputs">
                 {myTelops.map((text, i) => (
@@ -1166,19 +1217,28 @@ function App() {
                 ))}
               </div>
 
-              {/* フレームまで決まれば、あとは撮るだけ。「こまかい設定」は
-                  いじりたい人だけが押すものなので、目立たせない。
-                  上にフレームが映っているので「この設定で」が何を指すか分かる */}
+              <h3 className="setup-section-title" style={{ marginTop: 20 }}>{t('setting_teloppos')}</h3>
+              <div className="shape-switch">
+                <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
+                <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
+              </div>
+
+              <h3 className="setup-section-title" style={{ marginTop: 20 }}>{t('setting_telopcolor')}</h3>
+              <div className="shape-switch">
+                <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
+                <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
+              </div>
+
               <button
                 className="start-btn"
-                style={{ marginTop: 16, width: '100%' }}
+                style={{ marginTop: 20, width: '100%' }}
                 onClick={() => setScreen('video')}
               >この設定で撮る</button>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button
                   className="start-btn"
                   style={{ flex: 1, background: 'rgba(255,255,255,0.12)' }}
-                  onClick={() => setSetupStep('mode')}
+                  onClick={() => setSetupStep('frame')}
                 >もどる</button>
                 <button
                   className="start-btn"
