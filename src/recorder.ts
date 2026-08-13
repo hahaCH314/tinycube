@@ -58,6 +58,25 @@ const SIZES: Record<OutShape, { w: number; h: number }> = {
   landscape: { w: 1920, h: 1080 },
 };
 
+/** 顔ハメの穴に映すカメラの寄り具合。1.0 で画面いっぱいと同じ大きさ。
+ *
+ *  1.0 のままだと顔が小さいので、少しだけ寄せる
+ *  （2026-08-13、伊波さん「顔が少しアップで映るように」）。
+ *
+ *  **上げすぎないこと。** ここを大きくするほど、穴に顔を収めるために
+ *  利用者が顔を画面へ近づける必要が出る。それで「他機能の操作は無理」
+ *  という声が出た（同日、伊波さん）。実機で持った距離のまま入るかを
+ *  確かめてから変えること。 */
+const FACE_ZOOM = 1.35;
+
+/** 顔ハメの穴をどれだけ丸へ寄せるか。0 で測った四角のまま（縦長）、1 で真円。
+ *
+ *  812CMcube の絵は測ると縦横比 1.3〜1.5:1 の縦長になる。元からある顔ハメ13枚は
+ *  ほぼ真円（0.99:1）で、そちらのほうが顔ハメらしい。ただし真円まで丸めると
+ *  細長い絵で穴が小さくなりすぎるので、途中で止める
+ *  （2026-08-13、伊波さん「縦長よりすこし丸いほうがいい」「少し丸い」）。 */
+const HOLE_ROUNDNESS = 0.6;
+
 /** 画面に出すもの。録画していなくてもずっと回す。
  *
  *  以前は録画中しか canvas が無く、エフェクトを押しても音だけ鳴って
@@ -185,17 +204,61 @@ export function startStage(opts: StageOptions): () => void {
     // 絵の穴が透明でも黒でも、どちらでも成り立つ作りでもある
     const holes = frame?.faceHoles ?? (frame?.faceHole ? [frame.faceHole] : []);
     if (holes.length > 0 && video && vw && vh) {
-      for (const fh of holes) {
-        const cx = OUT_W * (fh.x + fh.w / 2) / 100;
-        const cy = OUT_H * (fh.y + fh.h / 2) / 100;
-        const rx = OUT_W * (fh.w / 2) / 100;
-        const ry = OUT_H * (fh.h / 2) / 100;
+      // 穴が複数あるものは「2人で並んで写る」枠。カメラは1つしか無いので、
+      // 穴ごとに別々に描くと同じ顔が2つ並ぶ。そうではなく、
+      // **すべての穴をまとめて1つの範囲**として扱い、そこへカメラを1回だけ
+      // 描く。こうすると、並んで写った2人がそれぞれの穴に収まる
+      // （2026-08-13、伊波さん「二人用は2つの穴に同じもの（2人の顔が映る）」）。
+      const span = {
+        x: Math.min(...holes.map(h => h.x)),
+        y: Math.min(...holes.map(h => h.y)),
+        r: Math.max(...holes.map(h => h.x + h.w)),
+        b: Math.max(...holes.map(h => h.y + h.h)),
+      };
+      const cx = OUT_W * (span.x + span.r) / 2 / 100;
+      const cy = OUT_H * (span.y + span.b) / 2 / 100;
+      const rx = OUT_W * (span.r - span.x) / 2 / 100;
+      const ry = OUT_H * (span.b - span.y) / 2 / 100;
+      {
+        // 切り抜きは穴の形のまま。まとめるのは「カメラの置き方」だけで、
+        // 見える範囲は1つ1つの穴に限る（穴の外まで顔が出ると台無しになる）
         g.save();
         g.beginPath();
-        g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        for (const fh of holes) {
+          const hx = OUT_W * (fh.x + fh.w / 2) / 100;
+          const hy = OUT_H * (fh.y + fh.h / 2) / 100;
+          // 測った四角のままだと、絵によっては縦長の楕円になる（実測で 1.3〜1.5:1）。
+          // 元からある顔ハメ13枚はほぼ真円（0.99:1）で、そちらのほうが顔ハメらしい
+          // （2026-08-13、伊波さん「縦長よりすこし丸いほうがいい」）。
+          // 長いほうの軸を縮めて丸へ寄せる。伸ばすのではなく縮めるのは、
+          // 絵に描いてある穴からカメラがはみ出さないようにするため。
+          let hw = OUT_W * (fh.w / 2) / 100;
+          let hh = OUT_H * (fh.h / 2) / 100;
+          const long = Math.max(hw, hh), short = Math.min(hw, hh);
+          const target = short + (long - short) * (1 - HOLE_ROUNDNESS);
+          if (hh > hw) hh = target; else hw = target;
+          g.ellipse(hx, hy, hw, hh, 0, 0, Math.PI * 2);
+        }
         g.clip();
-        // 穴の大きさに合わせて、穴の中心へ寄せる。
-        const s2 = Math.max((rx * 2) / vw, (ry * 2) / vh);
+        // 穴の中心へ寄せる。大きさは画面いっぱいを基準にする。
+        //
+        // 以前はここで穴の大きさまで縮めていた（Math.max(rx*2/vw, ry*2/vh)）。
+        // 穴は画面のごく一部（幅25%・高さ16%ほど）なので、そこへ映像全体を
+        // 詰め込むと顔が数倍に膨らみ、穴に収めるために利用者が顔を画面へ
+        // 物理的に近づけることになった。その体勢では手が届かず、他のボタンを
+        // 押せない（2026-08-13、伊波さん「インカメの時かなり顔を近づけないと
+        // いけないので他機能の操作は無理」）。
+        //
+        // 画面いっぱいを基準にすれば、普通に持った距離のままで穴に入る。
+        // FACE_ZOOM はそこから「少しアップ」に寄せるための倍率
+        // （2026-08-13、伊波さん「顔が少しアップで映るように」）。
+        //
+        // 穴が2つある枠では、2人が並んだ幅ぶんは必ず映っていないと
+        // 片方の穴が空になる。寄せるのは「穴がぜんぶ収まる」ところまでにする。
+        const base = Math.max(OUT_W / vw, OUT_H / vh);
+        // 穴がぜんぶ収まるのに要る最低の大きさ。これを下回ると穴が空く
+        const need = Math.max((rx * 2) / vw, (ry * 2) / vh);
+        const s2 = Math.max(base * FACE_ZOOM, need);
         const w2 = vw * s2, h2 = vh * s2;
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
         const dx = mirror ? OUT_W - cx : cx;

@@ -739,32 +739,6 @@ button {
   opacity: 0.92;
 }
 
-/* 長い言葉は2行で出す。
-   ボタンが 12個→5個 に減って縦に余裕ができたので、
-   「パーティータイム」が「パー…」になるのをやめる（2026-08-13）。
-
-   ⚠️ ボタンの高さは --btn-h（レールの割り算）で決まっていて、
-   中身では広がらない。行を増やすぶん、文字を小さくして中に収める。
-   ここを忘れると、2行目がボタンの外へはみ出して隣と重なる（実際になった） */
-.btn-telop .btn-label {
-  white-space: normal;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-  word-break: break-all;
-  text-align: center;
-  line-height: 1.08;
-}
-
-/* 短い言葉まで小さくしない。字を詰めるのは長い言葉のときだけ。
-   「尊い」「は？」は大きいままのほうが読みやすい（対象は40〜50代と子ども）。
-   App.tsx が文字数を data-len に入れているので、それで出し分ける */
-.btn-telop .btn-label[data-len="long"] {
-  font-size: clamp(6px, calc(var(--btn-h) * 0.17), 8.5px);
-}
-
 .number-icon {
   display: inline-flex;
   align-items: center;
@@ -916,77 +890,6 @@ button {
   background: linear-gradient(180deg, var(--lemon), #FFC24A);
   border-color: rgba(255, 255, 255, 0.6);
   box-shadow: 0 0 18px rgba(255, 228, 92, 0.5), var(--inner-hi);
-}
-
-/* --- 録画・停止・一時停止を、言葉つきのボタンで出す ------------------------
-   2026-08-13、伊波さんの指示「録画、停止、一時停止はそれぞれボタンで
-   はっきり出して」。前は録画ボタン1つが押すたびに意味を変える作りで、
-   赤い丸を見ても「いま押すと始まるのか止まるのか」が分からなかった。
-   対象は40〜50代と子どもなので、丸をやめて、絵の下に必ず言葉を置く。
-
-   ⚠️ ここは .bottom-controls の中だけ。同じクラス名が他の場所にも
-   あった場合に、そちらを丸のまま残すため。 */
-.bottom-controls .preview-btn-round,
-.bottom-controls .photo-btn-round,
-.bottom-controls .pause-btn-round,
-.bottom-controls .record-btn-round,
-.bottom-controls .stop-btn-round {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  /* 丸をやめて角丸に。言葉が入るだけの幅を持たせる */
-  width: auto;
-  min-width: clamp(64px, 19vw, 88px);
-  height: clamp(50px, 13.5vw, 62px);
-  padding: 0 clamp(8px, 2.4vw, 14px);
-  border-radius: var(--r-md);
-  flex: 0 0 auto;
-  font-size: inherit;
-}
-
-.bottom-controls .ctrl-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(15px, 4.2vw, 19px);
-  line-height: 1;
-}
-
-.bottom-controls .ctrl-label {
-  font-size: clamp(9px, 2.7vw, 11px);
-  font-weight: 800;
-  line-height: 1.1;
-  white-space: nowrap;
-  letter-spacing: 0.02em;
-}
-
-/* 録画スタート。赤い丸は絵として残す（何のボタンかは言葉が言う） */
-.bottom-controls .record-btn-round .record-dot {
-  width: clamp(13px, 3.6vw, 16px);
-  height: clamp(13px, 3.6vw, 16px);
-  border-radius: 50%;
-  background: var(--pink);
-  box-shadow: 0 0 10px rgba(255, 79, 163, 0.65);
-}
-
-/* 停止。録画中にだけ出る。赤で塗って、一番目につく形にする */
-.bottom-controls .stop-btn-round {
-  background: linear-gradient(180deg, var(--pink), #D62E82);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  color: #fff;
-  box-shadow: var(--halo-pink), var(--inner-hi);
-  transition: transform 0.12s ease, box-shadow 0.2s ease;
-}
-.bottom-controls .stop-btn-round:active {
-  transform: scale(0.94);
-}
-
-/* 録画中は2つしか出さないので、真ん中に寄せる */
-.bottom-controls:has(.stop-btn-round) {
-  justify-content: center;
-  gap: clamp(14px, 5vw, 28px);
 }
 
 
@@ -2014,73 +1917,6 @@ button {
 }
 
 /* --- 素材の取り込み口（カメラ / 動画を選ぶ） ----------------------------- */
-/* --- いちばん最初の問い「なにを撮りますか？」 ------------------------------
-   2026-08-13、伊波さんの指示。動画か写真かを先に決めてもらう。
-   ここで決まると、撮影画面に出すボタンを片方だけにできる。
-
-   設定の中でいちばん大きく出す。最初に目に入るものが、最初に決めることと
-   一致していないと迷う（対象は40〜50代と子ども）。 */
-.mode-picker {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.mode-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 116px;
-  padding: 16px 12px;
-  border-radius: var(--r-lg);
-  color: var(--fg);
-  background: var(--glass-bg);
-  border: 2px solid var(--glass-line);
-  box-shadow: var(--inner-hi), var(--lift-1);
-  transition: transform 0.12s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-}
-
-.mode-btn:active {
-  transform: scale(0.97);
-  border-color: var(--glass-line-hi);
-}
-
-/* 選んだほうをはっきり見せる。選んでいないほうは沈める */
-.mode-btn.on {
-  border-color: var(--pink);
-  background: var(--glass-bg-strong);
-  box-shadow: var(--halo-pink), var(--inner-hi);
-}
-.mode-picker:has(.mode-btn.on) .mode-btn:not(.on) {
-  opacity: 0.55;
-}
-
-.mode-icon { font-size: 34px; line-height: 1; }
-
-.mode-name {
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-}
-
-.mode-note {
-  font-size: 11px;
-  opacity: 0.8;
-  text-align: center;
-  line-height: 1.3;
-}
-
-.mode-hint {
-  margin: 2px 0 0;
-  text-align: center;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--cyan);
-}
-
 .source-picker {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -2398,21 +2234,18 @@ button {
     padding-inline: 12px;
   }
 
-  /* 下のバーのボタンは言葉つきなので、丸に戻さない。
-     横向きは高さが足りないぶん、縦を詰めて横幅は残す（2026-08-13） */
-  .bottom-controls .record-btn-round,
-  .bottom-controls .stop-btn-round,
-  .bottom-controls .preview-btn-round,
-  .bottom-controls .photo-btn-round,
-  .bottom-controls .pause-btn-round {
-    width: auto;
-    min-width: 68px;
-    height: 42px;
-    gap: 1px;
+  .record-btn-round {
+    width: 48px;
+    height: 48px;
   }
 
-  .bottom-controls .ctrl-icon { font-size: 14px; }
-  .bottom-controls .ctrl-label { font-size: 9px; }
+  .preview-btn-round,
+  .photo-btn-round,
+  .pause-btn-round {
+    width: 40px;
+    height: 40px;
+    font-size: 15px;
+  }
 
   .preview-stage {
     margin-block: 4px;

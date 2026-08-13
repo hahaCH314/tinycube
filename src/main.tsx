@@ -25,7 +25,15 @@ try {
 // 枠の絵を端末に貯めておく係を登録する。
 // 43種で 6.1MB あり、開くたびに落とし直すと通信の細い場所で待たされる。
 // 画面そのもの（HTML）は毎回ネットを見るので、直したものは次に開けば届く。
-if ('serviceWorker' in navigator) {
+// 開発中（npm run dev）は登録しない。むしろ前に登録されたものを外す。
+// 貯める係が居ると、直したものがスマホに永久に届かず「何も変わらない」に見える。
+// 実機で確かめながら直すときにこれが一番の障害になる（2026-08-13、伊波さん）
+if (import.meta.env.DEV) {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations?.().then(rs => rs.forEach(r => r.unregister())).catch(() => { });
+    caches?.keys?.().then(ks => ks.forEach(k => caches.delete(k))).catch(() => { });
+  }
+} else if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {
       // 登録できなくてもアプリは動く（毎回落とし直すだけ）

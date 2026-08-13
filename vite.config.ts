@@ -19,13 +19,20 @@ try {
   console.error(e);
 }
 
-try {
-  require('./import_sandwiches.js');
-} catch (e) {
-  console.error(e);
-}
+// サンドイッチ枠の取り込みは、ここから毎回は走らせない。
+// 走らせるたびに同じ17枚を別の id で足してしまい、一覧が二重になっていた
+// （2026-08-13 に重複17行を削除）。足したいときは手で
+//   node import_sandwiches.js
+// を実行すること。
+// try { require('./import_sandwiches.js'); } catch (e) { console.error(e); }
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    // 実機に届いているかを目で確かめるための印。画面の隅に出る（開発中だけ）
+    __BUILD_STAMP__: JSON.stringify(
+      new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    ),
+  },
 })

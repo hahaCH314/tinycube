@@ -35,16 +35,19 @@ SNSへの投稿等及び、二次使用は
 // 絵だけにはしない。何のボタンか分からなくなるので、小さな言葉を必ず下に置く
 // 並び順を変えても絵柄がずれないよう、番号ではなくボタンの名前で引く
 const RAIL_ICONS: Record<string, string> = {
-  // 音は3つだけ（2026-08-13、伊波さんの指示）
+  my1: '1', my2: '2',        // 自分の音を入れる枠
+  bam: '🥁',                 // どんっ   … 叩く音そのもの（車＝ぶつかる音は却下）
+  ding: '🌟',                // きらっ   … ネオンスターが光る
+  pon: '🍹',                 // ぽん     … 栓が抜ける
+  buzz: '☎️',                // ぶー     … 話し中の音
   clap: '💗',                // 拍手     … 喝采
   drum: '📻',                // ドラム   … ラジカセ
-  blip: '📼',                // 電子音   … 小さな機械の音
-  // 🪩 はミラーボールへ渡した。
-  // 📷 は下のバーの「写真」ボタンが使っているので、こちらでは使わない。
-  // 同じ絵が2か所にあると、どちらが何のボタンか分からなくなる
-  // （2026-08-13、伊波さん「写真はエフェクトと絵が被るし分かりづらい」）
-  flash: '💥',               // フラッシュ … 白く弾ける
-  mirrorball: '🪩',          // ミラーボール … 光の粒が回りながら流れる
+  blip: '📼',                // ぴこ     … 小さな機械の音
+  dread: '🌇',               // ずーん   … 日が沈む
+  slash: '✨',               // しゃきん … 刃が閃く
+  fanfare: '💿',             // ジャーン … レコードの一発
+  flash: '🪩',               // フラッシュ … ミラーボールが弾ける
+  glitch: '📺',              // グリッチ … ブラウン管の乱れ
   emotional: '🌴',           // エモい   … 南国の夕暮れの空気
 };
 
@@ -63,12 +66,8 @@ function RailFace({ id, label }: { id: string; label: string }) {
   );
 }
 
-// テロップの絵柄。吹き出しと、コミック風のギザギザを交互に出す
-
-/** この画面を読み込んだ時刻。開発中だけロゴの隣に出す。
- *  スマホは古い中身を握り続けることがあり、直したのに「何も変わらない」に
- *  見える。ここが変われば新しい中身が届いている（2026-08-13、伊波さん） */
-const LOADED_AT = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+// テロップの絵柄（BUBBLE / ZIGZAG）は 08cf11c で不要になった。
+// 5つとも「自分で決める場所」になり、全部が番号表示になったため
 
 function App() {
   const [isRecording, setIsRecording] = useState(false);
@@ -116,22 +115,14 @@ function App() {
   // 番号の付いた3つだけが、利用者の言葉。残りは決め打ちで動かさない
   // （2026-08-11、伊波さん「入れ替えれる言葉は上の数字の3か所」）。
   // 番号は「あなたが決める場所」の印なので、全部が変えられると意味が消える
-  // テキストは5つ。全部が自分で変えられる
-  // （2026-08-13、伊波さん「テキストは予め入っているが、ユーザーが変更できるよう
-  // 誘導線に置く（ボタン数５に減らす）」）。
-  //
-  // 前は「自分の3つ＋決め打ち9つ＝12個」で、決め打ちのほうは変えられなかった。
-  // 12個は対象（40〜50代と子ども）には多すぎるうえ、
-  // 変えられるものと変えられないものが混ざっていて見分けがつかなかった
+  // 12個（自分の3＋決め打ち9）から **5つ・全部が変更可能** に減らした
+  // （08cf11c「かんたん化」。対象は40〜50代と子どもなので、選ぶものを減らす）
   const TELOP_MINE = 5;
   const [myTelops, setMyTelops] = useState<string[]>(() => {
-    // 空にはしない。指示は「テキストは予め入っている」。
-    // 最初から言葉が入っていれば、押せば何が起きるかがすぐ分かる
-    // 2026-08-13、伊波さんが決めた5つ
     const base = ['尊い', 'は？', 'やば', 'パーティータイム', 'チョベリグー'];
     try {
-      // キーを v2 にしてある。前の3つぶんの配列をそのまま読むと、
-      // 4・5番目だけ既定に戻る（2026-08-13）
+      // ⚠️ 保存キーは v2。旧キー（tinycube.telops）のままだと3つぶんの配列が
+      //    読まれて、4・5番目だけ既定に戻る
       const saved = localStorage.getItem('tinycube.telops.v2');
       if (saved) {
         const arr = JSON.parse(saved) as string[];
@@ -281,6 +272,7 @@ function App() {
   const [camInfo, setCamInfo] = useState<string | null>(null);
   // 描画の係が毎フレーム読む。state を直接見ると古い値のままになる
   const camOnRef = useRef(false);
+  // 効果音の差し替え（soundInputRef / soundSlot / soundVer）は 08cf11c で廃止
   // 文字の色。白は暗い映像に、黒は明るい映像に強い
   const [telopDark, setTelopDark] = useState(() => {
     try { return localStorage.getItem('tinycube.telopDark') === '1'; } catch { return false; }
@@ -325,14 +317,6 @@ function App() {
     setScreen('setup');
   };
   const [hand, setHand] = useState<'right' | 'left'>('right');
-
-  // 動画を撮るのか、写真を撮るのか。設定のいちばん最初に聞く
-  // （2026-08-13、伊波さん「最初の設定で動画撮りますか？写真撮りますか？って聞く」）。
-  //
-  // 先に決めておくと、撮影画面に出すボタンを片方だけにできる。
-  // 対象は40〜50代と子どもなので、使わないボタンは見せないほうがいい。
-  // null のあいだは、まだ選んでいない＝設定の続きを出さない
-  const [mode, setMode] = useState<'video' | 'photo' | null>(null);
   // 初めて撮影画面に来た人に、押す場所だけ示すための旗
   const [startHint, setStartHint] = useState(false);
   // 撮る前の数え。押した瞬間に始まると構える間がない
@@ -513,9 +497,8 @@ function App() {
     }
   };
 
-  // 効果音の読み込み（sounds.ts）は廃止した
-  // （2026-08-13、伊波さん「音ぼファイル挿入廃止」）。
-  // 鳴るのは effects.ts が作る3つの音だけなので、起動時の読み直しも要らない
+  // 効果音の読み込み（sounds.ts）は 08cf11c で廃止。
+  // いまの3つは effects.ts が自分で鳴らすので、ここで用意するものは無い
 
   // <video> が画面に出てから、カメラの映像を繋ぐ
   useEffect(() => {
@@ -593,40 +576,14 @@ function App() {
   // そのまま1枚に書き出すだけでよい（2026-08-11、伊波さん「昔のプリクラ」）。
   // 光らせるのは画面の上だけ。canvas に描くと写真そのものが白くなる
   const [flash, setFlash] = useState(false);
-  // 連写の何枚目か。押しているあいだ画面に出す（「1 / 3」）。
-  // 出さないと、3枚撮り終わる前にもう一度押されてしまう
-  const [burst, setBurst] = useState<number | null>(null);
-
-  /** 1枚だけ撮って保存する。連写もこれを繰り返すだけ */
-  const shootOnce = async () => {
-    const c = canvasRef.current;
-    if (!c) return;
-    setFlash(true);
-    setTimeout(() => setFlash(false), 220);
-    const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
-    if (blob) await save(blob, 'jpg');
-  };
-
-  // 写真は自動で3枚。ゆっくり撮る
-  // （2026-08-13、伊波さん「写真は自動で３枚連写（ゆっくり）とか」）。
-  //
-  // プリクラと同じで、1回押したら3枚撮れて終わり。押す回数が減るぶん、
-  // 「押せたかどうか」で迷う場面も減る。
-  // 速い連写だと3枚とも同じ顔になるので、間を空けてポーズを変えられるようにする
-  const BURST_COUNT = 3;
-  const BURST_GAP = 1600;          // 枚と枚のあいだ（ミリ秒）
   const shoot = async () => {
     const c = canvasRef.current;
     if (!c) return;
     if (!videoSrc && !camOn) { alert(t('alert_load_first')); return; }
-    if (burst !== null) return;     // 連写中の二度押しは受けない
-    for (let n = 1; n <= BURST_COUNT; n++) {
-      setBurst(n);
-      await shootOnce();
-      // 最後の1枚のあとは待たない
-      if (n < BURST_COUNT) await new Promise(r => setTimeout(r, BURST_GAP));
-    }
-    setBurst(null);
+    setFlash(true);
+    setTimeout(() => setFlash(false), 220);
+    const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
+    if (blob) await save(blob, 'jpg');
   };
 
   // 一時停止。録画も動画も両方止める。
@@ -783,10 +740,7 @@ function App() {
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
             </div>
-            {/* 写真モードのときに「動画を読み込み」と出ると、何をすればいいか
-                分からなくなる（2026-08-13）。写真はカメラで撮るものなので、
-                設定へ戻ってカメラを入れてもらう */}
-            <p>{mode === 'photo' ? '設定からカメラを選んでください' : t('upload_hint')}</p>
+            <p>{t('upload_hint')}</p>
           </div>
         )}
         {camInfo && <div className="cam-info">{camInfo}</div>}
@@ -821,8 +775,8 @@ function App() {
                 「何も変わっていない」に見える。ここの時刻が変われば届いている
                 （2026-08-13、伊波さん「前もスマホはリアルタイムが難しかった」） */}
             {import.meta.env.DEV && (
-              <span style={{ fontSize: '10px', opacity: 0.9, marginLeft: '6px', fontFamily: 'monospace', color: '#0f0' }}>
-                {LOADED_AT}
+              <span style={{ fontSize: '9px', opacity: 0.7, marginLeft: '6px', fontFamily: 'monospace' }}>
+                顔ハメ改
               </span>
             )}
           </div>
@@ -838,66 +792,34 @@ function App() {
           </div>
         </header>
 
-        {/* 下のバー。
-            録画・停止・一時停止は、それぞれ別のボタンとして出す
-            （2026-08-13、伊波さんの指示）。前は録画ボタン1つが押すたびに
-            意味を変える作りで、赤い丸を見ても「いま押すと始まるのか止まるのか」が
-            分からなかった。対象は40〜50代と子どもなので、
-            **いま押せるボタンだけを出して、必ず言葉を添える**。
-            録画していないとき：撮り直す／写真／録画スタート
-            録画しているとき　：一時停止／停止 */}
+        {/* 録画ボタン */}
         <footer className="bottom-controls">
-          {!isRecording ? (
-            <>
-              <button className="preview-btn-round" onClick={() => setScreen('setup')} title="設定に戻る">
-                <span className="ctrl-icon">↺</span>
-                <span className="ctrl-label">やり直す</span>
-              </button>
-              {/* 設定で選んだほうだけ出す。使わないボタンは見せない
-                  （2026-08-13、伊波さん「最初の設定で動画？写真？って聞く」）。
-                  mode が null なのは、設定を通らずに来た場合の保険。両方出す */}
-              {mode !== 'video' && (
-                <button
-                  className="photo-btn-round"
-                  onClick={shoot}
-                  disabled={(!videoSrc && !camOn) || burst !== null}
-                >
-                  <span className="ctrl-icon">📷</span>
-                  <span className="ctrl-label">
-                    {burst !== null ? `${burst} / ${BURST_COUNT}枚目` : '写真（3枚）'}
-                  </span>
-                </button>
-              )}
-              {mode !== 'photo' && (
-                <button
-                  className="record-btn-round"
-                  onClick={toggleRecording}
-                  disabled={!videoSrc && !camOn}
-                >
-                  <span className="ctrl-icon record-dot" />
-                  <span className="ctrl-label">{t('btn_record')}</span>
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              {/* 一時停止。止めているあいだはファイルに入らない。
-                  使えない端末では出さない（押せないボタンを見せても迷うだけ） */}
-              {canPause && (
-                <button
-                  className={`pause-btn-round ${isPaused ? 'on' : ''}`}
-                  onClick={togglePause}
-                >
-                  <span className="ctrl-icon">{isPaused ? '▶' : '❚❚'}</span>
-                  <span className="ctrl-label">{isPaused ? t('btn_resume') : t('btn_pause')}</span>
-                </button>
-              )}
-              <button className="stop-btn-round" onClick={toggleRecording}>
-                <span className="ctrl-icon">■</span>
-                <span className="ctrl-label">{t('btn_stop')}</span>
-              </button>
-            </>
-          )}
+          <button className="preview-btn-round" onClick={() => setScreen('setup')} disabled={isRecording} title="取り直す">
+            ↺
+          </button>
+          {/* 写真。押した瞬間の画面が、そのまま1枚になる */}
+          <button
+            className="photo-btn-round"
+            onClick={shoot}
+            disabled={!videoSrc && !camOn}
+            title={t('btn_photo')}
+          >📷</button>
+          <button
+            className={`record-btn-round ${isRecording ? 'recording' : ''} ${isPaused ? 'paused' : ''}`}
+            onClick={toggleRecording}
+            title={isRecording ? t('btn_stop') : t('btn_record')}
+          >
+            <div className="record-inner"></div>
+          </button>
+          {/* 一時停止。止めているあいだはファイルに入らない */}
+          <button
+            className={`pause-btn-round ${isPaused ? 'on' : ''}`}
+            onClick={togglePause}
+            disabled={!isRecording || !canPause}
+            title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
+          >
+            {isPaused ? '▶' : '❚❚'}
+          </button>
         </footer>
         {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
         {/* シャッターの光。CSS なので写真にも動画にも入らない */}
@@ -906,16 +828,17 @@ function App() {
         {/* 左側のエフェクトパネル */}
         <div className="side-panel left" data-role="sound">
           <div className="panel-scroll">
-            {/* 音は3つだけ。拍手・ドラム・電子音
-                （2026-08-13、伊波さん「音数を、１．拍手２．ドラム３電子音 にしぼり
-                操作しやすくする」）。自分の音を入れる枠も同じ指示で廃止した */}
+            {/* 自作音の枠（my1 / my2）は 08cf11c で廃止。
+                音ファイルの読み込みごと無くなったので、空の枠だけ残しても押せない */}
+            {/* 音は3つ（08cf11c「かんたん化」。10個＋自作枠2個から減らした） */}
             {(['clap', 'drum', 'blip'] as const)
               .map(id => (
                 <button key={id} className="effect-btn btn-sound" onClick={() => fire(id)}>
                   <RailFace id={id} label={t(('eff_' + id) as never)} />
                 </button>
               ))}
-            {/* エフェクト3個は柱の下（2026-08-11、伊波さんの指示） */}
+            {/* エフェクト3個は柱の下（2026-08-11、伊波さんの指示）。
+                グリッチはミラーボールに差し替えた（同コミット） */}
             <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
               <RailFace id="flash" label={t('eff_flash')} />
             </button>
@@ -931,8 +854,7 @@ function App() {
         {/* 右側のテロップパネル */}
         <div className="side-panel right" data-role="telop">
           <div className="panel-scroll">
-            {/* 5つとも自分で決める場所。空でも枠として残す（押すと設定へ飛ぶ）。
-                番号を振っておくと、設定のどの欄がどのボタンか見て分かる */}
+            {/* 5つとも「自分で決める場所」。全部に番号を出す（08cf11c） */}
             {telops.map((text, i) => {
               const empty = !text.trim();
               return (
@@ -942,12 +864,10 @@ function App() {
                   onClick={() => (empty ? openSetup('video') : fireTelop(text, telopDark, telopRandom))}
                 >
                   <span className="number-icon">{i + 1}</span>
-                  {/* 長い言葉だけ字を小さくして2行に収める。
-                      短い言葉まで小さくすると読みにくい（2026-08-13） */}
+                  {/* 長い言葉は字を小さくして2行にする。ボタンが減って縦に
+                      余裕ができたのでできるようになった（08cf11c） */}
                   {!empty && (
-                    <span className="btn-label" data-len={text.length >= 5 ? 'long' : 'short'}>
-                      {text}
-                    </span>
+                    <span className="btn-label" data-len={text.length >= 5 ? 'long' : undefined}>{text}</span>
                   )}
                 </button>
               );
@@ -1024,41 +944,11 @@ function App() {
       {screen === 'setup' && (
         <div className="setup-screen">
           <div className="setup-header">
-            <h2 className="setup-title">
-              {mode === null ? 'なにを撮りますか？' : mode === 'photo' ? '写真の準備' : '動画の準備'}
-            </h2>
-            {backTo && mode !== null && <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>}
+            <h2 className="setup-title">動画用のフレームを選ぶ</h2>
+            {backTo && <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>}
           </div>
-
+          
           <div className="setup-content">
-            {/* いちばん最初に、動画か写真かを聞く
-                （2026-08-13、伊波さん「最初の設定で動画撮りますか？写真撮りますか？」）。
-                選ぶまで下の設定を出さない。1画面で決めることは1つだけ */}
-            <div className="mode-picker">
-              <button
-                className={`mode-btn ${mode === 'video' ? 'on' : ''}`}
-                onClick={() => setMode('video')}
-              >
-                <span className="mode-icon">🎬</span>
-                <span className="mode-name">動画を撮る</span>
-                <span className="mode-note">音や効果音も入ります</span>
-              </button>
-              <button
-                className={`mode-btn ${mode === 'photo' ? 'on' : ''}`}
-                onClick={() => setMode('photo')}
-              >
-                <span className="mode-icon">📷</span>
-                <span className="mode-name">写真を撮る</span>
-                <span className="mode-note">1回で3枚とれます</span>
-              </button>
-            </div>
-
-            {mode === null && (
-              <p className="mode-hint">まずどちらか選んでください</p>
-            )}
-
-            {mode !== null && (
-            <>
             <div className="hand-setting">
               <label><input type="radio" name="hand" value="right" checked={hand === 'right'} onChange={() => setHand('right')} /> 右</label>
               <label><input type="radio" name="hand" value="left" checked={hand === 'left'} onChange={() => setHand('left')} /> 左</label>
@@ -1094,20 +984,14 @@ function App() {
                   <span className="source-icon">📸</span>
                   <span className="source-text">{t('cam_back')}</span>
                 </button>
-                {/* 動画の読み込みは、動画を撮るときだけ。
-                    写真モードで出しても使い道がない（2026-08-13） */}
-                {mode === 'video' && (
-                  <button className={`source-btn ${videoSrc ? 'on' : ''}`} onClick={() => fileInputRef.current?.click()}>
-                    <span className="source-icon">📁</span>
-                    <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
-                  </button>
-                )}
+                <button className={`source-btn ${videoSrc ? 'on' : ''}`} onClick={() => fileInputRef.current?.click()}>
+                  <span className="source-icon">📁</span>
+                  <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
+                </button>
               </div>
-              {mode === 'video' && (
-                <div style={{ marginTop: '8px', fontSize: '12px', color: '#e2e8f0', textAlign: 'center' }}>
-                  （ゲームplayの動画などを予め録画してご用意いただきアップロードしてください）
-                </div>
-              )}
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#e2e8f0', textAlign: 'center' }}>
+                （ゲームplayの動画などを予め録画してご用意いただきアップロードしてください）
+              </div>
               {videoSrc && (
                 <div className="shape-switch" style={{ marginTop: '12px' }}>
                   <button className={!loopVideo ? 'on' : ''} onClick={() => setLoopVideo(false)}>ループしない</button>
@@ -1178,13 +1062,14 @@ function App() {
               </div>
             </div>
 
-            {/* 効果音の設定は無くなった。音は3つに固定で、入れ替えもしない
-                （2026-08-13、伊波さん「音数を3つにしぼる」「音ぼファイル挿入廃止」）。
-                試し聞きだけ残す。押せば柱のボタンと同じ音が鳴る */}
+            {/* 音は3つに固定。ファイルの読み込みは廃止した（08cf11c「かんたん化」）。
+                ここは「どの番号がどの音か」を確かめて、試し押しできるだけの欄にする */}
             <h3 className="setup-section-title">{t('setting_sounds')}</h3>
             <div className="sound-list">
               {(['clap', 'drum', 'blip'] as const).map((id, n) => (
                 <div key={id} className="sound-row">
+                  {/* 柱のボタンと同じ番号・同じ色。どの欄がどのボタンか、
+                      見ただけで結びつくように（2026-08-11、伊波さん） */}
                   <span className="slot-no mine">{n + 1}</span>
                   <button className="sound-try" onClick={() => fireEffect(id)}>▶</button>
                   <span className="sound-name">{t(('eff_' + id) as never)}</span>
@@ -1350,20 +1235,15 @@ function App() {
 
             <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
               <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                ©２０２６CUBICENGINEstudio
+                ©２０２６CUBICENGINEstudio　
               </a>
             </div>
-            </>
-            )}
           </div>
-          {/* 何を撮るか選ぶまでは、先へ進むボタンを出さない */}
-          {mode !== null && (
-            <div className="setup-footer">
-              <button className="start-btn" onClick={() => setScreen('video')}>
-                {mode === 'photo' ? 'この設定で写真を撮る！' : 'この設定で動画を撮る！'}
-              </button>
-            </div>
-          )}
+          <div className="setup-footer">
+            <button className="start-btn" onClick={() => setScreen('video')}>
+              この設定で撮る！
+            </button>
+          </div>
         </div>
       )}
 
