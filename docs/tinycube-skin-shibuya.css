@@ -1123,7 +1123,10 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 3 / 4;
+  /* 形は「いま選んでいる向き」に従う。3/4 で固定していたため、横（16:9）を
+     選んでもタイルが縦長のままで、横長の絵が上下に潰れて何枚も
+     積み重なって見えていた（2026-08-13、伊波さん） */
+  aspect-ratio: var(--tile-ar, 3 / 4);
   padding: 5px;
   border-radius: var(--r-md);
   font-size: 11px;
