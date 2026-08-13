@@ -14,17 +14,9 @@ import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRe
 // 改行も原文のまま。CSS 側（.manner-text）に white-space: pre-line を
 // 当ててあるので、<br> を入れずにこの文字列をそのまま流し込めば改行が出る。
 // 変えるときは伊波さんに確認してから、docs/tinycube-update-scope.md も直す。
-const MANNER_TEXT = `このアプリケーションは
-みなさんの日常を切り取る
-動画＆写真撮影アプリです
-SNSへの投稿等及び、二次使用は
-自由に行えます
-みなさんの愛のあるご利用を
-お願いすると共に
-このアプリが誹謗中傷や
-誰かを傷つける道具と
-なりませんよう
-お願い申し上げます`;
+// 同意画面の文章は i18n（manner_text）へ移した。
+// 英語で開いた人にも同じお願いが伝わらないと意味がない
+// （2026-08-13、伊波さん「ここは大事なページだからちゃんと訳してね」）
 
 // ---- シティポップの絵柄（2026-08-11、伊波さんの指示） -------------------
 //
@@ -931,9 +923,22 @@ function App() {
       {screen === 'agree' && (
         <div className="manner-screen">
           <div className="manner-content">
-            <h2 className="manner-title">はじめに</h2>
-            <p className="manner-text">{MANNER_TEXT}</p>
-            <button className="manner-agree-btn" onClick={afterAgree}>同意してはじめる</button>
+            {/* 言語は一番最初に選べるようにする。英語で開いた人が、
+                読めないまま奥へ進まずに済む（2026-08-13、伊波さん
+                「言語切り替えは、トップページへ」） */}
+            <div className="lang-switch">
+              <button
+                className={getLang() === 'ja' ? 'on' : ''}
+                onClick={() => { setLang('ja'); location.reload(); }}
+              >日本語</button>
+              <button
+                className={getLang() === 'en' ? 'on' : ''}
+                onClick={() => { setLang('en'); location.reload(); }}
+              >English</button>
+            </div>
+            <h2 className="manner-title">{t('manner_title')}</h2>
+            <p className="manner-text">{t('manner_text')}</p>
+            <button className="manner-agree-btn" onClick={afterAgree}>{t('manner_agree')}</button>
           </div>
         </div>
       )}
@@ -1312,19 +1317,9 @@ function App() {
                 onClick={() => setSetupStep('frame')}
               >もどる</button>
 
-              {/* 言語。自動判定が英語に振れたときに戻す場所が無かった
-                  （2026-08-13、伊波さん「これ、私見てるの英語版かなぁ？」） */}
-              <h3 className="setup-section-title" style={{ marginTop: 24 }}>言語 / Language</h3>
-              <div className="shape-switch">
-                <button
-                  className={getLang() === 'ja' ? 'on' : ''}
-                  onClick={() => { setLang('ja'); location.reload(); }}
-                >日本語</button>
-                <button
-                  className={getLang() === 'en' ? 'on' : ''}
-                  onClick={() => { setLang('en'); location.reload(); }}
-                >English</button>
-              </div>
+              {/* 言語の切り替えは一番最初の画面（agree）へ移した。
+                  英語で開いた人が、読める場所で切り替えられるように
+                  （2026-08-13、伊波さん「言語切り替えは、トップページへ」） */}
 
               {/* 利き手。録画ボタンを持つ手に合わせる */}
               <h3 className="setup-section-title" style={{ marginTop: 20 }}>ボタンの位置</h3>

@@ -82,6 +82,11 @@ type I18nDict = {
   eff_drum: string;
   eff_blip: string;
 
+  // 同意画面（一番最初に出る、マナーのお願い）
+  manner_title: string;
+  manner_text: string;
+  manner_agree: string;
+
   // Guide Sheet
   guide_title: string;
   guide_step1_title: string;
@@ -191,6 +196,20 @@ const dictJa: I18nDict = {
   eff_drum: '🥁 ドラム',
   eff_blip: '🔹 電子音',
 
+  manner_title: 'はじめに',
+  manner_text: `このアプリケーションは
+みなさんの日常を切り取る
+動画＆写真撮影アプリです
+SNSへの投稿等及び、二次使用は
+自由に行えます
+みなさんの愛のあるご利用を
+お願いすると共に
+このアプリが誹謗中傷や
+誰かを傷つける道具と
+なりませんよう
+お願い申し上げます`,
+  manner_agree: '同意してはじめる',
+
   guide_title: 'tinyCUBE の使い方',
   guide_step1_title: '動画を読み込む',
   guide_step1_desc: 'すでに撮ってある動画に、声とエフェクトを乗せる道具です。',
@@ -294,6 +313,20 @@ const dictEn: I18nDict = {
   eff_clap: '👏 Clap',
   eff_drum: '🥁 Drum',
   eff_blip: '🔹 Electronic',
+
+  // 原文は規約ではなく「お願い」。命令口調にせず、その姿勢のまま訳す
+  manner_title: 'Before you begin',
+  manner_text: `This app is for capturing
+the everyday moments of your life
+in video and photos.
+You are free to post what you make
+on social media, and to build on it.
+We ask that you use it with kindness,
+and that this app never becomes
+a tool for insult, harassment,
+or hurting anyone.
+Thank you.`,
+  manner_agree: 'I agree — let\'s begin',
 
   guide_title: 'How to use tinyCUBE',
   guide_step1_title: 'Load a video',

@@ -481,3 +481,27 @@
   min-height: 52px;
   font-size: 11px;
 }
+
+/* --- 同意画面の言語切り替え ------------------------------------------------
+   一番最初の画面に置く。英語で開いた人が、読めないまま奥へ進まずに済む
+   （2026-08-13、伊波さん「言語切り替えは、トップページへ」）。 */
+.lang-switch {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.lang-switch button {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 18px;
+  font-size: 13px; font-weight: 700;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.lang-switch button.on {
+  color: #fff;
+  background: rgba(102, 231, 255, 0.18);
+  border-color: #66e7ff;
+}
