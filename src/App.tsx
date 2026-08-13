@@ -967,22 +967,31 @@ function App() {
             {setupStep === 'mode' && (
             <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
               <h3 className="setup-section-title">なにを撮りますか？</h3>
+              {/* カメラ2つが主役。動画ファイルは「持っている人だけ」が使うものなので、
+                  同じ列に並べず、下に説明を添えて置く（2026-08-13、伊波さん） */}
               <div className="source-picker">
                 <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
                   <span className="source-icon">🤳</span>
                   <span className="source-text">{t('cam_front')}</span>
                 </button>
                 <button className={`source-btn ${camOn && !camFront ? 'on' : ''}`} onClick={() => startCam(false)}>
-                  <span className="source-icon">📸</span>
+                  <span className="source-icon">📷</span>
                   <span className="source-text">{t('cam_back')}</span>
                 </button>
-                <button className={`source-btn ${videoSrc ? 'on' : ''}`} onClick={() => fileInputRef.current?.click()}>
+              </div>
+
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+                <button
+                  className={`source-btn ${videoSrc ? 'on' : ''}`}
+                  style={{ width: '100%' }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <span className="source-icon">📁</span>
                   <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
                 </button>
-              </div>
-              <div style={{ marginTop: '8px', fontSize: '12px', color: '#e2e8f0', textAlign: 'center' }}>
-                （ゲームplayの動画などを予め録画してご用意いただきアップロードしてください）
+                <p style={{ margin: '8px 0 0', fontSize: '12px', lineHeight: 1.5, color: '#e2e8f0', textAlign: 'center' }}>
+                  ゲームplayの動画などを予め録画してご用意いただきアップロードしてください
+                </p>
               </div>
               {videoSrc && (
                 <div className="shape-switch" style={{ marginTop: '12px' }}>
