@@ -325,9 +325,17 @@ function App() {
   const [countdown, setCountdown] = useState<number | null>(null);
   // 設定を閉じたときに、どこへ戻すか。来た場所へ返さないと迷子になる
   // （2026-08-12、伊波さん「戻るボタンがほしいね」）
+  // 設定は1画面に1つずつ出す。9つ全部を積むと、対象の40〜50代と子どもが
+  // どこを見ればいいか分からない（2026-08-13、伊波さん）。
+  //   1 mode  … なにを撮りますか？（カメラ／動画）。選ぶまで先へ進ませない
+  //   2 frame … フレーム選び。ここが主役なので大きく出す
+  //   3 more  … その他の設定。押した人だけが見る（普段は開かなくていい）
+  const [setupStep, setSetupStep] = useState<'mode' | 'frame' | 'more'>('mode');
   // 枠選び（frame）と素材選び（source）は setup に統合したので、戻り先は video だけ
   const [backTo, setBackTo] = useState<'video'>('video');
-  const openSetup = (from: 'video') => { setBackTo(from); setScreen('setup'); };
+  // 2回目以降は「フレームだけ選び直す」ことが多いので、開いたら
+  // フレーム選びから始める（毎回1段目を踏ませない）
+  const openSetup = (from: 'video') => { setBackTo(from); setSetupStep('frame'); setScreen('setup'); };
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [loopVideo, setLoopVideo] = useState(true);
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
@@ -944,37 +952,21 @@ function App() {
       {screen === 'setup' && (
         <div className="setup-screen">
           <div className="setup-header">
-            <h2 className="setup-title">動画用のフレームを選ぶ</h2>
+            <h2 className="setup-title">
+              {setupStep === 'mode' ? 'なにを撮りますか？'
+                : setupStep === 'frame' ? 'フレームを選ぶ'
+                : 'こまかい設定'}
+            </h2>
             {backTo && <button className="setup-close-btn" onClick={() => setScreen(backTo)} title="もどる">←</button>}
           </div>
           
           <div className="setup-content">
-            <div className="hand-setting">
-              <label><input type="radio" name="hand" value="right" checked={hand === 'right'} onChange={() => setHand('right')} /> 右</label>
-              <label><input type="radio" name="hand" value="left" checked={hand === 'left'} onChange={() => setHand('left')} /> 左</label>
-            </div>
-
-            {/* オンボーディング（アプリの紹介） */}
-            <div className="setup-onboarding">
-              <h2>💖 あなたのスマホが「平成のプリクラ」に！</h2>
-              <div className="onboarding-features">
-                <div className="onboarding-item">
-                  <span className="onboarding-icon">📸</span>
-                  <p><strong>カメラONですぐ遊べる！</strong><br/>インカメ・外カメを使ってリアルタイムに盛ろう！</p>
-                </div>
-                <div className="onboarding-item">
-                  <span className="onboarding-icon">✨</span>
-                  <p><strong>フレームで一気にエモく</strong><br/>平成レトロなフレームを気分で着せ替え！</p>
-                </div>
-                <div className="onboarding-item">
-                  <span className="onboarding-icon">🎬</span>
-                  <p><strong>しかも、動画にもできる！</strong><br/>写真だけじゃない！スタンプ感覚でデコりながらエモい動画を作ろう！</p>
-                </div>
-              </div>
-            </div>
-
-            {/* 何を撮るか決めるエリア（一番上） */}
+            {/* ① なにを撮りますか？ 選ぶまで他の設定は出さない。
+                利き手とアプリの紹介文は、ここでは出さない（毎回読むものではない）。
+                利き手は「その他の設定」へ移した（2026-08-13、伊波さん） */}
+            {setupStep === 'mode' && (
             <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
+              <h3 className="setup-section-title">なにを撮りますか？</h3>
               <div className="source-picker">
                 <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
                   <span className="source-icon">🤳</span>
@@ -998,18 +990,22 @@ function App() {
                   <button className={loopVideo ? 'on' : ''} onClick={() => setLoopVideo(true)}>ループする🔁</button>
                 </div>
               )}
+              {/* 選べていないうちは先へ進ませない。押せないボタンを出すより、
+                  選んだ瞬間に出すほうが「次に何をするか」が分かる */}
+              {(camOn || videoSrc) && (
+                <button
+                  className="start-btn"
+                  style={{ marginTop: 16 }}
+                  onClick={() => setSetupStep('frame')}
+                >つぎへ：フレームを選ぶ →</button>
+              )}
             </div>
+            )}
 
+            {/* ② フレーム選び。ここが主役 */}
+            {setupStep === 'frame' && (
             <div className="setup-section highlight-section">
-              <h3 className="setup-section-title">✨ 2. フレームを選んでエモく！</h3>
-
-              <div style={{ marginBottom: '12px', padding: '10px', background: 'rgba(168, 85, 247, 0.1)', borderLeft: '3px solid #a855f7', borderRadius: '4px' }}>
-                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.4', color: '#e2e8f0' }}>
-                  <strong>みんながクリエイター！✨</strong><br/>
-                  ※AIと一緒に簡単に自作フレームが作れます<br/>
-                  素敵なオリジナルフレームや、おもしろフレームなど、あなたが作った作品をSNSで見れるのを楽しみにしています♡
-                </p>
-              </div>
+              <h3 className="setup-section-title">フレームを選ぶ</h3>
 
 
               <div className="frame-picker" style={{ '--tile-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}>
@@ -1060,6 +1056,27 @@ function App() {
                   </button>
                 ))}
               </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                <button
+                  className="start-btn"
+                  style={{ flex: '0 0 auto', background: 'rgba(255,255,255,0.12)' }}
+                  onClick={() => setSetupStep('mode')}
+                >← もどる</button>
+                <button
+                  className="start-btn"
+                  style={{ flex: 1 }}
+                  onClick={() => setSetupStep('more')}
+                >こまかい設定 →</button>
+              </div>
+            </div>
+            )}
+
+            {/* ③ その他の設定。普段は開かなくていいものを全部ここへ */}
+            {setupStep === 'more' && (
+            <>
+            <div className="hand-setting">
+              <label><input type="radio" name="hand" value="right" checked={hand === 'right'} onChange={() => setHand('right')} /> 右</label>
+              <label><input type="radio" name="hand" value="left" checked={hand === 'left'} onChange={() => setHand('left')} /> 左</label>
             </div>
 
             {/* 音は3つに固定。ファイルの読み込みは廃止した（08cf11c「かんたん化」）。
@@ -1233,17 +1250,29 @@ function App() {
               ))}
             </div>
 
+            <button
+              className="start-btn"
+              style={{ marginTop: 16, background: 'rgba(255,255,255,0.12)' }}
+              onClick={() => setSetupStep('frame')}
+            >← フレーム選びにもどる</button>
+
             <div style={{ textAlign: 'center', padding: '24px 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
               <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
-                ©２０２６CUBICENGINEstudio　
+                ©２０２６CUBICENGINEstudio
               </a>
             </div>
+            </>
+            )}
           </div>
-          <div className="setup-footer">
-            <button className="start-btn" onClick={() => setScreen('video')}>
-              この設定で撮る！
-            </button>
-          </div>
+          {/* 撮りに行くボタンは、なにを撮るか決まってから出す。
+              決まっていないのに押せると、真っ黒の画面へ進んでしまう */}
+          {(camOn || videoSrc) && (
+            <div className="setup-footer">
+              <button className="start-btn" onClick={() => setScreen('video')}>
+                この設定で撮る！
+              </button>
+            </div>
+          )}
         </div>
       )}
 
