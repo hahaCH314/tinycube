@@ -560,3 +560,19 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
+
+/* --- タイルの形は「いま選んでいる形」に合わせる ---------------------------
+   ⚠️ .frame-tile が aspect-ratio: 3/4（縦長）で固定されていて、
+   横（16:9）を選んでもタイルが縦長のままだった。そのため1枚の絵が
+   上下に潰れ、**何枚も詰まっているように見えていた**
+   （2026-08-13、伊波さん「コレじゃ選べないでしょ」）。 */
+.setup-content .frame-picker .frame-tile {
+  aspect-ratio: var(--tile-ar, 3 / 4);
+}
+
+/* 絵は切らずに全部見せる。切ると何の枠か分からない */
+.setup-content .frame-picker .frame-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

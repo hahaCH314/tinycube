@@ -56,8 +56,6 @@ export const FRAMES: Frame[] = [
 
 
 
-  // --- v0 生成フレーム（9スライス） ---
-  { id: 'v0_shibuya_decora', name: '渋谷デコラ', file: './frames/shibuya_decora.svg', anchor: 'full', slice: { t: 240, r: 240, b: 240, l: 240 } },
 
   // --- 812CMcube 追加分（2026-08-12） ---
   { id: 'frame_01',         name: 'E9',                 file: './frames/frame_01.webp',         anchor: 'full', faceHole: { x: 33.8, y: 11.7, w: 34.3, h: 24.7 } },
