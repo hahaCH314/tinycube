@@ -972,7 +972,10 @@ function App() {
                 <b>CMCUBE</b>
               </div>
               <p className="promo-lead">{t('guide_promo_lead')}</p>
-              <ul className="promo-points promo-fold">
+              {/* promo-fold（max-height 7.6em で折り畳む）を外した。
+                  4項目しか無いのに3行で切られ、最後の「枠は30種…」が
+                  途中で消えていた（2026-08-13、伊波さん「CMCUBE説明欠けてる」） */}
+              <ul className="promo-points">
                 <li>{t('guide_promo_p1')}</li>
                 <li>{t('guide_promo_p2')}</li>
                 <li>{t('guide_promo_p3')}</li>
