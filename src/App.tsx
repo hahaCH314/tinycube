@@ -338,7 +338,8 @@ function App() {
   const [burstNo, setBurstNo] = useState<number | null>(null);
   // 写真に乗せる落書き。プリクラの落書き機能を静止画のスタンプとして出す。
   // 音は鳴らさない（2026-08-14、伊波さん「エフェクト音無し」）
-  type Deco = { id: number; shot: number; kind: 'text' | 'stamp'; value: string; x: number; y: number; size: number; color: string };
+  // angle は度。font は文字だけが持つ（スタンプは絵文字なので効かない）
+  type Deco = { id: number; shot: number; kind: 'text' | 'stamp'; value: string; x: number; y: number; size: number; color: string; angle: number; font?: string };
   const [decos, setDecos] = useState<Deco[]>([]);
   const decoSeq = useRef(0);
   // 写真のテキスト。動画側の「出現の仕方」は静止画では意味がないので持たず、
@@ -346,8 +347,22 @@ function App() {
   // 色変更増やす。手描きフォントにするほうが当時のプリクラ再現率上がる」）
   const [photoText, setPhotoText] = useState('');
   const [photoTextColor, setPhotoTextColor] = useState('#ff4da6');
-  // 当時のプリクラは手描き風の文字。ここはゴシックに戻さないこと
-  const PHOTO_FONT = '"Yusei Magic", "Klee One", "Hachi Maru Pop", cursive';
+  // 当時のプリクラは手描き風の文字。ここはゴシックに戻さないこと。
+  // 平成のギャル文字は「まるっこくて太い」のが肝
+  // （2026-08-14、伊波さん「フォントは平成ギャルのフォント」）。
+  // Yusei Magic はサインペン風で線が細く、ギャルにはならないので主役から外した
+  // 2種類だけにする。並べすぎると選ぶのが仕事になる
+  // （2026-08-14、伊波さん「フォント2種類にできない？」）。
+  // 残したのは平成ギャルの2本柱。細い線のサインペン系は外した
+  const PHOTO_FONTS = [
+    { id: 'maru', name: 'まるもじ', css: '"Hachi Maru Pop", cursive' },
+    { id: 'pop',  name: 'ぷっくり', css: '"Mochiy Pop One", sans-serif' },
+  ] as const;
+  const [photoFontId, setPhotoFontId] = useState<string>('maru');
+  const PHOTO_FONT = PHOTO_FONTS.find(f => f.id === photoFontId)?.css ?? PHOTO_FONTS[0].css;
+  // 文字の傾き。プリクラの落書きは斜めに入れるものなので、角度が要る
+  // （2026-08-14、伊波さん「文字入れの角度が効かない」）
+  const [photoAngle, setPhotoAngle] = useState(0);
   const TEXT_COLORS = ['#ff4da6', '#ffffff', '#000000', '#ffe14d', '#4dd2ff', '#7cff4d', '#ff6b4d', '#c14dff'];
   const STAMPS = ['💖', '⭐', '🌟', '✨', '🎀', '🌈', '🍓', '🧸', '👑', '🦄', '🌸', '💎', '🍭', '☁️', '🐰', '🎵'];
   // 「同意してはじめる」を押したら、まっすぐフレーム選びへ。
@@ -725,18 +740,23 @@ function App() {
           g.save();
           g.textAlign = 'center';
           g.textBaseline = 'middle';
+          // 画面と同じ順番で、寄せてから回す。ここを合わせないと
+          // 画面で見た位置と保存した位置がずれる
+          g.translate(px, py);
+          if (d.angle) g.rotate(d.angle * Math.PI / 180);
           if (d.kind === 'text') {
-            g.font = `700 ${size}px ${PHOTO_FONT}`;
+            g.font = `700 ${size}px ${d.font ?? PHOTO_FONT}`;
             // 白い服にも黒い髪にも乗るよう、必ず縁を付ける
             g.lineWidth = Math.max(2, size * 0.14);
             g.strokeStyle = d.color === '#ffffff' ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.9)';
             g.lineJoin = 'round';
-            g.strokeText(d.value, px, py);
+            // translate 済みなので原点に描く
+            g.strokeText(d.value, 0, 0);
             g.fillStyle = d.color;
-            g.fillText(d.value, px, py);
+            g.fillText(d.value, 0, 0);
           } else {
             g.font = `${size}px sans-serif`;
-            g.fillText(d.value, px, py);
+            g.fillText(d.value, 0, 0);
           }
           g.restore();
         }
@@ -816,6 +836,9 @@ function App() {
       y: kind === 'text' ? 78 : 50,
       size: kind === 'text' ? 9 : 14,
       color: photoTextColor,
+      // 文字はいま選んでいる傾きと書体で出す。スタンプはまっすぐ
+      angle: kind === 'text' ? photoAngle : 0,
+      font: kind === 'text' ? PHOTO_FONT : undefined,
     }]);
   };
 
@@ -1684,9 +1707,11 @@ function App() {
                   style={{
                     left: `${d.x}%`,
                     top: `${d.y}%`,
+                    // 中央へ寄せてから回す。回してから寄せると位置がずれる
+                    transform: `translate(-50%, -50%) rotate(${d.angle}deg)`,
                     fontSize: `${d.size}cqw`,
                     color: d.kind === 'text' ? d.color : undefined,
-                    fontFamily: d.kind === 'text' ? PHOTO_FONT : undefined,
+                    fontFamily: d.kind === 'text' ? (d.font ?? PHOTO_FONT) : undefined,
                     // 白い文字は白い服に沈むので、必ず縁を付ける
                     WebkitTextStroke: d.kind === 'text'
                       ? `0.08em ${d.color === '#ffffff' ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.9)'}`
@@ -1728,9 +1753,6 @@ function App() {
                 </button>
               )))}
             </div>
-            {/* 小さいほうを押せば入れ替わる、と言葉で出す。
-                押せることが見た目だけでは伝わらない */}
-            <p className="shot-strip-note">下の写真をタップすると、上と入れ替わります</p>
 
             {photoStep === 'text' && (
               <div className="setup-section highlight-section">
@@ -1745,6 +1767,62 @@ function App() {
                     onChange={e => setPhotoText(e.target.value)}
                   />
                 </div>
+
+                {/* 書体。見本をその書体で出す。名前だけ並べても違いが分からない */}
+                <h3 className="setup-section-title" style={{ marginTop: 16 }}>文字の形</h3>
+                <div className="font-picker">
+                  {PHOTO_FONTS.map(f => (
+                    <button
+                      key={f.id}
+                      className={`font-btn ${photoFontId === f.id ? 'on' : ''}`}
+                      style={{ fontFamily: f.css }}
+                      onClick={() => {
+                        setPhotoFontId(f.id);
+                        // 置いてある文字も一緒に変える。置き直しをさせない
+                        setDecos(prev => prev.map(d =>
+                          d.shot === activeShot && d.kind === 'text' ? { ...d, font: f.css } : d));
+                      }}
+                    >{f.name}</button>
+                  ))}
+                </div>
+
+                {/* 傾き。プリクラの落書きは斜めに入れるもの */}
+                <h3 className="setup-section-title" style={{ marginTop: 16 }}>文字の傾き</h3>
+                <div className="angle-row">
+                  <button
+                    className="zoom-btn"
+                    onClick={() => setPhotoAngle(a => {
+                      const n = Math.max(-45, a - 5);
+                      setDecos(prev => prev.map(d =>
+                        d.shot === activeShot && d.kind === 'text' ? { ...d, angle: n } : d));
+                      return n;
+                    })}
+                  >↺</button>
+                  <input
+                    className="zoom-range"
+                    type="range"
+                    min={-45}
+                    max={45}
+                    step={1}
+                    value={photoAngle}
+                    onChange={e => {
+                      const n = Number(e.target.value);
+                      setPhotoAngle(n);
+                      setDecos(prev => prev.map(d =>
+                        d.shot === activeShot && d.kind === 'text' ? { ...d, angle: n } : d));
+                    }}
+                  />
+                  <button
+                    className="zoom-btn"
+                    onClick={() => setPhotoAngle(a => {
+                      const n = Math.min(45, a + 5);
+                      setDecos(prev => prev.map(d =>
+                        d.shot === activeShot && d.kind === 'text' ? { ...d, angle: n } : d));
+                      return n;
+                    })}
+                  >↻</button>
+                </div>
+                <p className="sheet-note" style={{ textAlign: 'center' }}>{photoAngle}度</p>
 
                 <h3 className="setup-section-title" style={{ marginTop: 16 }}>文字の色</h3>
                 <div className="color-picker">

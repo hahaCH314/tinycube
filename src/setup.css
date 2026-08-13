@@ -809,8 +809,10 @@
 }
 
 /* 乗せた飾り。位置は割合で持っているので、画面の大きさが変わってもずれない */
+/* transform は App.tsx が inline で渡す（傾きを含むため）。
+   ここで transform を書くと角度が打ち消される */
 .deco {
-  position: absolute; transform: translate(-50%, -50%);
+  position: absolute;
   cursor: grab; user-select: none; line-height: 1.2;
   white-space: nowrap; touch-action: none;
 }
@@ -836,8 +838,8 @@
    --shot-ar は App.tsx が渡す。
    待機なので大きくしない（主役は上の1枚） */
 .shot-thumb {
-  position: relative; flex: 0 0 auto; width: 27%;
-  border-radius: 10px; overflow: hidden;
+  position: relative; flex: 0 0 auto; width: 18%;
+  border-radius: 8px; overflow: hidden;
   border: 2px solid rgba(255,255,255,0.2); background: #000; padding: 0;
   aspect-ratio: var(--shot-ar, 9 / 16);
 }
@@ -922,8 +924,20 @@
   letter-spacing: 0.04em;
 }
 
-/* 入れ替えられることを言葉で伝える。見た目だけでは押せると分からない */
-.shot-strip-note {
-  margin: -6px 0 14px; text-align: center;
-  font-size: 0.72rem; color: #a9bad2; line-height: 1.4;
+/* 書体えらび。見本をその書体そのもので出す。
+   名前だけ並べても、どれがどんな形か分からない */
+.font-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.font-btn {
+  flex: 1 1 auto; min-width: 72px;
+  padding: 10px 8px; border-radius: 12px;
+  font-size: 0.92rem; color: #fff;
+  background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
 }
+.font-btn.on {
+  border-color: #66e7ff; color: #66e7ff;
+  background: rgba(102, 231, 255, 0.14);
+  box-shadow: 0 0 12px rgba(102, 231, 255, 0.35);
+}
+
+/* 傾き。ズームと同じ形にして、操作の作法を揃える */
+.angle-row { display: flex; gap: 8px; align-items: center; }
