@@ -1152,12 +1152,18 @@ function App() {
                     「小窓がなぜ必要か？老眼の人向けにフレームを見て
                     決めてもらうため」） */}
                 })()}
-                {frameId !== null && (
-                  <button className="preview-ok-btn" onClick={() => setSetupStep('telop')}>
-                    この設定でOK
-                  </button>
-                )}
               </div>
+
+              {/* 小窓の**下**に出す。中に重ねると、せっかく選んだ絵の上に
+                  かぶって見えなくなる（2026-08-13、伊波さん
+                  「小窓の中じゃなく、下に出る」） */}
+              {frameId !== null && (
+                <button
+                  className="start-btn"
+                  style={{ width: '100%', marginBottom: 12 }}
+                  onClick={() => setSetupStep('telop')}
+                >この設定でOK</button>
+              )}
 
               {/* 縦・横。この下の見本一覧が縦横で入れ替わるので、真上に置く。
                   小さくして、主役（小窓）の邪魔をしないようにする */}
