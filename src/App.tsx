@@ -990,7 +990,7 @@ function App() {
                   <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
                 </button>
                 <p style={{ margin: '8px 0 0', fontSize: '12px', lineHeight: 1.5, color: '#e2e8f0', textAlign: 'center' }}>
-                  ゲームplayの動画などを予め録画してご用意いただきアップロードしてください
+                  ゲームplayの動画などを予め録画してご用意いただき<br />アップロードしてください
                 </p>
               </div>
               {videoSrc && (
