@@ -821,22 +821,38 @@ function App() {
             disabled={!videoSrc && !camOn}
             title={t('btn_photo')}
           >📷</button>
-          <button
-            className={`record-btn-round ${isRecording ? 'recording' : ''} ${isPaused ? 'paused' : ''}`}
-            onClick={toggleRecording}
-            title={isRecording ? t('btn_stop') : t('btn_record')}
-          >
-            <div className="record-inner"></div>
-          </button>
-          {/* 一時停止。止めているあいだはファイルに入らない */}
-          <button
-            className={`pause-btn-round ${isPaused ? 'on' : ''}`}
-            onClick={togglePause}
-            disabled={!isRecording || !canPause}
-            title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
-          >
-            {isPaused ? '▶' : '❚❚'}
-          </button>
+          {/* 録画スタート。撮っている間は出さない（停止と別のボタンにする）。
+              前は赤い丸1つが押すたびに意味を変えていて、見ても始まるのか
+              止まるのか分からなかった（2026-08-13、伊波さん「停止ボタン追加」） */}
+          {!isRecording && (
+            <button
+              className="record-btn-round"
+              onClick={toggleRecording}
+              title={t('btn_record')}
+            >
+              <div className="record-inner"></div>
+            </button>
+          )}
+          {/* 撮っている間だけ「一時停止」と「停止」を出す */}
+          {isRecording && (
+            <>
+              <button
+                className={`pause-btn-round ${isPaused ? 'on' : ''}`}
+                onClick={togglePause}
+                disabled={!canPause}
+                title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
+              >
+                {isPaused ? '▶' : '❚❚'}
+              </button>
+              <button
+                className="record-btn-round recording"
+                onClick={toggleRecording}
+                title={t('btn_stop')}
+              >
+                <div className="record-inner"></div>
+              </button>
+            </>
+          )}
         </footer>
         {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
         {/* シャッターの光。CSS なので写真にも動画にも入らない */}
@@ -1025,6 +1041,14 @@ function App() {
             <div className="setup-section highlight-section">
               {/* 先に縦・横を決める。フレームは形で見え方が変わるので、
                   形が決まってから選ぶほうが分かりやすい（2026-08-13、伊波さん） */}
+              {/* 横向きの案内は一番上に出す。形を選んだ後だと、
+                  スクロールで流れて読まれない（2026-08-13、伊波さん
+                  「横フレーム案内上部へ」） */}
+              {(srcIsWide || shape === 'landscape') && (
+                <p className="sheet-note" style={{ marginTop: 0, marginBottom: 12 }}>
+                  {t('turn_hint')}
+                </p>
+              )}
               <h3 className="setup-section-title">{t('setting_shape')}</h3>
               {srcIsWide && (
                 <p className="sheet-note">{t('setting_shape_wide_note')}</p>
@@ -1122,6 +1146,26 @@ function App() {
                   </button>
                 ))}
               </div>
+
+              {/* テロップの言葉。奥に隠すと「自分の言葉に書き換えられる」ことに
+                  気づかないまま終わる。フレームと同じ段に置いて、撮りに行く前に
+                  必ず目に入るようにする（2026-08-13、伊波さん） */}
+              <h3 className="setup-section-title" style={{ marginTop: 24 }}>{t('setting_telop')}</h3>
+              <p className="sheet-note">{t('setting_telop_note')}</p>
+              <div className="telop-inputs">
+                {myTelops.map((text, i) => (
+                  <div className="telop-row" key={i}>
+                    <span className="slot-no telop">{i + 1}</span>
+                    <input
+                      className="telop-input"
+                      value={text}
+                      maxLength={20}
+                      onChange={e => setTelop(i, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+
               {/* フレームまで決まれば、あとは撮るだけ。「こまかい設定」は
                   いじりたい人だけが押すものなので、目立たせない。
                   上にフレームが映っているので「この設定で」が何を指すか分かる */}
@@ -1192,21 +1236,9 @@ function App() {
               <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
             </div>
 
-            <h3 className="setup-section-title">{t('setting_telop')}</h3>
-            <p className="sheet-note">{t('setting_telop_note')}</p>
-            <div className="telop-inputs">
-              {myTelops.map((text, i) => (
-                <div className="telop-row" key={i}>
-                  <span className="slot-no telop">{i + 1}</span>
-                  <input
-                    className="telop-input"
-                    value={text}
-                    maxLength={20}
-                    onChange={e => setTelop(i, e.target.value)}
-                  />
-                </div>
-              ))}
-            </div>
+            {/* テロップの言葉はフレーム選びの段へ移した。
+                奥に隠すと「書き換えられる」ことに気づかない
+                （2026-08-13、伊波さん「ちゃんとテキスト修正案内入れなきゃ」） */}
 
             <h3 className="setup-section-title">{t('setting_frame')}</h3>
 
