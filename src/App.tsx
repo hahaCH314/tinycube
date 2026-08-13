@@ -333,6 +333,9 @@ function App() {
   // 写真の編集は2段。テキストを決めてから、スタンプを乗せる
   const [photoStep, setPhotoStep] = useState<'text' | 'deco'>('text');
   const [isBursting, setIsBursting] = useState(false);
+  // いま何枚目を撮っているか。画面に大きく出す。
+  // 出さないと、3回光っても2回にしか見えない（2026-08-14、伊波さん）
+  const [burstNo, setBurstNo] = useState<number | null>(null);
   // 写真に乗せる落書き。プリクラの落書き機能を静止画のスタンプとして出す。
   // 音は鳴らさない（2026-08-14、伊波さん「エフェクト音無し」）
   type Deco = { id: number; shot: number; kind: 'text' | 'stamp'; value: string; x: number; y: number; size: number; color: string };
@@ -669,18 +672,27 @@ function App() {
         await new Promise(r => setTimeout(r, 1000));
       }
       setCountdown(null);
+      // 3枚。**毎回「1・2・3」と数字を出してから撮る。**
+      // 数えずに続けて光らせると、3回光っても2回にしか見えない
+      // （2026-08-14、伊波さん「連写が2回、写真は3枚」）。
+      // 何枚目を撮っているかが見えていれば、数を取り違えようがない
       for (let i = 0; i < 3; i++) {
+        setBurstNo(i + 1);
+        // 構える間。1枚目も含めて毎回置く（間が無いと連続の1枚に見える）
+        await new Promise(r => setTimeout(r, 700));
         setFlash(true);
-        setTimeout(() => setFlash(false), 200);
+        // 光っているあいだに撮ると、画面の白がそのまま写る。
+        // 光は CSS なので canvas には乗らないが、撮る側は光より先に済ませる
         taken.push(c.toDataURL('image/jpeg', 0.92));
-        // 3枚が全部同じ顔にならないよう、間を空ける。
-        // 最後の1枚のあとは待たない
-        if (i < 2) {
-          await new Promise(r => setTimeout(r, 900));
-        }
+        await new Promise(r => setTimeout(r, 260));
+        setFlash(false);
+        // 撮れたことが分かるように、次へ行く前に必ず間を空ける
+        await new Promise(r => setTimeout(r, 420));
       }
+      setBurstNo(null);
     } finally {
       setCountdown(null);
+      setBurstNo(null);
       setIsBursting(false);
     }
     setShots(taken);
@@ -998,6 +1010,8 @@ function App() {
         {camInfo && <div className="cam-info">{camInfo}</div>}
         {saveMessage && <div className="cam-info" style={{ background: 'rgba(255, 50, 150, 0.9)', fontWeight: 'bold' }}>{saveMessage}</div>}
         {countdown !== null && <div className="countdown">{countdown}</div>}
+        {/* 何枚目を撮っているか。3枚撮ったことが数で分かるようにする */}
+        {burstNo !== null && <div className="burst-no">{burstNo} / 3</div>}
         {shape === 'landscape' && portraitDevice ? (
           <div className="turn-hint">（横フレームが選択されています。<br/>スマホを横にしてください。）</div>
         ) : startHint && !isRecording ? (
@@ -1124,11 +1138,11 @@ function App() {
               <button
                 className={`cam-face-btn ${camFront ? 'on' : ''}`}
                 onClick={() => startCam(true)}
-              >🤳 自分</button>
+              >🤳 内カメ</button>
               <button
                 className={`cam-face-btn ${!camFront ? 'on' : ''}`}
                 onClick={() => startCam(false)}
-              >📷 前</button>
+              >📷 外カメ</button>
             </div>
             <div className="cam-tune-row zoom">
               <button className="zoom-btn" onClick={() => setCamZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))}>−</button>
@@ -1152,6 +1166,14 @@ function App() {
         {/* シャッターの光。CSS なので写真にも動画にも入らない */}
         {flash && <div className="shutter-flash" />}
 
+        {/* 左右の柱（音・テロップ）は動画のときだけ。
+            写真では飾りを撮ったあとに乗せるので、撮影中に押すものが無い。
+            出したままだとズームの操作パネルに柱が重なって、ズームを押した
+            つもりで音のボタンを押すことになる（2026-08-14、伊波さん
+            「ズーム機能効いてない、ボタン被る」「写真の時は、テキスト
+            エフェクトと音ボタンもいらないね」） */}
+        {captureKind !== 'photo' && (
+        <>
         {/* 左側のエフェクトパネル */}
         <div className="side-panel left" data-role="sound">
           <div className="panel-scroll">
@@ -1201,6 +1223,8 @@ function App() {
             })}
           </div>
         </div>
+        </>
+        )}
       </div>
 
       {/* 開いたときのお願い。平成大プリクラの入口＝ここから枠を選びにいく */}
@@ -1356,8 +1380,11 @@ function App() {
                 </button>
                 <button className={`source-btn ${camOn && !camFront ? 'on' : ''}`} onClick={() => startCam(false)}>
                   <span className="source-icon">📷</span>
-                  <span className="source-text">前を写す</span>
-                  <span className="source-sub">背面side（アウトカメラ）</span>
+                  {/* 「前を写す」だと自分の前なのか画面の前なのか紛れる。
+                      呼び名のほうを主にする（2026-08-14、伊波さん
+                      「外カメの前の表記は外カメで」） */}
+                  <span className="source-text">外カメ</span>
+                  <span className="source-sub">まわりの景色を写す</span>
                 </button>
               </div>
 
@@ -1679,25 +1706,31 @@ function App() {
               ))}
             </div>
 
-            {/* 小さい2枚。タップで大きいほうと入れ替える
-                （2026-08-14、伊波さん「タップでデコる。大きい画像の所へ自由に入れ替え」）。
-                3枚とも出す（撮ったものが全部見えていないと選べない） */}
+            {/* 待機の2枚。**いま出している1枚はここに出さない。**
+                大きく出ているものを小さくもう一度並べると、同じ絵が2つ出て
+                どちらを触ればいいのか分からなくなる（2026-08-14、伊波さん
+                「実際は３まいだから待機させてる写真は小さきく、
+                出してる1枚待機2枚」）。
+                タップで大きいほうと入れ替える */}
             <div
               className="shot-strip"
               style={{ '--shot-ar': shape === 'portrait' ? '9 / 16' : '16 / 9' } as React.CSSProperties}
             >
-              {shots.map((s, i) => (
+              {shots.map((s, i) => (i === activeShot ? null : (
                 <button
                   key={i}
-                  className={`shot-thumb ${i === activeShot ? 'on' : ''}`}
+                  className="shot-thumb"
                   onClick={() => setActiveShot(i)}
                 >
                   <img src={s} alt={`${i + 1}枚目`} />
                   <span className="shot-no">{i + 1}</span>
                   {decos.some(d => d.shot === i) && <span className="shot-dot">●</span>}
                 </button>
-              ))}
+              )))}
             </div>
+            {/* 小さいほうを押せば入れ替わる、と言葉で出す。
+                押せることが見た目だけでは伝わらない */}
+            <p className="shot-strip-note">下の写真をタップすると、上と入れ替わります</p>
 
             {photoStep === 'text' && (
               <div className="setup-section highlight-section">

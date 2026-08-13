@@ -735,11 +735,17 @@
 }
 
 /* ---- 撮影画面のカメラ調整 ---------------------------------------- */
-/* 録画ボタンの上に浮かせる。撮る前にしか触らないので、録画中は出さない */
+/* 録画ボタンの上に浮かせる。撮る前にしか触らないので、録画中は出さない。
+   **z-index と幅を下げないこと。** 左右の柱（音・テロップ）は下端まで
+   伸びていて、幅を広く取るとその上に重なる。重なった側が上に来ると、
+   ズームの＋−を押したつもりで音のボタンが鳴る（2026-08-14、伊波さん
+   「ズーム機能効いてない、ボタン被る」）。
+   写真のときは柱を出さないようにしたが、動画のときは柱が残るので、
+   ここでは柱（幅62px）の内側に収まる幅にして、必ず手前へ出す */
 .cam-tune {
   position: absolute; left: 50%; transform: translateX(-50%);
-  bottom: 128px; z-index: 40;
-  width: min(320px, calc(100% - 32px));
+  bottom: 128px; z-index: 60;
+  width: min(248px, calc(100% - 148px));
   display: flex; flex-direction: column; gap: 8px;
   padding: 10px 12px; border-radius: 14px;
   background: rgba(8, 4, 24, 0.72);
@@ -787,14 +793,19 @@
   touch-action: none;              /* 指で飾りを動かすので、ここでは画面を送らせない */
   border: 1px solid rgba(255,255,255,0.16);
   /* 縦長の写真だと画面からはみ出す。下の操作パネルが見えなくなるので、
-     高さの上限を切って、その中に収める */
-  max-height: 52dvh;
+     高さの上限を切って、その中に収める。
+     **max-height だけを頼りにしないこと。** 親が縦の flex なので、
+     高さは中身（img）が決めた実寸がそのまま要る。img 側にも同じ上限を
+     置いて、写真自身に縮んでもらう */
+  max-height: 46dvh;
   display: flex; align-items: center; justify-content: center;
 }
-/* 写真の形（縦・横）はそのまま。箱の中に収まるまで縮める */
+/* 写真の形（縦・横）はそのまま。箱の中に収まるまで縮める。
+   縦で撮ったときは高さで、横で撮ったときは幅で頭打ちになる */
 .shot-big > img {
-  max-width: 100%; max-height: 52dvh;
+  max-width: 100%; max-height: 46dvh;
   width: auto; height: auto; display: block;
+  object-fit: contain;
 }
 
 /* 乗せた飾り。位置は割合で持っているので、画面の大きさが変わってもずれない */
@@ -815,12 +826,18 @@
   -webkit-text-stroke: 0;
 }
 
-/* 小さい3枚。タップで大きいほうと入れ替える */
-.shot-strip { display: flex; gap: 8px; margin-bottom: 14px; }
+/* 待機の2枚。大きい1枚の下に、小さく並べる。
+   タップで大きいほうと入れ替わる */
+.shot-strip {
+  display: flex; gap: 10px; margin-bottom: 14px;
+  justify-content: center;
+}
 /* 形は撮った写真に合わせる。縦のときに 16:9 の枠へ入れると顔が切れる。
-   --shot-ar は App.tsx が渡す */
+   --shot-ar は App.tsx が渡す。
+   待機なので大きくしない（主役は上の1枚） */
 .shot-thumb {
-  position: relative; flex: 1; border-radius: 10px; overflow: hidden;
+  position: relative; flex: 0 0 auto; width: 27%;
+  border-radius: 10px; overflow: hidden;
   border: 2px solid rgba(255,255,255,0.2); background: #000; padding: 0;
   aspect-ratio: var(--shot-ar, 9 / 16);
 }
@@ -854,15 +871,30 @@
   transform: scale(1.08);
 }
 
-/* スタンプ。プリクラの落書きにあたるもの。音は鳴らさない */
+/* スタンプ。プリクラの落書きにあたるもの。音は鳴らさない。
+   **縦に積まないこと。** 2段のグリッドにすると縦に場所を取り、
+   上の写真が画面の外へ押し出されて、貼る先を見ながら選べなくなる
+   （2026-08-14、伊波さん「デコるスタンプスクロールだとデコれないよ
+   横にならべる？」）。横1列にして、はみ出したぶんは横へ流す */
 .stamp-picker {
-  display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px;
+  display: flex; gap: 8px;
+  overflow-x: auto; overflow-y: hidden;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 .stamp-btn {
-  aspect-ratio: 1; border-radius: 10px; font-size: 1.4rem; line-height: 1; padding: 0;
+  flex: 0 0 auto;
+  width: 52px; height: 52px;
+  border-radius: 12px; font-size: 1.7rem; line-height: 1; padding: 0;
   background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
 }
 .stamp-btn:active { transform: scale(0.92); }
+/* 横に流れることが分かるように、細い筋を出す */
+.stamp-picker::-webkit-scrollbar { height: 4px; }
+.stamp-picker::-webkit-scrollbar-thumb {
+  background: rgba(102, 231, 255, 0.5); border-radius: 2px;
+}
 
 /* 保存は終わりの操作。ほかのボタンと同じ色だと見つからない */
 .start-btn.save-btn {
@@ -874,7 +906,24 @@
 /* 編集画面は上下の余白を詰める。写真そのものを大きく見せたい */
 .photo-screen .setup-content { padding-top: 8px; }
 
-/* 画面が小さいときはスタンプを2段に */
+/* 画面が小さいときはスタンプを少し小さく。段は増やさない
+   （縦に積むと写真が押し出される） */
 @media (max-width: 380px) {
-  .stamp-picker { grid-template-columns: repeat(6, 1fr); }
+  .stamp-btn { width: 46px; height: 46px; font-size: 1.5rem; }
+}
+
+/* 何枚目を撮っているか。数えずに光らせるだけだと、3回光っても
+   2回にしか見えない（2026-08-14、伊波さん「連写が2回、写真は3枚」） */
+.burst-no {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 50; pointer-events: none;
+  font-size: 3.2rem; font-weight: 900; color: #fff;
+  text-shadow: 0 0 18px rgba(255, 79, 163, 0.95), 0 4px 12px rgba(0,0,0,0.7);
+  letter-spacing: 0.04em;
+}
+
+/* 入れ替えられることを言葉で伝える。見た目だけでは押せると分からない */
+.shot-strip-note {
+  margin: -6px 0 14px; text-align: center;
+  font-size: 0.72rem; color: #a9bad2; line-height: 1.4;
 }
