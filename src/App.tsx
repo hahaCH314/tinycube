@@ -1890,14 +1890,17 @@ function App() {
                     「言葉を入れる」だと入力欄にしか見えず、それが伝わらない。
                     スタンプが作れる場所だと先に言う（2026-08-14、伊波さん
                     「テキスト入力（好きな文字でスタンプ作れるよ」） */}
-                <h3 className="setup-section-title">テキスト入力</h3>
-                <p className="sheet-note">好きな文字でスタンプ作れるよ！{'\n'}入れた文字は指でつまんで動かせます</p>
+                {/* 説明は別の行に置かず、入力欄の透かしに入れる。
+                    見出しと説明で2行使うと、そのぶん写真が下へ押される
+                    （2026-08-14、伊波さん「説明じゃなくテクスト入力欄の
+                    透かしに説明」） */}
+                <h3 className="setup-section-title">らくがきスタンプ</h3>
                 <div className="telop-row">
                   <input
                     className="telop-input"
                     value={photoText}
                     maxLength={20}
-                    placeholder="なかよし／たのしかった など"
+                    placeholder="好きな言葉でスタンプ作れるよ"
                     onChange={e => setPhotoText(e.target.value)}
                   />
                 </div>
@@ -1994,10 +1997,13 @@ function App() {
 
             {photoStep === 'deco' && (
               <div className="setup-section highlight-section">
-                {/* スタンプとらくがきを1つの画面で切り替える
+                {/* スタンプと手描きを1つの画面で切り替える
                     （2026-08-14、伊波さん「らくがきスタンプとスタンプ
                     同じ画面で切り替えできるように」）。
-                    別画面に分けると、貼ってから描くたびに行き来することになる */}
+                    別画面に分けると、貼ってから描くたびに行き来することになる。
+                    ここを「らくがき」と呼ばないのは、文字の画面の見出しが
+                    「らくがきスタンプ」になったため。同じ言葉で別のものを
+                    指すと、どちらの話か分からなくなる */}
                 <div className="deco-tabs">
                   <button
                     className={`deco-tab ${!penOn ? 'on' : ''}`}
@@ -2006,7 +2012,7 @@ function App() {
                   <button
                     className={`deco-tab ${penOn ? 'on' : ''}`}
                     onClick={() => setPenOn(true)}
-                  >✏️ らくがき</button>
+                  >✏️ 手描き</button>
                 </div>
 
                 {!penOn ? (
