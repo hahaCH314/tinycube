@@ -231,7 +231,7 @@ const dictJa: I18nDict = {
   setting_telop: 'テロップの言葉',
   setting_telop_note: '5つとも、あなたの言葉です。書き換えると、そのまま動画に出ます。',
   setting_frame: '枠',
-  frame_none: 'なし',
+  frame_none: 'フレームなし',
   frame_crop: '端が欠けます',
 
   alert_load_first: '先に動画を読み込んでください！',
@@ -335,7 +335,7 @@ const dictEn: I18nDict = {
   setting_telop: 'Caption Texts',
   setting_telop_note: 'All five are yours. Change them to display custom text.',
   setting_frame: 'Frames',
-  frame_none: 'None',
+  frame_none: 'No frame',
   frame_crop: 'Edges cropped',
 
   alert_load_first: 'Please load a video first!',

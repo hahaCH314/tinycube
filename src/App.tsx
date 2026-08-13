@@ -1068,7 +1068,7 @@ function App() {
                   style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)' }}
                 >
                   <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
-                  <span style={{ color: '#a855f7' }}>マイフレーム追加</span>
+                  <span style={{ color: '#a855f7', lineHeight: 1.3 }}>マイフレーム<br />追加</span>
                 </button>
                 <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
                 
@@ -1254,7 +1254,7 @@ function App() {
                 style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)' }}
               >
                 <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
-                <span style={{ color: '#a855f7' }}>マイフレーム追加</span>
+                <span style={{ color: '#a855f7', lineHeight: 1.3 }}>マイフレーム<br />追加</span>
               </button>
               <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
               
