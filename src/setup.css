@@ -550,3 +550,35 @@
 .setup-content .frame-preview {
   max-height: 62vh !important;
 }
+
+/* --- レールのボタンは映像の上でも読めること -------------------------------
+   ⚠️ 背景が rgba 0.05〜0.20 と薄く、カメラを全画面にしたら映像に溶けて
+   見えなくなった（2026-08-13、伊波さん「スタンプ透明だと無理、見えない」）。
+   撮りながら押すものなので、**どんな映像の上でも読める**濃さが要る。 */
+.side-panel .effect-btn {
+  background: rgba(12, 8, 32, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* 種類ごとの色は「縁」で出す。塗りつぶしを薄くしない */
+.side-panel .effect-btn.btn-sound { border-color: rgba(53, 240, 255, 0.9); }
+.side-panel .effect-btn.btn-burst { border-color: rgba(255, 61, 139, 0.9); }
+.side-panel .effect-btn.btn-telop { border-color: rgba(169, 107, 255, 0.9); }
+
+/* 押している間ははっきり光らせる */
+.side-panel .effect-btn.on,
+.side-panel .effect-btn:active {
+  background: rgba(255, 61, 139, 0.85);
+  border-color: #fff;
+}
+
+/* 文字も影を付けて、明るい映像の上でも読めるようにする */
+.side-panel .effect-btn .btn-label,
+.side-panel .effect-btn .number-icon {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  font-weight: 800;
+}
