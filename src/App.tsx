@@ -82,6 +82,7 @@ const ZIGZAG = (
 function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [recordedData, setRecordedData] = useState<{blob: Blob, ext: string} | null>(null);
   // 一時停止。止めているあいだは動画も進めない。
   // 録画側を止めるだけだと、再開したときに動画だけ先へ進んでいて話が飛ぶ
   const [isPaused, setIsPaused] = useState(false);
@@ -677,7 +678,7 @@ function App() {
         shape,
         srcAudio: useSrcAudio,
         watermark: unlocked ? null : 'tinyCUBE',
-        onFinish: save,
+        onFinish: (blob, ext) => setRecordedData({ blob, ext }),
         onError: (e) => alert(t('alert_rec_fail') + e.message),
       });
       // 録画開始と同じタイミングで動画も最初から再生する
@@ -907,6 +908,37 @@ function App() {
         </div>
       </div>
 
+      {/* 録画後の保存確認 */}
+      {recordedData && (
+        <div className="manner-screen" style={{ zIndex: 9999 }}>
+          <div className="manner-content" style={{ textAlign: 'center' }}>
+            <h2 className="manner-title">録画完了！</h2>
+            <p className="manner-text" style={{ whiteSpace: 'normal', marginBottom: '24px' }}>
+              動画を保存しますか？
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                className="manner-agree-btn" 
+                style={{ background: '#a855f7', margin: 0, flex: 1 }}
+                onClick={() => {
+                  save(recordedData.blob, recordedData.ext);
+                  setRecordedData(null);
+                }}
+              >
+                保存する
+              </button>
+              <button 
+                className="manner-agree-btn" 
+                style={{ background: '#64748b', margin: 0, flex: 1 }}
+                onClick={() => setRecordedData(null)}
+              >
+                やり直す
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 開いたときのお願い。平成大プリクラの入口＝ここから枠を選びにいく */}
       {screen === 'agree' && (
         <div className="manner-screen">
@@ -974,7 +1006,7 @@ function App() {
       {screen === 'frame' && (
         <div className="setup-screen">
           <div className="setup-header" style={{ position: 'relative' }}>
-            <h2 className="setup-title">フレームを選ぶ</h2>
+            <h2 className="setup-title">＊撮影用のフレームを選ぶ</h2>
             <button 
               onClick={() => {
                 setLang(getLang() === 'ja' ? 'en' : 'ja');
