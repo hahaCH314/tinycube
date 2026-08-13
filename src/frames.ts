@@ -61,22 +61,22 @@ export const FRAMES: Frame[] = [
 
   // --- 812CMcube 追加分（2026-08-12） ---
   { id: 'frame_01',         name: 'E9',                 file: './frames/frame_01.webp',         anchor: 'full', faceHole: { x: 33.8, y: 11.7, w: 34.3, h: 24.7 } },
-  { id: 'frame_02',         name: 'N9',                 file: './frames/frame_02.webp',         anchor: 'full', faceHole: { x: 32.0, y: 20.0, w: 36.0, h: 30.0 } },
+  { id: 'frame_02',         name: 'N9',                 file: './frames/frame_02.webp',         anchor: 'full', faceHole: { x: 28.5, y: 17.5, w: 43.0, h: 39.0 } },
   { id: 'ol9',              name: 'OL9',                file: './frames/ol9.webp',              anchor: 'full', faceHole: { x: 30.1, y: 23.8, w: 39.8, h: 31.0 } },
   // 二人用。自動測定は黒いスカートを一番大きい穴として拾うので、目で見て
   // 顔ふたつ（画面の上側にある同じくらいの大きさの2つ）を選んである
   { id: 'p9',               name: 'P9',                 file: './frames/p9.webp',               anchor: 'full', faceHoles: [{ x: 21.3, y: 13.1, w: 25.0, h: 19.9 }, { x: 53.0, y: 19.2, w: 25.3, h: 23.0 }] },
-  { id: 'frame_05',         name: 'PANK,16',            file: './frames/frame_05.webp',         anchor: 'wide', faceHoles: [{ x: 23.0, y: 27.0, w: 23.0, h: 44.0 }, { x: 53.0, y: 27.0, w: 23.0, h: 44.0 }] },
-  { id: 'frame_06',         name: 'うみ16',              file: './frames/frame_06.webp',         anchor: 'wide', faceHole: { x: 35.0, y: 16.0, w: 30.0, h: 54.0 } },
+  { id: 'frame_05',         name: 'PANK,16',            file: './frames/frame_05.webp',         anchor: 'wide', faceHoles: [{ x: 29.4, y: 17.6, w: 18.0, h: 37.0 }, { x: 56.2, y: 25.4, w: 17.6, h: 28.6 }] },
+  { id: 'frame_06',         name: 'うみ16',              file: './frames/frame_06.webp',         anchor: 'wide', faceHole: { x: 23.5, y: 12.2, w: 52.9, h: 70.3 } },
   { id: 'frame_07',         name: 'アイドルメンズ9',        file: './frames/frame_07.webp',         anchor: 'full', faceHole: { x: 28.3, y: 9.5, w: 43.8, h: 39.6 } },
-  { id: 'frame_08',         name: 'ギャル男16',            file: './frames/frame_08.webp',         anchor: 'wide', faceHoles: [{ x: 26.0, y: 26.0, w: 23.0, h: 44.0 }, { x: 54.0, y: 26.0, w: 23.0, h: 44.0 }] },
+  { id: 'frame_08',         name: 'ギャル男16',            file: './frames/frame_08.webp',         anchor: 'wide', faceHoles: [{ x: 27.5, y: 26.1, w: 17.1, h: 44.9 }, { x: 55.1, y: 26.1, w: 17.1, h: 44.9 }] },
   { id: 'frame_09',         name: 'ヒーロー9',             file: './frames/frame_09.webp',         anchor: 'full', faceHole: { x: 29.8, y: 14.1, w: 34.1, h: 28.5 } },
   { id: 'frame_10',         name: 'ファンシー9',           file: './frames/frame_10.webp',         anchor: 'full' },
-  { id: 'white',            name: '白ギャル16',            file: './frames/white.webp',            anchor: 'wide', faceHoles: [{ x: 25.0, y: 26.0, w: 23.0, h: 44.0 }, { x: 53.0, y: 26.0, w: 23.0, h: 44.0 }] },
-  { id: 'black',            name: '黒ギャル16',            file: './frames/black.webp',            anchor: 'wide', faceHoles: [{ x: 25.0, y: 26.0, w: 23.0, h: 44.0 }, { x: 53.0, y: 26.0, w: 23.0, h: 44.0 }] },
-  { id: 'frame_13',         name: 'sアイドル16',           file: './frames/frame_13.webp',         anchor: 'wide', faceHole: { x: 34.0, y: 16.0, w: 32.0, h: 54.0 } },
+  { id: 'white',            name: '白ギャル16',            file: './frames/white.webp',            anchor: 'wide', faceHoles: [{ x: 29.1, y: 20.7, w: 18.6, h: 39.6 }, { x: 55.5, y: 21.4, w: 17.9, h: 39.5 }] },
+  { id: 'black',            name: '黒ギャル16',            file: './frames/black.webp',            anchor: 'wide', faceHoles: [{ x: 27.7, y: 23.1, w: 18.2, h: 40.2 }, { x: 53.9, y: 24.4, w: 18.3, h: 40.1 }] },
+  { id: 'frame_13',         name: 'sアイドル16',           file: './frames/frame_13.webp',         anchor: 'wide', faceHole: { x: 26.4, y: 5.5, w: 47.4, h: 78.3 } },
   { id: 'frame_14',         name: 's9',                 file: './frames/frame_14.webp',         anchor: 'full', faceHole: { x: 33.1, y: 15.9, w: 30.7, h: 24.7 } },
-  { id: 'frame_15',         name: 'v系16',               file: './frames/frame_15.webp',         anchor: 'wide', faceHoles: [{ x: 23.0, y: 27.0, w: 23.0, h: 44.0 }, { x: 53.0, y: 27.0, w: 23.0, h: 44.0 }] },
+  { id: 'frame_15',         name: 'v系16',               file: './frames/frame_15.webp',         anchor: 'wide', faceHoles: [{ x: 25.4, y: 17.4, w: 21.0, h: 45.6 }, { x: 55.8, y: 19.0, w: 21.2, h: 45.0 }] },
 
   // --- 顔ハメ（9:16 で描いてあるので、縦で書き出すときにぴったり合う） ---
   // CMCUBE ではカメラを穴にはめて使うもの。tinyCUBE では動画が穴から見える。
