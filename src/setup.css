@@ -496,9 +496,7 @@
      1. ボタンに言葉を添えたぶん、下バーが 92px では足りなくなった
      2. レールを下寄りにしたので、下バーと重なった
    下バーの高さを実態に合わせ、レールはその上で止める。 */
-:root {
-  --bottom-h: 112px;
-}
+/* --bottom-h は skin 側の画面サイズごとの指定に任せる（2026-08-13） */
 
 .bottom-controls {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);

@@ -2095,7 +2095,7 @@ button {
 @media (max-width: 344px) {
   :root {
     --header-h: 42px;
-    --bottom-h: 80px;
+    --bottom-h: 100px;
     --rail-w: 42px;
     --rail-gap: 2px;
     --rail-pad: 3px;
@@ -2108,7 +2108,7 @@ button {
 @media (min-width: 345px) and (max-width: 375px) {
   :root {
     --header-h: 44px;
-    --bottom-h: 86px;
+    --bottom-h: 106px;
   }
 
   /* -> (640-50-92-8-42)/15 = 29.9px per button */
@@ -2118,7 +2118,7 @@ button {
 @media (min-width: 376px) {
   :root {
     --header-h: 48px;
-    --bottom-h: 96px;
+    --bottom-h: 112px;
   }
 
   /* 844 tall -> (844-54-102-8-42)/15 = 42.5px  |  915 tall -> 47.2px */
@@ -2130,7 +2130,7 @@ button {
 @media (orientation: landscape) and (max-height: 500px) {
   :root {
     --header-h: 34px;
-    --bottom-h: 58px;
+    --bottom-h: 74px;
     --rail-w: 104px;
     /* two 50px columns side by side */
     --rail-gap: 2px;

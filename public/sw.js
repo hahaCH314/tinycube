@@ -16,7 +16,7 @@
 // 枠の絵はファイル名を変えずに中身だけ差し替えることがあるので、
 // 絵を作り直したら必ずここも変えること。変えないと、古い絵を持っている
 // 端末には新しい絵が永久に届かない（2026-08-11、顔ハメが黒いままだった）
-const CACHE = 'tinycube-2026-08-13c';
+const CACHE = 'tinycube-2026-08-13d';
 
 // 端末に貯めてよいもの。**絵だけ**にする。
 //
@@ -53,7 +53,12 @@ self.addEventListener('fetch', (e) => {
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       try {
-        const fresh = await fetch(req);
+        // ⚠️ ただの fetch(req) だと、ブラウザ自身のキャッシュから古い HTML が
+        //    返ることがある。HTML が古いと、そこに書かれた JS の名前も古いまま
+        //    なので、**直したものが届くのが一拍遅れる**
+        //    （2026-08-13、伊波さん「更新も遅い気がする」）。
+        //    cache:'no-store' で、毎回ネットの最新を取りに行かせる
+        const fresh = await fetch(req, { cache: 'no-store' });
         const cache = await caches.open(CACHE);
         cache.put('/', fresh.clone());
         return fresh;
