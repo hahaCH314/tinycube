@@ -514,7 +514,7 @@
 
 /* 小窓は見て決めるためのもの。できるだけ大きく */
 .setup-content .frame-preview {
-  max-height: 40vh !important;
+  max-height: 46vh !important;
 }
 
 /* --- レールのボタンは映像の上でも読めること -------------------------------

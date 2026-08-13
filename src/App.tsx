@@ -332,7 +332,7 @@ function App() {
   //   2 frame … フレーム選び。ここが主役なので大きく出す
   //   3 more  … その他の設定。押した人だけが見る（普段は開かなくていい）
   //   4 telop … スタンプ（テロップ）の言葉と出し方。フレームの次に聞く
-  const [setupStep, setSetupStep] = useState<'mode' | 'frame' | 'telop' | 'more'>('mode');
+  const [setupStep, setSetupStep] = useState<'mode' | 'frame' | 'telop'>('mode');
   // 枠選び（frame）と素材選び（source）は setup に統合したので、戻り先は video だけ
   const [backTo, setBackTo] = useState<'video'>('video');
   // 2回目以降は「フレームだけ選び直す」ことが多いので、開いたら
@@ -341,8 +341,7 @@ function App() {
   // 設定の段階を1つ戻す。1段目まで来たら撮影画面へ返す。
   // ヘッダーと小窓の中の両方から呼ぶので、処理はここに1つだけ置く
   const goBackStep = () => {
-    if (setupStep === 'more') setSetupStep('telop');
-    else if (setupStep === 'telop') setSetupStep('frame');
+    if (setupStep === 'telop') setSetupStep('frame');
     else if (setupStep === 'frame') setSetupStep('mode');
     else if (camOn || videoSrc) setScreen(backTo);
   };
@@ -806,7 +805,7 @@ function App() {
                 （2026-08-12、伊波さん「撮影画面の設定ボタンは消して設定に戻るボタンを付ける」） */}
             <button className="tool-btn-small" onClick={() => setScreen('setup')} title="設定に戻る" style={{ width: 'auto', padding: '0 12px', fontSize: '13px', fontWeight: 'bold' }}>戻る</button>
             <button className="tool-btn-small" onClick={() => setScreen('manner')} title="使い方">❓</button>
-            <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank')} title="公式Discord">👾</button>
+            <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank', 'noopener,noreferrer')} title="公式Discord">👾</button>
           </div>
         </header>
 
@@ -1006,7 +1005,6 @@ function App() {
                   （2026-08-13、伊波さん「上の無駄なスペースにモニター置けばいい」） */}
               {setupStep === 'mode' ? 'なにを撮りますか？'
                 : setupStep === 'telop' ? 'スタンプの文字'
-                : setupStep === 'more' ? 'こまかい設定'
                 : ''}
             </h2>
             {/* 段階を1つ戻す。前は「撮影画面へ飛ぶ」だけだったので、
@@ -1160,7 +1158,7 @@ function App() {
               {frameId !== null && (
                 <button
                   className="start-btn"
-                  style={{ width: '100%', marginBottom: 12 }}
+                  style={{ width: '100%', marginBottom: 12, minHeight: 44, fontSize: 14, padding: '0 16px' }}
                   onClick={() => setSetupStep('telop')}
                 >この設定でOK</button>
               )}
