@@ -339,20 +339,13 @@ function App() {
   // 写真に乗せる落書き。プリクラの落書き機能を静止画のスタンプとして出す。
   // 音は鳴らさない（2026-08-14、伊波さん「エフェクト音無し」）
   // angle は度。font は文字だけが持つ（スタンプは絵文字なので効かない）。
-  // kind 'pen' は指で描いた線。points に通った場所を割合（0〜100）で持つ
-  // （2026-08-14、伊波さん「らくがきスタンプ作ってデコろう」）
-  type Pt = { x: number; y: number };
-  type Deco = { id: number; shot: number; kind: 'text' | 'stamp' | 'pen'; value: string; x: number; y: number; size: number; color: string; angle: number; font?: string; points?: Pt[] };
+  //
+  // 指で線を描く機能（kind 'pen'）は 2026-08-14 に入れて、同日に外した
+  // （伊波さん「指で書く機能いらないよ？」）。プリクラの落書きは
+  // **文字スタンプと絵スタンプで足りている**、という判断。戻さないこと。
+  type Deco = { id: number; shot: number; kind: 'text' | 'stamp'; value: string; x: number; y: number; size: number; color: string; angle: number; font?: string };
   const [decos, setDecos] = useState<Deco[]>([]);
   const decoSeq = useRef(0);
-  // らくがきの道具。ペンを持っているあいだは、写真を触ると線になる
-  // （飾りをつまんで動かす動きとぶつかるので、はっきり切り替える）
-  const [penOn, setPenOn] = useState(false);
-  const [penColor, setPenColor] = useState('#ff4da6');
-  const [penWidth, setPenWidth] = useState(1.4);   // 写真の幅に対する割合(%)
-  // いま引いている最中の線。離すまで decos には入れない
-  const [drawing, setDrawing] = useState<Pt[] | null>(null);
-  const drawingRef = useRef<Pt[] | null>(null);
   // 写真のテキスト。動画側の「出現の仕方」は静止画では意味がないので持たず、
   // 代わりに色を選べるようにした（2026-08-14、伊波さん「出現の仕方の代りに
   // 色変更増やす。手描きフォントにするほうが当時のプリクラ再現率上がる」）
@@ -744,25 +737,6 @@ function App() {
         if (!g) return resolve(null);
         g.drawImage(img, 0, 0);
         for (const d of decos.filter(x => x.shot === i)) {
-          // らくがきの線。点は割合で持っているので、書き出す大きさに直す。
-          // 画面の SVG は viewBox を引き伸ばして描いているので、
-          // 縦横それぞれの比率で place し直す
-          if (d.kind === 'pen' && d.points && d.points.length > 1) {
-            g.save();
-            g.strokeStyle = d.color;
-            g.lineWidth = Math.max(1, c.width * d.size / 100);
-            g.lineCap = 'round';
-            g.lineJoin = 'round';
-            g.beginPath();
-            d.points.forEach((pt, n) => {
-              const X = c.width * pt.x / 100;
-              const Y = c.height * pt.y / 100;
-              if (n === 0) g.moveTo(X, Y); else g.lineTo(X, Y);
-            });
-            g.stroke();
-            g.restore();
-            continue;
-          }
           const px = c.width * d.x / 100;
           const py = c.height * d.y / 100;
           // 文字の大きさは幅を基準にする。縦横で見え方が変わらないように
@@ -877,63 +851,6 @@ function App() {
   const [dragId, setDragId] = useState<number | null>(null);
   const bigShotRef = useRef<HTMLDivElement>(null);
 
-  // ---- らくがき（指でなぞった線） ----------------------------------
-  // 写真の中の場所を割合（0〜100）で取る。書き出す大きさが変わっても
-  // 同じところに線が乗る
-  const ptFromEvent = (e: { clientX: number; clientY: number }): Pt | null => {
-    const box = bigShotRef.current?.getBoundingClientRect();
-    if (!box || box.width === 0) return null;
-    return {
-      x: ((e.clientX - box.left) / box.width) * 100,
-      y: ((e.clientY - box.top) / box.height) * 100,
-    };
-  };
-  const penDown = (e: React.PointerEvent) => {
-    if (!penOn) return;
-    e.preventDefault();
-    const p = ptFromEvent(e);
-    if (!p) return;
-    drawingRef.current = [p];
-    setDrawing([p]);
-  };
-  const penMove = (e: React.PointerEvent) => {
-    if (!penOn || !drawingRef.current) return;
-    e.preventDefault();
-    const p = ptFromEvent(e);
-    if (!p) return;
-    // 近すぎる点は捨てる。全部拾うと点が数千個になり、保存が重くなる
-    const last = drawingRef.current[drawingRef.current.length - 1];
-    if (Math.hypot(p.x - last.x, p.y - last.y) < 0.6) return;
-    drawingRef.current = [...drawingRef.current, p];
-    setDrawing(drawingRef.current);
-  };
-  const penUp = () => {
-    const pts = drawingRef.current;
-    drawingRef.current = null;
-    setDrawing(null);
-    // 点1つだけ（ちょんと触っただけ）は線にしない
-    if (!pts || pts.length < 2) return;
-    decoSeq.current += 1;
-    setDecos(prev => [...prev, {
-      id: decoSeq.current,
-      shot: activeShot,
-      kind: 'pen',
-      value: '',
-      x: 0, y: 0, size: penWidth, angle: 0,
-      color: penColor,
-      points: pts,
-    }]);
-  };
-  // 線を1本ずつ取り消す。全部消すより、直前のやり直しのほうがよく要る
-  const undoPen = () => {
-    setDecos(prev => {
-      const last = [...prev].reverse().find(d => d.shot === activeShot && d.kind === 'pen');
-      return last ? prev.filter(d => d.id !== last.id) : prev;
-    });
-  };
-  // 点の並びを SVG の道順にする。角を丸めず素直に繋ぐ
-  const toPath = (pts: Pt[]) =>
-    pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
   const startDrag = (id: number) => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1788,49 +1705,9 @@ function App() {
 
           <div className="setup-content">
             {/* 大きい1枚。ここに乗せたものが写真に焼かれる */}
-            <div
-              className={`shot-big ${penOn ? 'pen-on' : ''}`}
-              ref={bigShotRef}
-              onPointerDown={penDown}
-              onPointerMove={penMove}
-              onPointerUp={penUp}
-              onPointerCancel={penUp}
-              onPointerLeave={penUp}
-            >
+            <div className="shot-big" ref={bigShotRef}>
               <img src={shots[activeShot]} alt={`${activeShot + 1}枚目`} />
-              {/* らくがきの線。写真の上に重ねる。
-                  vector-effect を使わず、太さも割合で持つ（拡大しても崩れない） */}
-              <svg
-                className="pen-layer"
-                viewBox="0 0 100 100"
-                preserveAspectRatio="none"
-              >
-                {/* 太さは viewBox（0〜100）の中の値。写真の幅に対する割合に
-                    なるので、画面の大きさが変わっても見た目の太さが変わらない */}
-                {decos.filter(d => d.shot === activeShot && d.kind === 'pen' && d.points).map(d => (
-                  <path
-                    key={d.id}
-                    d={toPath(d.points!)}
-                    fill="none"
-                    stroke={d.color}
-                    strokeWidth={d.size}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ))}
-                {/* いま引いている最中の線 */}
-                {drawing && drawing.length > 1 && (
-                  <path
-                    d={toPath(drawing)}
-                    fill="none"
-                    stroke={penColor}
-                    strokeWidth={penWidth}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                )}
-              </svg>
-              {decos.filter(d => d.shot === activeShot && d.kind !== 'pen').map(d => (
+              {decos.filter(d => d.shot === activeShot).map(d => (
                 <div
                   key={d.id}
                   className={`deco deco-${d.kind} ${dragId === d.id ? 'dragging' : ''}`}
@@ -1997,26 +1874,11 @@ function App() {
 
             {photoStep === 'deco' && (
               <div className="setup-section highlight-section">
-                {/* スタンプと手描きを1つの画面で切り替える
-                    （2026-08-14、伊波さん「らくがきスタンプとスタンプ
-                    同じ画面で切り替えできるように」）。
-                    別画面に分けると、貼ってから描くたびに行き来することになる。
-                    ここを「らくがき」と呼ばないのは、文字の画面の見出しが
-                    「らくがきスタンプ」になったため。同じ言葉で別のものを
-                    指すと、どちらの話か分からなくなる */}
-                <div className="deco-tabs">
-                  <button
-                    className={`deco-tab ${!penOn ? 'on' : ''}`}
-                    onClick={() => setPenOn(false)}
-                  >🎀 スタンプ</button>
-                  <button
-                    className={`deco-tab ${penOn ? 'on' : ''}`}
-                    onClick={() => setPenOn(true)}
-                  >✏️ 手描き</button>
-                </div>
-
-                {!penOn ? (
-                <>
+                {/* 指で線を描く機能は 2026-08-14 に入れて同日に外した
+                    （伊波さん「指で書く機能いらないよ？」
+                    「フォントでひょうげんできるじゃん」）。
+                    文字スタンプ（書体・色・傾き）と絵スタンプで足りている。
+                    タブも一緒に消したので、ここはスタンプだけ */}
                 <p className="sheet-note">押すと写真の真ん中に出ます。指でつまんで動かせます</p>
                 <div className="stamp-picker">
                   {STAMPS.map(s => (
@@ -2027,58 +1889,10 @@ function App() {
                 <h3 className="setup-section-title" style={{ marginTop: 16 }}>大きさ</h3>
                 <div className="shape-switch">
                   <button onClick={() => setDecos(prev => prev.map(d =>
-                    d.shot === activeShot && d.kind !== 'pen' ? { ...d, size: Math.max(4, +(d.size - 2).toFixed(1)) } : d))}>小さく</button>
+                    d.shot === activeShot ? { ...d, size: Math.max(4, +(d.size - 2).toFixed(1)) } : d))}>小さく</button>
                   <button onClick={() => setDecos(prev => prev.map(d =>
-                    d.shot === activeShot && d.kind !== 'pen' ? { ...d, size: Math.min(40, +(d.size + 2).toFixed(1)) } : d))}>大きく</button>
+                    d.shot === activeShot ? { ...d, size: Math.min(40, +(d.size + 2).toFixed(1)) } : d))}>大きく</button>
                 </div>
-                </>
-                ) : (
-                <>
-                <p className="sheet-note">写真を指でなぞると線が引けます</p>
-
-                <h3 className="setup-section-title" style={{ marginTop: 12 }}>ペンの色</h3>
-                <div className="color-picker">
-                  {TEXT_COLORS.map(c => (
-                    <button
-                      key={c}
-                      className={`color-dot ${penColor === c ? 'on' : ''}`}
-                      style={{ background: c }}
-                      onClick={() => setPenColor(c)}
-                      title={c}
-                    />
-                  ))}
-                </div>
-
-                <h3 className="setup-section-title" style={{ marginTop: 16 }}>ペンの太さ</h3>
-                <div className="angle-row">
-                  <button className="zoom-btn" onClick={() => setPenWidth(w => Math.max(0.4, +(w - 0.4).toFixed(1)))}>細</button>
-                  <input
-                    className="zoom-range"
-                    type="range"
-                    min={0.4}
-                    max={5}
-                    step={0.2}
-                    value={penWidth}
-                    onChange={e => setPenWidth(Number(e.target.value))}
-                  />
-                  <button className="zoom-btn" onClick={() => setPenWidth(w => Math.min(5, +(w + 0.4).toFixed(1)))}>太</button>
-                </div>
-                {/* いまの太さと色を、その場で見せる */}
-                <div className="pen-preview">
-                  <svg viewBox="0 0 100 16" preserveAspectRatio="none">
-                    <path d="M4,8 Q26,1 50,8 T96,8" fill="none" stroke={penColor}
-                      strokeWidth={penWidth} strokeLinecap="round" />
-                  </svg>
-                </div>
-
-                <button
-                  className="start-btn"
-                  style={{ marginTop: 14, width: '100%' }}
-                  onClick={undoPen}
-                  disabled={!decos.some(d => d.shot === activeShot && d.kind === 'pen')}
-                >1本もどす</button>
-                </>
-                )}
 
                 <button
                   className="start-btn"
