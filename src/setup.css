@@ -832,15 +832,7 @@
 }
 .deco-text { font-weight: 700; }
 .deco.dragging { cursor: grabbing; filter: drop-shadow(0 0 8px rgba(102,231,255,0.9)); }
-/* 消す口。飾りの右上に小さく出す */
-.deco-x {
-  position: absolute; top: -10px; right: -14px;
-  width: 22px; height: 22px; border-radius: 50%;
-  font-size: 11px; line-height: 1; color: #fff;
-  background: rgba(220, 38, 90, 0.92); border: 1px solid rgba(255,255,255,0.7);
-  display: flex; align-items: center; justify-content: center;
-  -webkit-text-stroke: 0;
-}
+/* ✕ は廃止。ゴミ箱へ運んで捨てる方式にした（2026-08-14） */
 
 /* 待機の2枚。大きい1枚の下に、小さく並べる。
    タップで大きいほうと入れ替わる */
@@ -1100,3 +1092,37 @@
   font-size: 2.1rem; font-weight: 900; line-height: 1;
   text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
+
+/* ---- ゴミ箱（2026-08-14、伊波さん「飾りもテキストもゴミ箱みたいなとこで
+   捨てる」「飾りを消すじゃなく、指で操作」） ------------------------- */
+/* 掴んでいるあいだだけ出す。普段は場所を取らせないので、
+   写真の下に重ねて浮かせる（並びを押し下げるとスクロールが戻る） */
+.deco-trash {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  z-index: 20; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 16px; border-radius: 14px;
+  background: rgba(8, 4, 24, 0.86);
+  border: 2px dashed rgba(255,255,255,0.45);
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.14s ease, transform 0.14s ease, border-color 0.14s ease;
+}
+/* 飾りを掴んだら出す */
+.deco-trash.show { opacity: 1; visibility: visible; }
+/* 口の上に来たら、はっきり色を変える。離せば捨てると分かるように */
+.deco-trash.over {
+  border-color: #ff4d6d; border-style: solid;
+  background: rgba(220, 38, 90, 0.92);
+  transform: translateX(-50%) scale(1.12);
+}
+.trash-icon { font-size: 1.7rem; line-height: 1; }
+.trash-label { font-size: 0.64rem; font-weight: 800; color: #fff; }
+
+/* **写真の中の下寄りに置く。** 待機の列に重ねると、その裏に隠れて
+   どこへ運べばいいのか見えなかった（2026-08-14、実機サイズで確認）。
+   写真の中なら、飾りを掴んでいる指のすぐ近くに必ず見える */
+.photo-screen .shot-big { position: sticky; }
+.deco-trash { bottom: 8px; }
+
+/* ゴミ箱は写真の中に浮かせる。写真が位置の基準になっている */
+.shot-big > .deco-trash { position: absolute; }

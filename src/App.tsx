@@ -391,7 +391,11 @@ function App() {
   const STAMPS: StampDef[] = [
     { v: '💖' }, { v: '★', color: '#4fc3f7' }, { v: '✨' },
     { v: '🎀' }, { v: '🌈' }, { v: '🍓' }, { v: '🧸' },
-    { v: '👑' }, { v: '🦄' }, { v: '🌸' }, { v: '💎' },
+    { v: '👑' }, { v: '🦄' },
+    // 桜（🌸）はロゼットへ（2026-08-14、伊波さん「桜はガーベラとかが
+    // イイかな」→ 候補から「ロゼっと」を選択）。絵文字にガーベラそのものは
+    // 無く、🏵️ が花弁の並んだ勲章型でいちばん近い。桜だと季節が付いて回る
+    { v: '🏵️' }, { v: '💎' },
     { v: '🍭' }, { v: '☁️' }, { v: '🐱' },
     { v: '♪', color: '#ffd83d' },
   ];
@@ -886,6 +890,22 @@ function App() {
   // 押している間だけ window で追いかける（指が絵の外へ出ても離さない）
   const [dragId, setDragId] = useState<number | null>(null);
   const bigShotRef = useRef<HTMLDivElement>(null);
+  // ゴミ箱。飾りを指で運んできて、この上で離すと捨てる
+  // （2026-08-14、伊波さん「飾りもテキストもゴミ箱みたいなとこで捨てる」
+  // 「飾りを消すじゃなく、指で操作」）。
+  // over は「いま口が開いている」＝離せば捨てる、の合図
+  const trashRef = useRef<HTMLDivElement>(null);
+  const [overTrash, setOverTrash] = useState(false);
+  const overTrashRef = useRef(false);
+  // 指がゴミ箱の上に来ているか。離した瞬間に state を読むと
+  // 反映前の古い値を見ることがあるので、ref にも同じものを持つ
+  const hitTrash = (x: number, y: number) => {
+    const r = trashRef.current?.getBoundingClientRect();
+    if (!r) return false;
+    // 指の位置ぴったりだと入れづらいので、少しだけ広げて判定する
+    const pad = 14;
+    return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
+  };
 
   // 指の当たっている場所を覚えておく。2本になったらひねりと開き具合を見る
   const ptrsRef = useRef<Map<number, { x: number; y: number }>>(new Map());
@@ -936,6 +956,9 @@ function App() {
 
       // 指1本 … いままで通り、つまんで動かす
       gestureRef.current = null;
+      // ゴミ箱の上に来たら口を開けて知らせる。捨てるのは離した時
+      const on = hitTrash(e.clientX, e.clientY);
+      if (on !== overTrashRef.current) { overTrashRef.current = on; setOverTrash(on); }
       const x = ((e.clientX - box.left) / box.width) * 100;
       const y = ((e.clientY - box.top) / box.height) * 100;
       setDecos(prev => prev.map(d => d.id === dragId
@@ -946,7 +969,15 @@ function App() {
       ptrs.delete(e.pointerId);
       // 2本目を離したら、次に置き直したときに測り直す
       gestureRef.current = null;
-      if (ptrs.size === 0) setDragId(null);
+      if (ptrs.size === 0) {
+        // ゴミ箱の上で離したら捨てる
+        if (overTrashRef.current) {
+          setDecos(prev => prev.filter(d => d.id !== dragId));
+        }
+        overTrashRef.current = false;
+        setOverTrash(false);
+        setDragId(null);
+      }
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -1810,15 +1841,26 @@ function App() {
                   } as React.CSSProperties}
                   onPointerDown={startDrag(d.id)}
                 >
+                  {/* ✕ は外した。ゴミ箱まで運んで捨てる方式にしたので、
+                      飾りの上に小さなボタンを置く必要がなくなった
+                      （2026-08-14、伊波さん「指で操作」）。
+                      小さい飾りだと ✕ が本体に被って押しづらくもあった */}
                   {d.value}
-                  {/* 消す口。置いてから要らなくなったものを外せないと詰む */}
-                  <button
-                    className="deco-x"
-                    onPointerDown={e => e.stopPropagation()}
-                    onClick={() => setDecos(prev => prev.filter(x => x.id !== d.id))}
-                  >✕</button>
                 </div>
               ))}
+
+              {/* ゴミ箱。飾りを指で運んできて、この上で離すと捨てる。
+                  **写真の中に置くこと。** 写真の下（待機の列のあたり）に
+                  置いたら、待機写真の裏に隠れて見えなかった。
+                  掴んでいるあいだだけ出す（普段は写真を隠さない） */}
+              <div
+                ref={trashRef}
+                className={`deco-trash ${dragId !== null ? 'show' : ''} ${overTrash ? 'over' : ''}`}
+                aria-hidden={dragId === null}
+              >
+                <span className="trash-icon">🗑</span>
+                <span className="trash-label">{overTrash ? 'はなすと捨てる' : 'ここへ運ぶと捨てる'}</span>
+              </div>
             </div>
 
             {/* 待機の2枚。**いま出している1枚はここに出さない。**
@@ -1941,14 +1983,10 @@ function App() {
               <p className="sheet-note gesture-hint">写真の飾りは、指1本で移動／2本でひねって傾け・大きさ</p>
 
               {/* 保存と片付けはタブの外。どちらを開いていても押せる */}
-              <div className="sub-btn-row">
-                <button
-                  className="sub-btn"
-                  onClick={() => setDecos(prev => prev.filter(d => d.shot !== activeShot))}
-                  disabled={!decos.some(d => d.shot === activeShot)}
-                >飾りを消す</button>
-                <button className="sub-btn" onClick={retakePhotos}>撮り直す</button>
-              </div>
+              {/* 「飾りを消す」も「撮り直す」も外した。
+                  飾りは1つずつゴミ箱へ運んで捨てる。撮り直すは右上に同じものが
+                  あって重複していた（2026-08-14、伊波さん「飾りを消すじゃなく、
+                  指で操作」「撮り直すも重複上だけあればいい」） */}
 
               <button
                 className="start-btn save-btn"
