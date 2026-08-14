@@ -603,12 +603,9 @@ function App() {
     }
   };
 
-  // 保存の渡し方。
-  // iPhone の Safari は a.download をほぼ無視するので、これだけに頼ると
-  // 「録れたのに保存できない」で終わる。手元に iOS の実機が無く確かめられないため、
-  // iOS が確実に持っている共有シート（Web Share）を先に試す形にした。
-  // 共有シートから「ビデオを保存」でカメラロールへ入る。
-  // 対応していない環境（PCのブラウザなど）は、今まで通りダウンロードする。
+  // （保存の渡し方は下の save() に書いてある。
+  //   このコメントは save() から離れた場所に取り残されていたもの。
+  //   中身が実装と食い違っていたので、説明は save() の側へ移した）
   const stopCam = () => {
     camStreamRef.current?.getTracks().forEach(t => t.stop());
     camStreamRef.current = null;
@@ -675,12 +672,37 @@ function App() {
 
   const save = async (blob: Blob, ext: string) => {
     const name = `tinycube_${Date.now()}.${ext}`;
-    
+
     const showSaved = () => {
       setSaveMessage('保存しました！');
       setTimeout(() => setSaveMessage(null), 3000);
     };
 
+    // ⚠️ **iPhone の Safari は a.download をほぼ無視する。**
+    //    それだけに頼ると「録れたのに保存できない」で終わる。
+    //    しかも以前は、保存できたか確かめずに 100ms 後に必ず
+    //    「保存しました！」を出していた。**何も起きていなくても成功と出る**ので、
+    //    撮ったものが消えたことに気づけない。子どもが使うものでこれは一番まずい
+    //    （2026-08-14 に発見。コメントには「共有シートを先に試す」と書いてあったが、
+    //     実装は a.download だけで、Web Share はどこにも無かった）。
+    //
+    //    iOS が確実に持っている共有シート（Web Share）を先に試す。
+    //    そこから「画像を保存」「ビデオを保存」でカメラロールへ入る。
+    const file = new File([blob], name, { type: blob.type || (ext === 'mp4' ? 'video/mp4' : 'image/png') });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file] });
+        showSaved();
+        return;
+      } catch (e: any) {
+        // 本人が「キャンセル」を押しただけなら、失敗ではないので黙って戻る。
+        // ここで下のダウンロードへ進むと、やめたはずの保存が走ってしまう
+        if (e?.name === 'AbortError') return;
+        // 共有できなかったときは、下のダウンロードで拾う
+      }
+    }
+
+    // 共有シートが無い環境（PC のブラウザなど）は、今までどおり落とす
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
