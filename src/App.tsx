@@ -452,8 +452,27 @@ function App() {
     // 写真はテロップの段を通らないので、フレームから mode へ戻る道は同じ
     else if (setupStep === 'frame') setSetupStep('mode');
     else if (setupStep === 'mode') setSetupStep('kind');
+    // いちばん最初の画面（なにを撮る？）では、押しても何も起きなかった。
+    // ここは「戻る」ではなく「終わる」場所（2026-08-14、伊波さん
+    // 「動画と、写真選ぶの画面の戻るはアプリ閉じるがいいかも？」）
+    else if (setupStep === 'kind') closeApp();
     else if (camOn || videoSrc) setScreen(backTo);
   };
+  // アプリを閉じる。
+  // **ブラウザは自分で開いたタブしか閉じられない。**利用者が URL を打って
+  // 開いたタブでは window.close() が黙って無視される。だから閉じられたか
+  // どうかを確かめて、駄目なら「タブを閉じてください」と伝える。
+  // Capacitor で包んだアプリ（ストア版）では、こちらから終了できる
+  const closeApp = () => {
+    // カメラを止めてから終わる。点きっぱなしで閉じると、ランプが消えない
+    stopCam();
+    const cap = (window as unknown as { Capacitor?: { Plugins?: { App?: { exitApp?: () => void } } } }).Capacitor;
+    if (cap?.Plugins?.App?.exitApp) { cap.Plugins.App.exitApp(); return; }
+    window.close();
+    // 閉じられたなら、この先は動かない。動いたということは閉じられなかった
+    setTimeout(() => setCantClose(true), 250);
+  };
+  const [cantClose, setCantClose] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [loopVideo, setLoopVideo] = useState(true);
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
@@ -1543,7 +1562,13 @@ function App() {
             {/* どの段でも同じ場所に出す。段ごとに置き場所が変わると、
                 そこにあると思って探せない（2026-08-13、伊波さん
                 「フレーム選択の戻るボタン気づかなかったよ？元の場所へ」） */}
-            <button className="setup-close-btn" title="もどる" onClick={goBackStep}>戻る</button>
+            {/* いちばん最初の画面では戻る先が無いので「終わる」と出す
+                （2026-08-14、伊波さん「戻るはアプリ閉じるがいいかも？」） */}
+            <button
+              className="setup-close-btn"
+              title={setupStep === 'kind' ? 'アプリを終わる' : 'もどる'}
+              onClick={goBackStep}
+            >{setupStep === 'kind' ? '終わる' : '戻る'}</button>
           </div>
           
           <div className="setup-content">
@@ -2086,6 +2111,24 @@ function App() {
                 onClick={openPreview}
                 disabled={previewBusy}
               >{previewBusy ? '作っています…' : 'できあがりを見る'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ブラウザが閉じさせてくれなかったとき。
+          自分で開いたタブ以外は window.close() が黙って無視されるので、
+          何も起きないように見える。そのときだけ出す */}
+      {cantClose && (
+        <div className="preview-screen" onClick={() => setCantClose(false)}>
+          <div className="preview-inner" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
+            <div className="preview-head">おつかれさま！</div>
+            <p className="sheet-note" style={{ textAlign: 'center', lineHeight: 1.8 }}>
+              カメラは止めました。<br />
+              このページはブラウザのタブを閉じて終わってください。
+            </p>
+            <div className="preview-btns">
+              <button className="sub-btn" onClick={() => setCantClose(false)}>もどる</button>
             </div>
           </div>
         </div>

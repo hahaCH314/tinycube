@@ -206,14 +206,31 @@ for (const file of files) {
     for (const f of fr) { const [t, b] = probeV(f); Ts.push(t); Bs.push(b); }
     L = med(Ls); R = med(Rs); T = med(Ts); B = med(Bs);
 
-    // 四角の内側で、黒いところだけを消す（枠が食い込んでいる部分は残す）
-    let cleared = 0;
-    for (let y = T; y <= B; y++) {
-      for (let x = L; x <= R; x++) {
-        const i = y*W + x;
-        if (dark[i]) { d[i*4+3] = 0; cleared++; }
+    // 四角の内側で、**中央から繋がっている黒だけ**を消す。
+    //
+    // 「四角の内側の黒を全部」にすると、枠から内側へ伸びている枝や鎖が
+    // 四角の境目でぶつ切りになり、内側のぶんが消えてギザギザになる
+    // （2026-08-14、伊波さん「枠の絵とくに私からみて左側」）。
+    // ホラーの左の枝がまさにそれだった。
+    // 中央と繋がっていない絵（枝・鎖・血）は、四角の中にあっても残る。
+    // 四角の外へは出ないので、前の「枠まで漏れる」問題も起きない
+    const seen = new Uint8Array(N);
+    const stack2 = new Int32Array(N);
+    let sp2 = 0, cleared = 0;
+    const start = cy*W + cx;
+    stack2[sp2++] = start; seen[start] = 1;
+    while (sp2 > 0) {
+      const q = stack2[--sp2];
+      const x = q % W, y = (q / W) | 0;
+      const nb = [[x-1,y],[x+1,y],[x,y-1],[x,y+1]];
+      for (const [nx, ny] of nb) {
+        if (nx < L || nx > R || ny < T || ny > B) continue;
+        const nq = ny*W + nx;
+        if (seen[nq] || !dark[nq]) continue;
+        seen[nq] = 1; stack2[sp2++] = nq;
       }
     }
+    for (let i = 0; i < N; i++) if (seen[i]) { d[i*4+3] = 0; cleared++; }
     if (cleared === 0) return JSON.stringify({ cleared: 0 });
     g.putImageData(im, 0, 0);
     const holes = [{
