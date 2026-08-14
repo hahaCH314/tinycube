@@ -2,6 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 
+// 枠の絵を貯めておく係（sw.js）の名札は、ビルドのあとに tools/stamp-sw.mjs が
+// 埋める（package.json の build を見ること）。ここでは何もしない。
+// public/ の素通しコピーは vite のどのフックよりあとに走るので、
+// プラグインで dist/sw.js を書き換えても上書きされて消える。
+
 try {
   const shibuyaCss = fs.readFileSync('e:/cmcube/916cube/docs/tinycube-skin-shibuya.css', 'utf8');
   const oldAppCss = fs.readFileSync('e:/cmcube/916cube/src/App.css', 'utf8');
