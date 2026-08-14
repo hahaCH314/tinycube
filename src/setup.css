@@ -447,7 +447,9 @@
   top: auto !important;
   bottom: calc(var(--chrome-bot) + 12px) !important;
   height: auto !important;
-  max-height: 52dvh;
+  /* 下の 502 行あたりで max(44dvh, 342px) に上書きしている。
+     342px は左の柱の6個ぶん（52px×6 + 隙間6px×5）*/
+  max-height: max(52dvh, 342px);
   width: 62px;
 }
 
@@ -501,7 +503,17 @@
 /* レールは下バーに被らないところで止める */
 .side-panel {
   bottom: calc(var(--chrome-bot) + 8px) !important;
-  max-height: 44dvh;
+  /* **6個が入るだけの高さを必ず確保する。**
+     44dvh は背の低い端末（iPhone SE 667px）で 293px にしかならず、
+     左の柱（6個 = 52px×6 + 隙間6px×5 = 342px）が入らずに
+     6個目の「電子音」が消えていた（2026-08-14、伊波さん
+     「でたけど、左はも少し上に上げる」。実測 下端607 > 柱の底553）。
+     上には216px余っていたので、上へ伸ばせばよい。
+     max() で「割合」と「6個ぶん」の大きいほうを取る。背の高い端末では
+     これまでどおり 44dvh が効き、低い端末でだけ 342px まで伸びる。
+     下端は動かさないので、指の届きやすさ（画面の下半分に集める設計）は
+     そのまま */
+  max-height: max(44dvh, 342px);
 }
 
 
