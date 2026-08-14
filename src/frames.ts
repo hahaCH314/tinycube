@@ -36,6 +36,36 @@ export type Frame = {
 };
 
 export const FRAMES: Frame[] = [
+  // --- tinyCUBE 用に描き下ろした枠（2026-08-14 追加） ---
+  //
+  // 元は CMCUBE 用の絵。**真ん中を透明に抜いてある**（tools/punch-holes.mjs）。
+  // 顔ハメではないので faceHole は持たない。中央にカメラの映像がそのまま映る。
+  //
+  // 上下2枚を重ねる作り（bgFile）ではなく、**最初から1枚に合成された絵**。
+  // tinyCUBE は片方しか出さない場面があり、2枚に分けると絵が欠けたため
+  // （2026-08-14、伊波さん「tinycubeでは片方の画像しか出てないから
+  // 絵が見えなくなってる、だから重ねた画像にした」）。
+  //
+  // ファイル名を英数字にしてあるのは、日本語だと URL で %E3%81... に化けるため。
+  // 画面に出る名前は日本語のまま（name の側）
+  { id: 'tc_galaxy', name: 'ギャラクシー', file: './frames/tc_galaxy.png', anchor: 'wide' },
+  { id: 'tc_otaku', name: 'ヲタ芸', file: './frames/tc_otaku.png', anchor: 'wide' },
+  { id: 'tc_fun', name: 'おふざけ', file: './frames/tc_fun.png', anchor: 'wide' },
+  { id: 'tc_fun2', name: 'おふざけ2', file: './frames/tc_fun2.png', anchor: 'wide' },
+  { id: 'tc_mushroom', name: 'きのこの森', file: './frames/tc_mushroom.png', anchor: 'wide' },
+  { id: 'tc_animal', name: 'アニマル', file: './frames/tc_animal.png', anchor: 'wide' },
+  { id: 'tc_cyber', name: 'サイバー', file: './frames/tc_cyber.png', anchor: 'wide' },
+  { id: 'tc_biotope', name: 'ビオトープ', file: './frames/tc_biotope.png', anchor: 'wide' },
+  { id: 'tc_horror', name: 'ホラー', file: './frames/tc_horror.png', anchor: 'wide' },
+  { id: 'tc_pop', name: 'ポップ', file: './frames/tc_pop.png', anchor: 'wide' },
+  { id: 'tc_deepsea', name: '深海', file: './frames/tc_deepsea.png', anchor: 'wide' },
+  { id: 'tc_manga', name: '漫画', file: './frames/tc_manga.png', anchor: 'wide' },
+  { id: 'tc_matsuri', name: '祭り', file: './frames/tc_matsuri.png', anchor: 'wide' },
+  { id: 'tc_denno', name: '電脳', file: './frames/tc_denno.png', anchor: 'wide' },
+  { id: 'tc_mc', name: '夜の街', file: './frames/tc_mc.png', anchor: 'wide' },
+  { id: 'tc_garden', name: 'グリーンガーデン', file: './frames/tc_garden.png', anchor: 'wide' },
+  { id: 'tc_heart', name: 'ハート', file: './frames/tc_heart.png', anchor: 'wide' },
+
   { id: 'pop_0545_1', name: 'cmcube_pop_themes (3)', file: './frames/pop_0545_1_overlay.png', bgFile: './frames/pop_0545_1_mural.png', anchor: 'wide' },
   { id: 'split_0587_2', name: 'cmcube_split_themes (10)', file: './frames/split_0587_2_overlay.png', bgFile: './frames/split_0587_2_mural.png', anchor: 'wide' },
   { id: 'split_0599_3', name: 'cmcube_split_themes (11)', file: './frames/split_0599_3_overlay.png', bgFile: './frames/split_0599_3_mural.png', anchor: 'wide' },

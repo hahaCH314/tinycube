@@ -810,7 +810,7 @@
    （2026-08-14、伊波さん「なるべく（フレーム選択以外）スクロール無しで」）*/
 .photo-screen .shot-big,
 .photo-screen .shot-big > img { max-height: 34dvh; }
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
   .photo-screen .shot-big > img { max-height: 28dvh; }
 }
@@ -1013,7 +1013,7 @@
 .opt-row { margin-top: 8px; }
 .photo-screen .telop-input { padding: 10px 12px; }
 /* 背の低い端末では、写真をもう一段譲る */
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
   .photo-screen .shot-big > img { max-height: 22dvh; }
   .photo-screen .shot-thumb { width: 9%; }
@@ -1024,7 +1024,7 @@
 /* 最後の数px。ボタンの間だけ詰めれば収まる */
 .photo-screen .start-btn { margin-top: 8px !important; }
 .photo-screen .sub-btn-row { margin-top: 10px; }
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .gesture-hint { margin-top: 4px; font-size: 0.64rem; }
   .photo-screen .opt-row { margin-top: 6px; }
 }
@@ -1033,7 +1033,7 @@
    高さで揃えて、形は写真に任せる */
 .shot-strip { align-items: center; }
 .photo-screen .shot-thumb { width: auto; height: 52px; }
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-thumb { width: auto; height: 44px; }
 }
 
@@ -1056,7 +1056,7 @@
    下の操作が全部見えていることのほうが大事 */
 .photo-screen .shot-big,
 .photo-screen .shot-big > img { max-height: 27dvh; }
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
   .photo-screen .shot-big > img { max-height: 19dvh; }
   .photo-screen .deco-tab { padding: 8px 6px; font-size: 0.8rem; }
@@ -1065,7 +1065,7 @@
 
 /* 背の低い端末（iPhone SE など）は、らくがき側がまだ入らない。
    写真をもう一段譲り、押す場所以外の余白を削る */
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
   .photo-screen .shot-big > img { max-height: 15dvh; }
   .photo-screen .shot-thumb { height: 38px; }
@@ -1081,7 +1081,7 @@
 /* 背の低い端末は、詰めきると写真が15dvh まで縮んで飾る相手が見えなくなる。
    スクロールを無くすことより、写真が見えることのほうが先
    （2026-08-14、実機サイズで見て判断）。24dvh を下限にする */
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
   .photo-screen .shot-big > img { max-height: 24dvh; }
 }
@@ -1150,7 +1150,7 @@
   font-size: 2.1rem;
 }
 .stamp-btn.glyph { font-size: 2.5rem; }
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .stamp-picker { gap: 6px; }
   .stamp-btn { font-size: 1.8rem; }
   .stamp-btn.glyph { font-size: 2.1rem; }
@@ -1168,7 +1168,7 @@
 /* 浮いたぶんを写真へ。ここが主役なので、余裕はすべて写真に渡す */
 .photo-screen .shot-big,
 .photo-screen .shot-big > img { max-height: 35dvh; }
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .opt-row .color-dot { width: 21px; height: 21px; }
   .photo-screen .deco-tab { padding: 6px 4px; font-size: 0.74rem; }
   .photo-screen .shot-big,
@@ -1216,7 +1216,7 @@
 /* ---- 動画のテロップ画面（2026-08-14、伊波さん「動画のテキストスタンプの
    ページもスクロールなしで」） --------------------------------------- */
 /* 入力欄が5本で252px。ここを詰めないと背の低い端末で入らない */
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .telop-inputs { gap: 5px; }
   .telop-input { padding: 8px 10px; font-size: 0.86rem; }
   .setup-content .setup-section-title { margin-bottom: 8px; }
@@ -1229,7 +1229,7 @@
 }
 
 /* SE で 25px 残る。入力欄と操作の行をあと少し詰めれば収まる */
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .telop-inputs { gap: 4px; }
   .telop-input { padding: 7px 9px; }
   .setup-content .opt-row { margin-top: 5px; }
@@ -1237,7 +1237,7 @@
 }
 
 /* SE であと12px。テロップ画面の見出しと入力欄をもう少しだけ詰める */
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .setup-content .setup-section-title { margin-bottom: 6px; font-size: 0.88rem; }
   .telop-input { padding: 6px 9px; }
   .setup-content .start-btn { min-height: 44px; }
@@ -1251,7 +1251,7 @@
 }
 
 /* SE のらくがき側にあと1px。ボタンの間だけ削る */
-@media (max-height: 700px) {
+@media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .start-btn { margin-top: 6px !important; }
 }
 
@@ -1327,3 +1327,37 @@
 }
 /* 畳んだら案内を下げてよい（欄が薄くなるので） */
 .turn-hint.above-tune-folded { bottom: 182px; }
+
+/* ---- 横持ちのフレーム選択（2026-08-14、伊波さん「横の画面が壊れてる」）--- */
+/* `.frame-picker.ar-landscape` は 2列固定（!important）で、縦持ちなら
+   ちょうどよいが、**横持ちだと画面幅844pxを2分割して1枚258pxの巨大タイル**に
+   なっていた（実測）。一覧の高さも `max-height: none !important` で
+   6513px まで伸び、決定ボタンや縦横の切り替えが画面の外へ出ていた。
+
+   ここは私（シオン）が今日触った場所ではなく、元からの指定。
+   横持ちのときだけ上書きする。縦持ちの見え方は変えない。 */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* 幅があるので列を増やす。ただし**細かくしすぎない**。
+     104px まで詰めたら 16:9 のタイルの高さが71pxになり、絵が潰れて
+     何のフレームか分からなくなった（実測）。160px 前後で4列に収まる */
+  .frame-picker.ar-landscape {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+  }
+  .frame-picker.ar-portrait {
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)) !important;
+  }
+  /* 一覧は画面の中で繰る。伸ばし切ると決定ボタンが画面の外へ出る */
+  .setup-content .frame-picker {
+    max-height: 52dvh !important;
+    overflow-y: auto !important;
+  }
+  /* **決定ボタンを sticky にしない。** 横持ちでは案内文（「読み込んだ動画は
+     横長です…」）の上に貼り付いて、案内が読めなくなっていた（実測）。
+     画面が低いぶん一覧を繰る距離も短いので、普通に並べれば足りる */
+  .frame-decide { position: static; margin: 4px 0 8px; }
+  .setup-content .sheet-note { font-size: 0.7rem; line-height: 1.4; margin-bottom: 4px; }
+  /* 画面が低いので、余白と文字を詰める */
+  .setup-content { padding-top: 8px; padding-bottom: 8px; gap: 8px; }
+  .setup-section { padding: 10px; }
+  .shape-switch--mini button { padding: 6px 4px; font-size: 0.8rem; }
+}
