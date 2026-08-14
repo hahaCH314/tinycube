@@ -1254,3 +1254,25 @@
 @media (max-height: 700px) {
   .photo-screen .start-btn { margin-top: 6px !important; }
 }
+
+/* ---- クレジット（2026-08-14、伊波さんの依頼） ---------------------- */
+/* このアプリを作るのを支えた人の名前を残す場所。使い方（❓）の一番下。
+   「なっとうサイダー」は、開発費を出してこのアプリを成り立たせた人。
+   本人が自分の実績として示せるよう、読める大きさで出す */
+.credits {
+  margin-top: 18px; padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.14);
+}
+.credits-head {
+  font-size: 0.74rem; font-weight: 900; letter-spacing: 0.08em;
+  color: #66e7ff; margin-bottom: 10px;
+}
+.credits-list { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.credits-row { display: flex; align-items: baseline; gap: 10px; }
+.credits-row dt {
+  flex: 0 0 auto; min-width: 8.5em;
+  font-size: 0.68rem; color: #a9bad2; letter-spacing: 0.02em;
+}
+.credits-row dd {
+  margin: 0; font-size: 0.86rem; font-weight: 800; color: #fff;
+}

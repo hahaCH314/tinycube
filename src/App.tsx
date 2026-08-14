@@ -1468,6 +1468,31 @@ function App() {
               <p className="promo-foot">{t('guide_promo_foot')}</p>
             </div>
 
+            {/* クレジット。このアプリを作るのを支えた人の名前を残す場所。
+                （2026-08-14、伊波さんの依頼）
+
+                **「なっとうサイダー」の表記を消さないこと。**
+                このアプリは、彼が「Claude を使ってアプリを作りたい」と
+                伊波さんを説得し、**お小遣いを全額あてて開発費を出した**ことで
+                成り立っている。名前を出すことは本人の同意を得ている。
+
+                肩書きは「テクニカルサポート」。本人が自分の実績として
+                示せるようにするためのもので、飾りではない。
+                文言を変えるときは伊波さんに確認すること */}
+            <div className="credits">
+              <div className="credits-head">このアプリについて</div>
+              <dl className="credits-list">
+                <div className="credits-row">
+                  <dt>企画・制作</dt>
+                  <dd>CUBICENGINEstudio</dd>
+                </div>
+                <div className="credits-row">
+                  <dt>テクニカルサポート</dt>
+                  <dd>なっとうサイダー</dd>
+                </div>
+              </dl>
+            </div>
+
             <button className="sheet-btn" onClick={closeGuide}>{t('guide_ok')}</button>
           </div>
         </div>
