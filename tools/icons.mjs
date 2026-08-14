@@ -11,9 +11,9 @@
 // 焼くのは headless Chrome。SVG をそのまま描けるので、画像ライブラリが要らない。
 
 import { spawn } from 'node:child_process';
-import { writeFileSync, readFileSync, mkdtempSync, existsSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdtempSync, existsSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 
 const SVG = resolve('public/favicon.svg');
 const PORT = 9388;
@@ -21,11 +21,31 @@ const CHROME = process.env.CHROME_PATH
   || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 // 出すもの。maskable だけ角の丸みを外す
+// Android の解像度別の大きさ。ic_launcher は四角、round は端末が丸く抜く
+const ANDROID = [
+  ['mdpi', 48], ['hdpi', 72], ['xhdpi', 96], ['xxhdpi', 144], ['xxxhdpi', 192],
+];
+
 const JOBS = [
   { out: 'public/icon-192.png', size: 192 },
   { out: 'public/icon-512.png', size: 512 },
   { out: 'public/apple-touch-icon.png', size: 180 },
   { out: 'public/icon-maskable.png', size: 512, maskable: true },
+
+  // ---- Android（アプリの顔）----
+  // ⚠️ ここを焼かないと、**Capacitor の初期アイコン（水色の稲妻）のまま**
+  //    ストアにもホーム画面にも出る。tinyCUBE と何の関係もない絵になる
+  //    （2026-08-14、伊波さん「アイコン揃ってる？」で判明）。
+  ...ANDROID.flatMap(([dpi, px]) => [
+    { out: `android/app/src/main/res/mipmap-${dpi}/ic_launcher.png`, size: px },
+    { out: `android/app/src/main/res/mipmap-${dpi}/ic_launcher_round.png`, size: px },
+    // adaptive icon の前景。端末が丸や角丸に切り抜くので、
+    // **絵は中央 66% に収める**。目一杯だと角や縁が切り落とされる
+    { out: `android/app/src/main/res/mipmap-${dpi}/ic_launcher_foreground.png`, size: Math.round(px * 2.25), inset: true },
+  ]),
+
+  // Play Console に出す「ストアのアイコン」。512x512 の PNG が要る
+  { out: 'store/play-icon-512.png', size: 512, maskable: true },
 ];
 
 if (!existsSync(CHROME)) {
@@ -68,11 +88,18 @@ await send('Page.enable');
 
 for (const j of JOBS) {
   let svg = source;
-  if (j.maskable) {
+  if (j.maskable || j.inset) {
     svg = svg.replace(/rx="\d+"/, 'rx="0"').replace(/<rect x="8"[\s\S]*?\/>/, '');
   }
-  const html = '<meta charset="utf-8"><style>html,body{margin:0;padding:0}'
-    + `svg{display:block;width:${j.size}px;height:${j.size}px}</style>` + svg;
+  // adaptive icon の前景は、絵を中央 66% に置いて周りを透かす。
+  // 端末が丸や角丸に切り抜いても、絵が欠けないようにするため
+  const inner = j.inset ? Math.round(j.size * 0.66) : j.size;
+  const pad = j.inset ? Math.round((j.size - inner) / 2) : 0;
+  const html = '<meta charset="utf-8"><style>html,body{margin:0;padding:0;background:transparent}'
+    + (j.inset ? `body{width:${j.size}px;height:${j.size}px;position:relative}` : '')
+    + `svg{display:block;width:${inner}px;height:${inner}px`
+    + (j.inset ? `;position:absolute;left:${pad}px;top:${pad}px` : '')
+    + `}</style>` + svg;
   const tmp = join(profile, 'icon.html');
   writeFileSync(tmp, html, 'utf8');
 
@@ -83,9 +110,17 @@ for (const j of JOBS) {
     url: 'file:///' + tmp.split(String.fromCharCode(92)).join('/') + '?v=' + Date.now(),
   });
   await sleep(800);
+  // 前景は周りが透けていないと、切り抜いたときに四角い縁が残る
+  if (j.inset) {
+    await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
+  } else {
+    await send('Emulation.setDefaultBackgroundColorOverride');
+  }
   const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
   const buf = Buffer.from(shot.result.data, 'base64');
-  writeFileSync(resolve(j.out), buf);
+  const outPath = resolve(j.out);
+  mkdirSync(dirname(outPath), { recursive: true });   // store/ などが無くても作る
+  writeFileSync(outPath, buf);
   console.log(j.out.padEnd(30), j.size + 'px', Math.round(buf.length / 1024) + 'KB');
 }
 

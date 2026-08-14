@@ -11,9 +11,17 @@
 // URL を直接叩けば誰でも落とせる。承知のうえでこの作りにしている。
 // 止めるにはサーバーが要り、その代わりに「壊れたら誰も使えない」を抱えることになる。
 
+// 2026-08-14 追記：Google Play のアプリ内課金を足した。
+// アプリ（Android）では Play の課金で解ける。Web ではこれまでどおりキー入力。
+// Play は「アプリの中で売るデジタルの品物は Play の課金を通すこと」を求めていて、
+// 外の売り場（BOOTH / Ko-fi）へ誘導すると審査で弾かれるため。
+// **キー入力は消さない。** BOOTH で既に買った人が使えなくなるのを避ける。
+import { initBilling, isNativeApp } from './billing';
 import { KEY_PRINTS } from './keys';
 
 const STORE = 'tinycube.unlock';
+/** Play で買ったことが分かったときに入れておく印。キーとは別に持つ */
+const STORE_PLAY = 'tinycube.unlock.play';
 
 /** 打ち方のゆれを吸収する。小文字、空白、ハイフン無しでも通す。
     tools/keys.mjs と同じ規則にしておくこと（ずれると照合できない） */
@@ -29,8 +37,34 @@ async function fingerprint(key: string): Promise<string> {
 
 let unlocked = false;
 try {
-  unlocked = !!localStorage.getItem(STORE);
+  // キーで解除したか、Play で買ったか。どちらでも解ける
+  unlocked = !!localStorage.getItem(STORE) || !!localStorage.getItem(STORE_PLAY);
 } catch { /* 端末が localStorage を断っていても、その回だけ解除できる */ }
+
+/** 解除の状態が変わったときに画面へ知らせる係。App.tsx が登録する。
+    Play の買い物は「押した直後」ではなく、あとから確かめが返ってくるので、
+    その場で答えを返せない。分かった時点で呼ぶ */
+const listeners = new Set<(v: boolean) => void>();
+
+export function onUnlockChange(fn: (v: boolean) => void): () => void {
+  listeners.add(fn);
+  return () => { listeners.delete(fn); };
+}
+
+/** Play で買ってあることが分かったときに呼ばれる */
+function markOwned() {
+  if (unlocked) return;
+  unlocked = true;
+  try { localStorage.setItem(STORE_PLAY, '1'); } catch { /* 残せなくてもその回は解除されている */ }
+  listeners.forEach(fn => fn(true));
+}
+
+/** アプリの起動時に一度だけ呼ぶ。Play に「前に買っていますか」を聞きに行く。
+    機種を変えても買い直しにならないようにするため */
+export function startBilling(): void {
+  if (!isNativeApp()) return;
+  void initBilling(markOwned);
+}
 
 export function isUnlocked(): boolean {
   return unlocked;
@@ -60,5 +94,11 @@ export async function tryUnlock(key: string): Promise<boolean> {
 /** 解除を外す。端末を人に渡すときなど */
 export function relock() {
   unlocked = false;
-  try { localStorage.removeItem(STORE); } catch { /* 消せなくても次に開けば効く */ }
+  try {
+    localStorage.removeItem(STORE);
+    // Play で買った印も消す。ただし**買った事実は Play 側が覚えている**ので、
+    // 買い直しにはならない。次に起動すれば restorePurchases で戻る
+    localStorage.removeItem(STORE_PLAY);
+  } catch { /* 消せなくても次に開けば効く */ }
+  listeners.forEach(fn => fn(false));
 }

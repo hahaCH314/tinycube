@@ -1,6 +1,30 @@
 apply plugin: 'com.android.application'
 
+// 署名の設定を android/keystore.properties から読む。
+//
+// Google Play に出すには、自分の鍵で署名した AAB が要る。
+// **鍵のパスワードが入るファイルなので git には入れない**（.gitignore 済み）。
+// 置き方は docs/play-release-checklist.md を見ること。
+//
+// ファイルが無ければ署名なしでビルドする（今までどおり動く）。
+// 伊波さんが鍵を作る前でも、ビルドが止まらないようにするため。
+def keystorePropsFile = rootProject.file("keystore.properties")
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystoreProps.load(new FileInputStream(keystorePropsFile))
+}
+
 android {
+    if (keystorePropsFile.exists()) {
+        signingConfigs {
+            release {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
     namespace = "com.cubicenginestudio.tinycube"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
@@ -20,6 +44,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // 鍵があるときだけ署名する。無ければ署名なし（Play には出せないが、動きは見られる）
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

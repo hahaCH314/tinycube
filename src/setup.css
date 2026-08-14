@@ -142,12 +142,17 @@
   font-family: 'Outfit', monospace; font-size: 0.9rem; letter-spacing: 0.08em;
   color: #66e7ff; text-align: center;
 }
-.unlock-relock {
+/* 「解除を外す」と「買ったのに使えないとき」は、どちらも控えめでよい。
+   主役は買うボタンなので、同じ薄さで揃える */
+.unlock-relock,
+.unlock-restore {
   width: 100%; padding: 10px; border-radius: 12px;
   font-size: 0.72rem; font-weight: 700;
   background: transparent; color: #94a3b8;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
+/* 買うボタンのすぐ下に置くので、少しだけ離す */
+.unlock-restore { margin-top: 8px; }
 
 .frame-tile.locked { position: relative; border-color: rgba(255, 217, 100, 0.5); }
 .frame-tile.locked img { filter: saturate(0.35) brightness(0.5); }

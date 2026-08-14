@@ -32,3 +32,9 @@ android/.gradle/
 android/local.properties
 android/capacitor-cordova-android-plugins/build/
 android/app/src/main/assets/public/
+
+# 署名の鍵とパスワード。**絶対に git に入れないこと**（2026-08-14）
+# 入れると GitHub に上がって、誰でもアプリを偽装できるようになる
+android/keystore.properties
+*.jks
+*.keystore

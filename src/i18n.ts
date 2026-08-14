@@ -36,6 +36,13 @@ type I18nDict = {
   unlock_p1: string;
   unlock_p2: string;
   unlock_buy: string;
+  /** アプリ（Android）で買うボタン。**外の売り場の名前を出してはいけない**。
+      Play の課金を通すので「BOOTH で買う」とは書けない（2026-08-14）*/
+  unlock_buy_app: string;
+  /** 買ったのに解けていない人の取り戻し（機種変えのあとなど）*/
+  unlock_restore: string;
+  /** 買い物の画面が出せなかったとき */
+  unlock_buy_ng: string;
   unlock_have: string;
   unlock_place: string;
   unlock_go: string;
@@ -153,6 +160,9 @@ const dictJa: I18nDict = {
   unlock_p1: '🖼 フレームが53枚ふえる（推し色・顔ハメなど）',
   unlock_p2: '💧 動画と写真の右下に入る「tinyCUBE」の文字が消える',
   unlock_buy: 'BOOTH で買う（¥300）',
+  unlock_buy_app: 'ぜんぶ使えるようにする（¥300）',
+  unlock_restore: '買ったのに使えないとき',
+  unlock_buy_ng: 'いま買えませんでした。少し時間をおいて、もう一度ためしてください。',
   unlock_have: 'キーを持っている',
   unlock_place: 'TC-XXXX-XXXX-XXXX',
   unlock_go: '解除する',
@@ -271,6 +281,9 @@ const dictEn: I18nDict = {
   unlock_p1: '🖼 53 more frames (fan colours, face cut-outs and more)',
   unlock_p2: '💧 The "tinyCUBE" mark on your videos and photos disappears',
   unlock_buy: 'Buy on Ko-fi (¥300)',
+  unlock_buy_app: 'Unlock everything (¥300)',
+  unlock_restore: 'Already bought it?',
+  unlock_buy_ng: 'Could not start the purchase. Please try again in a moment.',
   unlock_have: 'I have a key',
   unlock_place: 'TC-XXXX-XXXX-XXXX',
   unlock_go: 'Unlock',

@@ -5,7 +5,8 @@ import { startRecording, startStage, type RecordHandle, type OutShape } from './
 import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
 import { t, getLang, setLang } from './i18n'
-import { isUnlocked, tryUnlock, savedKey, relock } from './unlock'
+import { isUnlocked, tryUnlock, savedKey, relock, startBilling, onUnlockChange } from './unlock'
+import { isNativeApp, buy as buyInApp, restore as restoreInApp } from './billing'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
 // ---- 開いたときのお願い（2026-08-12、伊波さんの原文） -------------------
@@ -482,14 +483,50 @@ function App() {
   const [keyNG, setKeyNG] = useState(false);
   const unlockRef = useRef<HTMLDivElement>(null);
   // 買うところ。BOOTH は日本、Ko-fi は英語圏。CMCUBE と同じ分け方（2026-08-11）
+  //
+  // ⚠️ **アプリ（Android）では、この外の売り場へ連れて行ってはいけない。**
+  //    Google Play は、アプリの中で売るデジタルの品物に Play の課金を通すことを
+  //    求めていて、外の売り場へ誘導すると審査で弾かれる。
+  //    アプリでは Play の課金ボタン、Web ではこれまでどおり BOOTH / Ko-fi
+  //    （2026-08-14、伊波さん「A. アプリ版だけボタンを隠す」）
+  const inApp = isNativeApp();
   const buyUrl = getLang() === 'ja'
     ? 'https://cubicengine.booth.pm/items/8705410'
     : 'https://ko-fi.com/s/e4fc12b6e7';
+  const [buyBusy, setBuyBusy] = useState(false);
+  const [buyNG, setBuyNG] = useState(false);
   const submitKey = async () => {
     const ok = await tryUnlock(keyInput);
     setKeyNG(!ok);
     if (ok) { setUnlocked(true); setKeyInput(''); }
   };
+
+  // アプリの中で買う。Play の画面が出て、買えたかどうかは
+  // あとから onUnlockChange 経由で返ってくる（その場では分からない）
+  const buyNow = async () => {
+    setBuyNG(false);
+    setBuyBusy(true);
+    const opened = await buyInApp();
+    setBuyBusy(false);
+    if (!opened) setBuyNG(true);
+  };
+
+  // 「買ったのに解けていない」ときの取り戻し。機種変えのあとなど。
+  // Play は買い切りの持ち主を覚えているので、ここから戻せる
+  const restoreNow = async () => {
+    setBuyNG(false);
+    setBuyBusy(true);
+    const ok = await restoreInApp();
+    setBuyBusy(false);
+    if (!ok) setBuyNG(true);
+  };
+
+  // Play への問い合わせは起動時に一度だけ。
+  // 解除の知らせは、押した直後ではなくあとから返ってくるので受け口を置く
+  useEffect(() => {
+    startBilling();
+    return onUnlockChange(v => setUnlocked(v));
+  }, []);
   
   // 値は読まない（開く操作だけ）。読む側が出てきたら第1要素を戻すこと
   const [, setAdvancedOpen] = useState(false);
@@ -1825,20 +1862,41 @@ function App() {
                       <li>{t('unlock_p1')}</li>
                       <li>{t('unlock_p2')}</li>
                     </ul>
-                    <a className="unlock-buy" href={buyUrl} target="_blank" rel="noopener noreferrer">{t('unlock_buy')}</a>
-                    <div className="unlock-row">
-                      <input
-                        className="unlock-input"
-                        value={keyInput}
-                        placeholder={t('unlock_place')}
-                        autoCapitalize="characters"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
-                      />
-                      <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
-                    </div>
-                    {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
+                    {/* アプリでは Play の課金、Web では外の売り場（上のコメントを見ること）*/}
+                    {inApp ? (
+                      <>
+                        <button className="unlock-buy" onClick={buyNow} disabled={buyBusy}>
+                          {buyBusy ? '…' : t('unlock_buy_app')}
+                        </button>
+                        {/* 買ったのに解けていない人の逃げ道。機種変えのあとなど。
+                            これが無いと「払ったのに使えない」で終わってしまう */}
+                        <button className="unlock-restore" onClick={restoreNow} disabled={buyBusy}>
+                          {t('unlock_restore')}
+                        </button>
+                        {buyNG && <p className="unlock-ng">{t('unlock_buy_ng')}</p>}
+                      </>
+                    ) : (
+                      <a className="unlock-buy" href={buyUrl} target="_blank" rel="noopener noreferrer">{t('unlock_buy')}</a>
+                    )}
+                    {/* キー入力は Web だけ。アプリに残すと「外で買う道」に見えて
+                        審査で引っかかる（買った人は Play が覚えているので要らない）*/}
+                    {!inApp && (
+                      <>
+                        <div className="unlock-row">
+                          <input
+                            className="unlock-input"
+                            value={keyInput}
+                            placeholder={t('unlock_place')}
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            spellCheck={false}
+                            onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
+                          />
+                          <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
+                        </div>
+                        {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
+                      </>
+                    )}
                   </>
                 )}
               </div>
