@@ -1212,3 +1212,45 @@
 .preview-btns { display: flex; gap: 10px; flex: 0 0 auto; }
 .preview-btns .sub-btn { flex: 0 0 38%; }
 .preview-save { flex: 1 1 auto; width: auto !important; min-height: 50px; margin: 0 !important; }
+
+/* ---- 動画のテロップ画面（2026-08-14、伊波さん「動画のテキストスタンプの
+   ページもスクロールなしで」） --------------------------------------- */
+/* 入力欄が5本で252px。ここを詰めないと背の低い端末で入らない */
+@media (max-height: 700px) {
+  .telop-inputs { gap: 5px; }
+  .telop-input { padding: 8px 10px; font-size: 0.86rem; }
+  .setup-content .setup-section-title { margin-bottom: 8px; }
+}
+
+/* 長い札（「録画ボタンの位置」など）。2行に折って幅を抑える */
+.opt-label.wide {
+  min-width: 4.6em; white-space: pre-line; line-height: 1.25;
+  font-size: 0.72rem;
+}
+
+/* SE で 25px 残る。入力欄と操作の行をあと少し詰めれば収まる */
+@media (max-height: 700px) {
+  .telop-inputs { gap: 4px; }
+  .telop-input { padding: 7px 9px; }
+  .setup-content .opt-row { margin-top: 5px; }
+  .setup-content .opt-row .shape-switch button { padding: 7px 5px; font-size: 0.82rem; }
+}
+
+/* SE であと12px。テロップ画面の見出しと入力欄をもう少しだけ詰める */
+@media (max-height: 700px) {
+  .setup-content .setup-section-title { margin-bottom: 6px; font-size: 0.88rem; }
+  .telop-input { padding: 6px 9px; }
+  .setup-content .start-btn { min-height: 44px; }
+}
+
+/* 撮れた動画の確認。写真の見本と同じ枠を使う */
+.preview-sheet video {
+  width: 100%; height: auto; max-height: 100%;
+  object-fit: contain; display: block; border-radius: 10px;
+  background: #000;
+}
+
+/* SE のらくがき側にあと1px。ボタンの間だけ削る */
+@media (max-height: 700px) {
+  .photo-screen .start-btn { margin-top: 6px !important; }
+}

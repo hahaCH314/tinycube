@@ -694,6 +694,10 @@ function App() {
   // そのまま1枚に書き出すだけでよい（2026-08-11、伊波さん「昔のプリクラ」）。
   // 光らせるのは画面の上だけ。canvas に描くと写真そのものが白くなる
   const [flash, setFlash] = useState(false);
+  // 動画の撮影画面から「写真」ボタンを外したので、いま呼び出し口は無い
+  // （2026-08-14、伊波さん「動画撮影ページの写真のボタン削除」）。
+  // 写真は「なにを撮る？」→ 写真 → 3枚連写の道に一本化した。
+  // 1枚だけ撮る需要が出たときのために処理は残してある
   const shoot = async () => {
     const c = canvasRef.current;
     if (!c) return;
@@ -921,6 +925,11 @@ function App() {
   // できあがりの見本。保存の前に、3枚が1枚になった姿を見せる
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewBusy, setPreviewBusy] = useState(false);
+  // 撮れた動画。止めた直後に黙って保存すると、何が起きたのか分からない
+  // （2026-08-14、伊波さん「停止後の操作が不明」
+  // 「録画停止後すぐ保存しますか？を出す？」）。
+  // 写真と同じで、見てから保存するかを決められるようにする
+  const [madeVideo, setMadeVideo] = useState<{ blob: Blob; ext: string; url: string } | null>(null);
   const overTrashRef = useRef(false);
   // 指がゴミ箱の上に来ているか。離した瞬間に state を読むと
   // 反映前の古い値を見ることがあるので、ref にも同じものを持つ
@@ -1014,6 +1023,8 @@ function App() {
     };
   }, [dragId]);
 
+  void shoot;
+
   // 一時停止。録画も動画も両方止める。
   // 止めているあいだの絵と音は、まったくファイルに入らない
   const togglePause = () => {
@@ -1078,7 +1089,10 @@ function App() {
         shape,
         srcAudio: useSrcAudio,
         watermark: unlocked ? null : 'tinyCUBE',
-        onFinish: (blob, ext) => save(blob, ext),
+        // ここで保存はしない。撮れたものを見せてから決めてもらう
+        onFinish: (blob, ext) => {
+          setMadeVideo({ blob, ext, url: URL.createObjectURL(blob) });
+        },
         onError: (e) => alert(t('alert_rec_fail') + e.message),
       });
       // 録画開始と同じタイミングで動画も最初から再生する
@@ -1224,10 +1238,8 @@ function App() {
 
         {/* 録画ボタン */}
         <footer className="bottom-controls">
-          <button className="preview-btn-round" onClick={() => setScreen('setup')} disabled={isRecording || isBursting} title="設定に戻る">
-            <span className="ctrl-icon">↺</span>
-            <span className="ctrl-label">設定</span>
-          </button>
+          {/* 左端の「設定」も外した。ヘッダー右上の「戻る」が同じ場所へ行く
+              （2026-08-14、伊波さん「その隣は設定だから戻るボタンと重複」） */}
           {/* 写真の道では、押すものを「3枚撮る」1つだけにする。
               録画のボタンが並んでいると、写真を撮りに来た人がどれを押すか迷う
               （2026-08-14、伊波さん「写真はフレーム選択の後→camera画面で撮影」） */}
@@ -1243,18 +1255,9 @@ function App() {
             </button>
           ) : (
           <>
-          {/* 写真。押した瞬間の画面が、そのまま1枚になる。
-              絵の下に必ず言葉を置く（2026-08-13、伊波さん
-              「ボタンなどの文字はわかりやすく」） */}
-          <button
-            className="photo-btn-round"
-            onClick={shoot}
-            disabled={!videoSrc && !camOn}
-            title={t('btn_photo')}
-          >
-            <span className="ctrl-icon">📷</span>
-            <span className="ctrl-label">写真</span>
-          </button>
+          {/* 動画のときの「写真」ボタンは外した。写真を撮りたい人は
+              最初の「なにを撮る？」で写真を選ぶ道があるので重複していた
+              （2026-08-14、伊波さん「動画撮影ページの写真のボタン削除」） */}
           {/* 録画スタート・一時停止・停止は**いつも4つとも出す**。
               そのときに押せないものは薄くして押せなくするだけにする。
               消してしまうと「さっきあったボタンが無い」と探すことになる
@@ -1343,15 +1346,9 @@ function App() {
           <div className="panel-scroll">
             {/* 自作音の枠（my1 / my2）は 08cf11c で廃止。
                 音ファイルの読み込みごと無くなったので、空の枠だけ残しても押せない */}
-            {/* 音は3つ（08cf11c「かんたん化」。10個＋自作枠2個から減らした） */}
-            {(['clap', 'drum', 'blip'] as const)
-              .map(id => (
-                <button key={id} className="effect-btn btn-sound" onClick={() => fire(id)}>
-                  <RailFace id={id} label={t(('eff_' + id) as never)} />
-                </button>
-              ))}
-            {/* エフェクト3個は柱の下（2026-08-11、伊波さんの指示）。
-                グリッチはミラーボールに差し替えた（同コミット） */}
+            {/* エフェクトが上、音が下（2026-08-14、伊波さん
+                「音ボタンとエフェクトボタン上下入れ替え」）。
+                前は音が上・エフェクトが下だった */}
             <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
               <RailFace id="flash" label={t('eff_flash')} />
             </button>
@@ -1361,6 +1358,13 @@ function App() {
             <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>
               <RailFace id="emotional" label={t('eff_emotional')} />
             </button>
+            {/* 音は3つ（08cf11c「かんたん化」。10個＋自作枠2個から減らした） */}
+            {(['clap', 'drum', 'blip'] as const)
+              .map(id => (
+                <button key={id} className="effect-btn btn-sound" onClick={() => fire(id)}>
+                  <RailFace id={id} label={t(('eff_' + id) as never)} />
+                </button>
+              ))}
           </div>
         </div>
 
@@ -1746,8 +1750,12 @@ function App() {
                 「次（スタンプテキスト変更しますか？」「テキストの出現の仕方忘れずに」） */}
             {setupStep === 'telop' && (
             <div className="setup-section highlight-section">
-              <h3 className="setup-section-title">スタンプの文字を変えますか？</h3>
-              <p className="sheet-note">{t('setting_telop_note')}</p>
+              {/* 見出しを1つずつ立てると50px×3、説明文で42px。それだけで
+                  画面からはみ出す。写真側と同じく、小さな札を操作の左に
+                  添える形にしてスクロールを無くす（2026-08-14、伊波さん
+                  「動画のテキストスタンプのページもスクロールなしで」）。
+                  説明は入力欄の透かしへ移した */}
+              <h3 className="setup-section-title">テキストスタンプの変更</h3>
               <div className="telop-inputs">
                 {myTelops.map((text, i) => (
                   <div className="telop-row" key={i}>
@@ -1756,57 +1764,60 @@ function App() {
                       className="telop-input"
                       value={text}
                       maxLength={20}
+                      placeholder="好きな言葉を入れてね"
                       onChange={e => setTelop(i, e.target.value)}
                     />
                   </div>
                 ))}
               </div>
 
-              <h3 className="setup-section-title" style={{ marginTop: 20 }}>{t('setting_teloppos')}</h3>
-              <div className="shape-switch">
-                <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
-                <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
+              <div className="opt-row">
+                <span className="opt-label">場所</span>
+                <div className="shape-switch">
+                  <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
+                  <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
+                </div>
               </div>
 
-              <h3 className="setup-section-title" style={{ marginTop: 20 }}>{t('setting_telopcolor')}</h3>
-              <div className="shape-switch">
-                <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
-                <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
+              <div className="opt-row">
+                <span className="opt-label">色</span>
+                <div className="shape-switch">
+                  <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
+                  <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
+                </div>
               </div>
-
-              <button
-                className="start-btn"
-                style={{ marginTop: 20, width: '100%' }}
-                onClick={() => setScreen('video')}
-              >この設定で撮る</button>
-              {/* 「こまかい設定」への脇道は無くした。中身は他の段と重複して
-                  いたか、この流れの中に置ける（2026-08-13、伊波さん
-                  「細かい設定にまとめるものなんてないよ？」「全部誘導線に乗せる」） */}
-              {/* 同上。戻るはヘッダーに一本化 */}
-
-              {/* 言語の切り替えは一番最初の画面（agree）へ移した。
-                  英語で開いた人が、読める場所で切り替えられるように
-                  （2026-08-13、伊波さん「言語切り替えは、トップページへ」） */}
 
               {/* 利き手。録画ボタンを持つ手に合わせる */}
-              <h3 className="setup-section-title" style={{ marginTop: 20 }}>ボタンの位置</h3>
-              <div className="hand-setting">
-                <label><input type="radio" name="hand" value="right" checked={hand === 'right'} onChange={() => setHand('right')} /> 右</label>
-                <label><input type="radio" name="hand" value="left" checked={hand === 'left'} onChange={() => setHand('left')} /> 左</label>
+              {/* 何のボタンの位置か分からないので「録画ボタン」と言い切る
+                  （2026-08-14、伊波さん「ボタンの位置の文言は
+                  録画ボタンの位置に変更」）。札は2行で置く */}
+              <div className="opt-row">
+                <span className="opt-label wide">録画ボタンの位置</span>
+                <div className="shape-switch">
+                  <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
+                  <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
+                </div>
               </div>
 
               {/* 動画の音の扱い。動画を読み込んだ人にだけ関わる */}
               {videoSrc && (
-                <>
-                  <h3 className="setup-section-title" style={{ marginTop: 20 }}>{t('setting_srcaudio')}</h3>
-                  <p className="sheet-note">{t('srcaudio_note')}</p>
+                <div className="opt-row">
+                  <span className="opt-label">音</span>
                   <div className="shape-switch">
                     <button className={useSrcAudio === 'mic' ? 'on' : ''} onClick={() => pickSrcAudio('mic')}>{t('srcaudio_mic')}</button>
                     <button className={useSrcAudio === 'mix' ? 'on' : ''} onClick={() => pickSrcAudio('mix')}>{t('srcaudio_mix')}</button>
                     <button className={useSrcAudio === 'off' ? 'on' : ''} onClick={() => pickSrcAudio('off')}>{t('srcaudio_off')}</button>
                   </div>
-                </>
+                </div>
               )}
+
+              {/* 「撮る」はいちばん最後。前は真ん中にあって、その下にも
+                  設定が続いていた（押したあとに気づく並びだった） */}
+              <button
+                className="start-btn"
+                style={{ marginTop: 14, width: '100%' }}
+                onClick={() => setScreen('video')}
+              >この設定で撮る</button>
             </div>
             )}
 
@@ -2026,6 +2037,40 @@ function App() {
                 onClick={openPreview}
                 disabled={previewBusy}
               >{previewBusy ? '作っています…' : 'できあがりを見る'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 録画のあと。止めた直後に黙って保存すると、何が起きたのか
+          分からない（2026-08-14、伊波さん「停止後の操作が不明」
+          「今の動画を保存しますか？やりなおしますか？の選択かな」）。
+          撮れたものをその場で見て、保存かやりなおしかを選ぶ */}
+      {madeVideo && (
+        <div className="preview-screen">
+          <div className="preview-inner" onClick={e => e.stopPropagation()}>
+            <div className="preview-head">撮れました！</div>
+            <div className="preview-sheet">
+              {/* 音も出す。撮れた声が入っているか、ここで確かめられる */}
+              <video src={madeVideo.url} controls playsInline autoPlay loop />
+            </div>
+            <div className="preview-btns">
+              <button
+                className="sub-btn"
+                onClick={() => {
+                  URL.revokeObjectURL(madeVideo.url);
+                  setMadeVideo(null);
+                  setStartHint(true);
+                }}
+              >やりなおす</button>
+              <button
+                className="start-btn save-btn preview-save"
+                onClick={async () => {
+                  await save(madeVideo.blob, madeVideo.ext);
+                  URL.revokeObjectURL(madeVideo.url);
+                  setMadeVideo(null);
+                }}
+              >この動画を保存する</button>
             </div>
           </div>
         </div>
