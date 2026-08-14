@@ -66,23 +66,6 @@ export const FRAMES: Frame[] = [
   { id: 'tc_garden', name: 'グリーンガーデン', file: './frames/tc_garden.png', anchor: 'wide' },
   { id: 'tc_heart', name: 'ハート', file: './frames/tc_heart.png', anchor: 'wide' },
 
-  { id: 'pop_0545_1', name: 'cmcube_pop_themes (3)', file: './frames/pop_0545_1_overlay.png', bgFile: './frames/pop_0545_1_mural.png', anchor: 'wide' },
-  { id: 'split_0587_2', name: 'cmcube_split_themes (10)', file: './frames/split_0587_2_overlay.png', bgFile: './frames/split_0587_2_mural.png', anchor: 'wide' },
-  { id: 'split_0599_3', name: 'cmcube_split_themes (11)', file: './frames/split_0599_3_overlay.png', bgFile: './frames/split_0599_3_mural.png', anchor: 'wide' },
-  { id: 'split_0602_4', name: 'cmcube_split_themes (12)', file: './frames/split_0602_4_overlay.png', bgFile: './frames/split_0602_4_mural.png', anchor: 'wide' },
-  { id: 'split_0606_5', name: 'cmcube_split_themes (13)', file: './frames/split_0606_5_overlay.png', bgFile: './frames/split_0606_5_mural.png', anchor: 'wide' },
-  { id: 'split_0609_6', name: 'cmcube_split_themes (14)', file: './frames/split_0609_6_overlay.png', bgFile: './frames/split_0609_6_mural.png', anchor: 'wide' },
-  { id: 'split_0612_7', name: 'cmcube_split_themes (15)', file: './frames/split_0612_7_overlay.png', bgFile: './frames/split_0612_7_mural.png', anchor: 'wide' },
-  { id: 'split_0617_8', name: 'cmcube_split_themes (16)', file: './frames/split_0617_8_overlay.png', bgFile: './frames/split_0617_8_mural.png', anchor: 'wide' },
-  { id: 'split_0619_9', name: 'cmcube_split_themes (17)', file: './frames/split_0619_9_overlay.png', bgFile: './frames/split_0619_9_mural.png', anchor: 'wide' },
-  { id: 'split_0621_10', name: 'cmcube_split_themes (2)', file: './frames/split_0621_10_overlay.png', bgFile: './frames/split_0621_10_mural.png', anchor: 'wide' },
-  { id: 'split_0623_11', name: 'cmcube_split_themes (4)', file: './frames/split_0623_11_overlay.png', bgFile: './frames/split_0623_11_mural.png', anchor: 'wide' },
-  { id: 'split_0625_12', name: 'cmcube_split_themes (5)', file: './frames/split_0625_12_overlay.png', bgFile: './frames/split_0625_12_mural.png', anchor: 'wide' },
-  { id: 'split_0627_13', name: 'cmcube_split_themes (6)', file: './frames/split_0627_13_overlay.png', bgFile: './frames/split_0627_13_mural.png', anchor: 'wide' },
-  { id: 'split_0631_14', name: 'cmcube_split_themes (7)', file: './frames/split_0631_14_overlay.png', bgFile: './frames/split_0631_14_mural.png', anchor: 'wide' },
-  { id: 'split_0634_15', name: 'cmcube_split_themes (8)', file: './frames/split_0634_15_overlay.png', bgFile: './frames/split_0634_15_mural.png', anchor: 'wide' },
-  { id: 'split_0638_16', name: 'cmcube_split_themes (9)', file: './frames/split_0638_16_overlay.png', bgFile: './frames/split_0638_16_mural.png', anchor: 'wide' },
-  { id: 'ofuzake1_0643', name: 'ofuzake', file: './frames/ofuzake1_0643_overlay.png', bgFile: './frames/ofuzake1_0643_mural.png', anchor: 'wide' },
 
 
 
