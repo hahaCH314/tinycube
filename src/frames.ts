@@ -48,7 +48,13 @@ export const FRAMES: Frame[] = [
   //
   // ファイル名を英数字にしてあるのは、日本語だと URL で %E3%81... に化けるため。
   // 画面に出る名前は日本語のまま（name の側）
-  { id: 'tc_galaxy', name: 'ギャラクシー', file: './frames/tc_galaxy.webp', anchor: 'wide' },
+  // 「ギャラクシー」（tc_galaxy）は 2026-08-14 に外した。
+  // 元絵が 320x180 しかなく（他は 1400x788）、穴の縁が階段状にガタガタで、
+  // 周りの黒い縁も太くて映像が小さくしか映らなかった。
+  // 顔ハメではなく映像がそのまま映る枠なので、縁の粗さがはっきり見える。
+  // 元絵がどこにも無く作り直せないため、伊波さんの判断で削除。
+  // 絵は assets/_removed-galaxy-2026-08-14 と
+  // assets/_png-before-webp-2026-08-14 に残してある
   { id: 'tc_otaku', name: 'ヲタ芸', file: './frames/tc_otaku.webp', anchor: 'wide' },
   { id: 'tc_fun', name: 'おふざけ', file: './frames/tc_fun.webp', anchor: 'wide' },
   { id: 'tc_fun2', name: 'おふざけ2', file: './frames/tc_fun2.webp', anchor: 'wide' },
