@@ -1356,23 +1356,37 @@
      そのぶん場所を食って6個入らなかった（2026-08-14、伊波さん
      「ボタン自体も縦長にしてるから入らないんじゃない？」）。
      縦に詰めるだけで、字は縮めない */
-  .side-panel .effect-btn { min-height: 46px; padding: 1px 0; }
+  /* **余った高さを配って、上下いっぱいに伸ばす。**
+     46px 固定だと、柱が348pxあるのに中身は340px＝下に53px余ったまま
+     ボタンだけ小さく縮こまっていた（2026-08-14 実測）。
+     伊波さん「横向きボタンはもう少し上下伸ばしてスクロールなしに」。
+     flex:1 で余りを等分すれば、個数が変わっても勝手に埋まる。
+     min-height は押しやすさの下限、max-height は伸びすぎ防止 */
+  .side-panel .effect-btn {
+    flex: 1 1 auto;
+    min-height: 46px; max-height: 72px;
+    padding: 1px 0;
+  }
   .side-panel .panel-scroll {
     display: flex; flex-direction: column; flex-wrap: nowrap;
-    gap: 3px; overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    gap: 3px;
+    /* 伸ばして収まるので、繰る必要がなくなった。
+       hidden にしておけば、指が触れても中身がずれない */
+    overflow: hidden;
+    height: 100%;
   }
   /* **小さくしないこと。** 入る数から逆算して詰めたら、押しにくいうえに
      字も読みづらくなった（2026-08-14、伊波さん「めっちゃ小さい
-     このまま縦に並べて」）。縦持ちと同じ大きさのまま縦に並べ、
-     入り切らないぶんは指で繰ってもらう */
-  .side-panel .effect-btn { flex: 0 0 auto; }
-  /* 3個しか見えないと「これで全部」に見えるので、下に続きがある印を出す。
-     柱の下端をぼかして、途中で切れていることを伝える */
-  .side-panel {
-    -webkit-mask-image: linear-gradient(180deg, #000 88%, transparent 100%);
-    mask-image: linear-gradient(180deg, #000 88%, transparent 100%);
-  }
+     このまま縦に並べて」）。字は縮めず、上の flex で余りを配る */
+  /* ⚠️ ここに `flex: 0 0 auto` を書き戻さないこと。
+        後から効くので上の `flex: 1 1 auto` を打ち消し、
+        ボタンが伸びずに下が空いたままになる */
+
+  /* 下端のぼかしは**外した**。
+     全部が収まるようになったのに、ぼかしがあると
+     「まだ下に続きがある」と嘘をつくことになる
+     （6個で全部なのに、電子音が薄れて途中に見えていた）。
+     入り切らなかった頃の名残なので、ここでは付けない */
   .cam-tune-label { font-size: 0.62rem; }
   .cam-tune .zoom-btn { width: 34px; height: 34px; flex: 0 0 34px; }
   .cam-face-btn { padding: 6px 4px; font-size: 0.74rem; }
