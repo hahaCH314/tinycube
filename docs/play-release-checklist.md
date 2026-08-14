@@ -25,7 +25,7 @@
 PowerShell で、`E:\cmcube` のあたりで:
 
 ```powershell
-& "E:\JDK\17 v2\bin\keytool.exe" -genkeypair -v `
+& "C:\Program Files\Microsoft\jdk-21.0.12.8-hotspot\bin\keytool.exe" -genkeypair -v `
   -keystore E:\keystore-tinycube\tinycube-release.jks `
   -alias tinycube `
   -keyalg RSA -keysize 2048 -validity 10000
