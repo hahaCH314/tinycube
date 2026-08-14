@@ -1276,3 +1276,54 @@
 .credits-row dd {
   margin: 0; font-size: 0.86rem; font-weight: 800; color: #fff;
 }
+
+/* ---- 横フレームの案内・録画の誘導（2026-08-14、伊波さん
+   「横フレーム選択時のお知らせが、録画ボタンに被って どちらも見えない」
+   「ズーム機能の表示もあるから気を付けて」） ------------------------- */
+/* skin 側は bottom:14px・z-index 無しで、録画ボタン（y=732..844, z-index:30）の
+   裏に完全に隠れていた。実測で案内 y=758..830 が丸ごと被っていた。
+   ズーム欄（.cam-tune, bottom:128px, z-index:60）とも重ならない場所へ置く。
+
+   置き場所の考え方：
+   - ズーム欄が出ているとき（カメラで録画前）はその上
+   - 出ていないとき（動画ファイル・録画中）は録画ボタンのすぐ上
+   どちらでも録画ボタンより前面に出す（z-index を明示する）*/
+.turn-hint {
+  bottom: 128px;                 /* 録画ボタンの上。ズーム欄と同じ高さから始める */
+  z-index: 70;                   /* 録画ボタン(30)・柱(40)・ズーム(60) より前 */
+  max-width: min(74%, 260px);    /* 左右の柱（幅62px）の内側に収める */
+}
+/* ズーム欄が出ているときは、その上へ逃がす。
+   **高さを固定値で見積もらないこと。** 実測で 177px あり、145px と
+   見積もって重ねてしまった。案内をズーム欄の兄弟ではなく、
+   ズーム欄そのものの上端を基準にする方法が無いので、
+   ここは十分な余裕（欄の実測177px＋録画ボタン128px＋余白）を取る */
+.turn-hint.above-tune { bottom: 320px; }
+
+/* 畳めるズーム欄（2026-08-14、伊波さん「横にしたら画面がズーム画面で
+   おおわれてる、畳めるようにして」）。
+   横持ちは画面の高さが390pxしかなく、この欄の145pxが真ん中を占領していた */
+.cam-tune-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; width: 100%; padding: 4px 2px;
+  font-size: 0.72rem; font-weight: 800; color: #cfe0f5;
+  background: transparent; border: none;
+}
+.cam-tune-caret { font-size: 0.62rem; color: #66e7ff; }
+/* 畳んだときは見出しの一行だけ残す */
+.cam-tune.folded { gap: 0; padding-bottom: 6px; }
+.cam-tune.folded .cam-tune-row,
+.cam-tune.folded .cam-tune-label { display: none; }
+
+/* 横持ちのときは既定でも詰める。高さが足りない */
+@media (orientation: landscape) and (max-height: 500px) {
+  .cam-tune { bottom: 96px; padding: 6px 10px; gap: 6px; }
+  .cam-tune-label { font-size: 0.62rem; }
+  .cam-tune .zoom-btn { width: 34px; height: 34px; flex: 0 0 34px; }
+  .cam-face-btn { padding: 6px 4px; font-size: 0.74rem; }
+  /* 案内も同じだけ上げる */
+  .turn-hint.above-tune { bottom: 240px; }
+  .turn-hint.above-tune-folded { bottom: 142px; }
+}
+/* 畳んだら案内を下げてよい（欄が薄くなるので） */
+.turn-hint.above-tune-folded { bottom: 182px; }

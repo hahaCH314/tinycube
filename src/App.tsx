@@ -320,6 +320,10 @@ function App() {
   // 「顔がデカい人は入らないと指摘、ズーム機能調整（インカメ）」）。
   // 1 が今まで通り。下げると引く（顔が小さくなって穴に収まる）
   const [camZoom, setCamZoom] = useState(1);
+  // ズームの操作欄を畳めるようにする。横持ちだと画面の高さが足りず、
+  // この欄が映像を覆ってしまう（2026-08-14、伊波さん）。
+  // 既定は開いた状態（畳んだままだとズームに気づかない）
+  const [camTuneOpen, setCamTuneOpen] = useState(true);
   useEffect(() => { liveRef.current.zoom = camZoom; }, [camZoom]);
 
   // ---- 写真（3枚連写 → テキスト → デコる → 保存） --------------------
@@ -1190,12 +1194,16 @@ function App() {
         {countdown !== null && <div className="countdown">{countdown}</div>}
         {/* 何枚目を撮っているか。3枚撮ったことが数で分かるようにする */}
         {burstNo !== null && <div className="burst-no">{burstNo} / 3</div>}
+        {/* ズーム欄（.cam-tune）は別の親（.ui-layer）にあるので、
+            CSS の :has() では位置を合わせられない。**出ているかどうかを
+            クラスで渡すこと。** ここを CSS だけで解こうとして一度失敗した
+            （2026-08-14）。ズーム欄と重なると、どちらも読めなくなる */}
         {shape === 'landscape' && portraitDevice ? (
-          <div className="turn-hint">（横フレームが選択されています。<br/>スマホを横にしてください。）</div>
+          <div className={`turn-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>（横フレームが選択されています。<br/>スマホを横にしてください。）</div>
         ) : startHint && !isRecording ? (
           /* 誘導は説明より強い。初めて撮影画面に来た人に、押す場所だけ示す
              （2026-08-12、伊波さん「説明見てわからないなら、誘導が１番でしょ？」） */
-          <div className="turn-hint start-hint">録画ボタンを押してね</div>
+          <div className={`turn-hint start-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>録画ボタンを押してね</div>
         ) : null}
       </main>
 
@@ -1299,8 +1307,19 @@ function App() {
             穴に顔が入らないことに撮ってから気づく（2026-08-14、伊波さん
             「顔がデカい人は入らないと指摘、ズーム機能調整（インカメ）」）。
             前後の切り替えもここに置く。設定まで戻らずに直せる */}
+        {/* 畳めるようにしてある（2026-08-14、伊波さん「横にしたら画面が
+            ズーム画面でおおわれてる、畳めるようにして」）。
+            横持ちだと画面の高さが390pxしかなく、この欄の145pxが真ん中を
+            占領して映像が見えなくなる。畳むと見出しの一行だけになる */}
         {camOn && !isRecording && (
-          <div className="cam-tune">
+          <div className={`cam-tune ${camTuneOpen ? '' : 'folded'}`}>
+            <button
+              className="cam-tune-toggle"
+              onClick={() => setCamTuneOpen(o => !o)}
+            >
+              <span>📷 カメラ・ズーム</span>
+              <span className="cam-tune-caret">{camTuneOpen ? '▼' : '▲'}</span>
+            </button>
             <div className="cam-tune-row">
               <button
                 className={`cam-face-btn ${camFront ? 'on' : ''}`}
