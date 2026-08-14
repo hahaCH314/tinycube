@@ -1322,7 +1322,7 @@
      左下の隅へ寄せて、幅も抑える */
   /* 左の柱（x=4..66）と重ならない位置へ。真ん中は映像なので避ける */
   .cam-tune {
-    left: 138px; transform: none;
+    left: 76px; transform: none;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
     width: 210px; padding: 6px 10px; gap: 6px;
   }
@@ -1334,18 +1334,40 @@
      だけになり、何のボタンか分からなくなった（2026-08-14、伊波さん
      「縮んで隠れてる」）。「絵だけにはしない」は以前からの決まり。
      縮めるのではなく、**柱の中を繰れるようにして全部に手が届くようにする** */
-  /* 横持ちは高さが足りず、繰れるようにしても**3個しか見えず「これで全部」に
-     見えてしまう**（2026-08-14、伊波さん「テキストと音エフェクトボタンも
-     直してね」）。横は幅に余裕があるので、**2列にして全部出す**。
-     縦持ちで2列にしたときは幅が足りず文字が切れたが、横なら足りる */
-  .side-panel { top: 42px !important; bottom: 74px !important; width: 124px; }
-  .side-panel.right { left: auto; right: 4px; }
-  .side-panel .panel-scroll {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 5px; overflow: visible;
-    align-content: start;
+  /* 横持ちは高さが足りず、繰れるようにしても3個しか見えず「これで全部」に
+     見えてしまう。かといって**2列にすると1つが小さくなって押しにくい**
+     （2026-08-14、伊波さん「音ボタンも2列で押しにくい」）。
+     1列のまま、**画面の上から下までいっぱいに使って**全部入れる。
+     ヘッダーと録画ボタンのぶんだけ空ければ、11個とも収まる */
+  /* **上下いっぱいまで伸ばす。** 余白を取りすぎて3個しか出ていなかったが、
+     ヘッダー（34px）と録画ボタン（74px）のぶんだけ空ければ5個入る
+     （2026-08-14、伊波さん「5個ずつ縦に入るよ」）*/
+  /* **max-height を上書きすること。** 別の場所で 44dvh が指定されていて、
+     横持ちでは 390x0.44 = 172px にしかならず3個で頭打ちだった（実測）。
+     top/bottom を指定しても、この max-height が勝って伸びない。
+     ヘッダーと録画ボタンのぶんだけ空ければ5個入る
+     （2026-08-14、伊波さん「5個ずつ縦に入るよ」）*/
+  .side-panel {
+    top: 36px !important; bottom: 76px !important; width: 62px;
+    height: auto !important;
+    max-height: none !important;
   }
-  .side-panel .effect-btn { min-height: 0; }
+  .side-panel .panel-scroll {
+    display: flex; flex-direction: column; flex-wrap: nowrap;
+    gap: 3px; overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* **小さくしないこと。** 入る数から逆算して詰めたら、押しにくいうえに
+     字も読みづらくなった（2026-08-14、伊波さん「めっちゃ小さい
+     このまま縦に並べて」）。縦持ちと同じ大きさのまま縦に並べ、
+     入り切らないぶんは指で繰ってもらう */
+  .side-panel .effect-btn { flex: 0 0 auto; }
+  /* 3個しか見えないと「これで全部」に見えるので、下に続きがある印を出す。
+     柱の下端をぼかして、途中で切れていることを伝える */
+  .side-panel {
+    -webkit-mask-image: linear-gradient(180deg, #000 88%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 88%, transparent 100%);
+  }
   .cam-tune-label { font-size: 0.62rem; }
   .cam-tune .zoom-btn { width: 34px; height: 34px; flex: 0 0 34px; }
   .cam-face-btn { padding: 6px 4px; font-size: 0.74rem; }

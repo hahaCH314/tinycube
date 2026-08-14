@@ -554,6 +554,9 @@ function App() {
   const builtinFrame = FRAMES.find(f => f.id === frameId) ?? null;
   const customFrame = customFrames.find(f => f.id === frameId) ?? null;
   const frame: Frame | null = builtinFrame || (customFrame ? { id: customFrame.id, name: 'マイフレーム', file: customFrame.dataUrl, anchor: 'wide' } : null);
+  // 顔ハメの枠かどうか。ズームを出すかどうかの判断に使う。
+  // 穴の無い枠では、ズームは映像を覆うだけで使い道が無い（2026-08-14）
+  const isFaceHoleFrame = !!frame && ((frame.faceHoles && frame.faceHoles.length > 0) || !!frame.faceHole);
 
 
   // 画面に出す係を1つだけ回す。録画していなくても同じ絵が出るので、
@@ -1334,7 +1337,12 @@ function App() {
             ズーム画面でおおわれてる、畳めるようにして」）。
             横持ちだと画面の高さが390pxしかなく、この欄の145pxが真ん中を
             占領して映像が見えなくなる。畳むと見出しの一行だけになる */}
-        {camOn && !isRecording && (
+        {/* **顔ハメの枠を選んだときだけ出す。**
+            ズームは「顔を穴に合わせる」ための道具なので、穴の無い枠では
+            使い道が無く、映像を覆うだけになる（2026-08-14、伊波さん
+            「カメラズームのボタンが邪魔。顔はめ以外ズーム隠したら？」）。
+            前後の切り替えも一緒に隠れるが、設定画面から変えられる */}
+        {camOn && !isRecording && isFaceHoleFrame && (
           <div className={`cam-tune ${camTuneOpen ? '' : 'folded'}`}>
             <button
               className="cam-tune-toggle"
