@@ -805,6 +805,15 @@
   max-height: 46dvh;
   display: flex; align-items: center; justify-content: center;
 }
+/* 画面に収めるため、写真は残りの高さに合わせて縮める。
+   下の操作は全部見えていないと使えないので、譲るのは写真のほう
+   （2026-08-14、伊波さん「なるべく（フレーム選択以外）スクロール無しで」）*/
+.photo-screen .shot-big,
+.photo-screen .shot-big > img { max-height: 34dvh; }
+@media (max-height: 700px) {
+  .photo-screen .shot-big,
+  .photo-screen .shot-big > img { max-height: 28dvh; }
+}
 /* 写真の形（縦・横）はそのまま。箱の中に収まるまで縮める。
    縦で撮ったときは高さで、横で撮ったときは幅で頭打ちになる */
 .shot-big > img {
@@ -953,3 +962,85 @@
 /* 説明文で改行を使えるようにする。skin 側は pre-line を持っていないので、
    '\n' を渡しても1行に潰れる。setup.css はあとから読まれるので、こちらが勝つ */
 .setup-content .sheet-note { white-space: pre-line; }
+
+/* ---- 1画面に収める（2026-08-14、伊波さん「なるべく（フレーム選択以外）
+   スクロール無しで作りたい」） -------------------------------------- */
+/* 見出しを1行ずつ立てると、それだけで50px×4＝200px 使う。
+   小さな札を操作の左に添えれば、1行で済む */
+.opt-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px;
+}
+.opt-label {
+  flex: 0 0 auto; min-width: 2.6em;
+  font-size: 0.78rem; font-weight: 900; color: #66e7ff;
+  letter-spacing: 0.04em;
+}
+/* 札の右側は残りぜんぶ使う */
+.opt-row > .font-picker,
+.opt-row > .angle-row,
+.opt-row > .color-picker,
+.opt-row > .shape-switch { flex: 1 1 auto; margin: 0; }
+
+/* 色の丸を小さくする。8個が1行に収まるように */
+.opt-row .color-dot { width: 30px; height: 30px; }
+.opt-row .color-picker { flex-wrap: nowrap; gap: 6px; justify-content: space-between; }
+
+/* 書体と大きさのボタンも詰める */
+.opt-row .font-btn { padding: 8px 6px; font-size: 0.86rem; min-width: 0; }
+.opt-row .shape-switch button { padding: 8px 6px; }
+.opt-row .zoom-btn { width: 34px; height: 34px; flex: 0 0 34px; font-size: 1rem; }
+
+/* 使う頻度の低いものは横に並べる。縦に積むと1つ54px ずつ増える */
+.sub-btn-row { display: flex; gap: 8px; margin-top: 14px; }
+.sub-btn {
+  flex: 1; padding: 11px 6px; border-radius: 12px;
+  font-size: 0.82rem; font-weight: 800; color: #fff;
+  background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.24);
+}
+.sub-btn:disabled { opacity: 0.4; }
+
+/* 写真の編集画面は余白を詰める。ここだけで数十pxが浮く */
+.photo-screen .setup-content { gap: 8px; padding-top: 6px; padding-bottom: 12px; }
+.photo-screen .setup-section { padding: 12px; }
+.photo-screen .shot-big { margin-bottom: 6px; }
+.photo-screen .shot-strip { margin-bottom: 8px; }
+.photo-screen .start-btn { min-height: 46px; }
+
+/* 指の使い方の案内。つまみを消したぶん、やり方が分からなくなるので一言だけ */
+.gesture-hint {
+  margin-top: 10px; font-size: 0.68rem; line-height: 1.4;
+  color: #a9bad2; text-align: center;
+}
+
+/* 文字の画面はいちばん中身が多い。ここだけさらに詰める */
+.photo-screen .shot-strip { margin-bottom: 4px; }
+/* 待機の2枚は「そこにある」と分かれば足りる。高さで効かせる */
+.photo-screen .shot-thumb { width: 11%; }
+.gesture-hint { margin-top: 6px; }
+.opt-row { margin-top: 8px; }
+.photo-screen .telop-input { padding: 10px 12px; }
+/* 背の低い端末では、写真をもう一段譲る */
+@media (max-height: 700px) {
+  .photo-screen .shot-big,
+  .photo-screen .shot-big > img { max-height: 22dvh; }
+  .photo-screen .shot-thumb { width: 9%; }
+  .photo-screen .setup-section { padding: 10px; }
+  .photo-screen .start-btn { min-height: 42px; }
+}
+
+/* 最後の数px。ボタンの間だけ詰めれば収まる */
+.photo-screen .start-btn { margin-top: 8px !important; }
+.photo-screen .sub-btn-row { margin-top: 10px; }
+@media (max-height: 700px) {
+  .photo-screen .gesture-hint { margin-top: 4px; font-size: 0.64rem; }
+  .photo-screen .opt-row { margin-top: 6px; }
+}
+
+/* 横で撮ったときは、待機の2枚が潰れる（幅%で決めると高さが足りない）。
+   高さで揃えて、形は写真に任せる */
+.shot-strip { align-items: center; }
+.photo-screen .shot-thumb { width: auto; height: 52px; }
+@media (max-height: 700px) {
+  .photo-screen .shot-thumb { width: auto; height: 44px; }
+}

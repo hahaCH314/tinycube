@@ -346,6 +346,10 @@ function App() {
   type Deco = { id: number; shot: number; kind: 'text' | 'stamp'; value: string; x: number; y: number; size: number; color: string; angle: number; font?: string };
   const [decos, setDecos] = useState<Deco[]>([]);
   const decoSeq = useRef(0);
+  // 指で操っているあいだ、いまの値を読むための控え。
+  // state を直接見ると、指を置いた時点の古い値を掴んだままになる
+  const decosRef = useRef<Deco[]>([]);
+  useEffect(() => { decosRef.current = decos; }, [decos]);
   // 写真のテキスト。動画側の「出現の仕方」は静止画では意味がないので持たず、
   // 代わりに色を選べるようにした（2026-08-14、伊波さん「出現の仕方の代りに
   // 色変更増やす。手描きフォントにするほうが当時のプリクラ再現率上がる」）
@@ -360,13 +364,16 @@ function App() {
   // 残したのは平成ギャルの2本柱。細い線のサインペン系は外した
   const PHOTO_FONTS = [
     { id: 'maru', name: 'まるもじ', css: '"Hachi Maru Pop", cursive' },
-    { id: 'pop',  name: 'ぷっくり', css: '"Mochiy Pop One", sans-serif' },
+    { id: 'note', name: 'ノート',   css: '"Klee One", serif' },
   ] as const;
   const [photoFontId, setPhotoFontId] = useState<string>('maru');
   const PHOTO_FONT = PHOTO_FONTS.find(f => f.id === photoFontId)?.css ?? PHOTO_FONTS[0].css;
   // 文字の傾き。プリクラの落書きは斜めに入れるものなので、角度が要る
-  // （2026-08-14、伊波さん「文字入れの角度が効かない」）
-  const [photoAngle, setPhotoAngle] = useState(0);
+  // （2026-08-14、伊波さん「文字入れの角度が効かない」）。
+  // つまみは同日に外した。写真の上で2本指をひねれば回せるので、そちらへ寄せた
+  // （同日「文字の傾きはそれこそ指でできない？」）。
+  // ここは「新しく作るスタンプの初期の傾き」としてだけ残っている
+  const [photoAngle] = useState(0);
   const TEXT_COLORS = ['#ff4da6', '#ffffff', '#000000', '#ffe14d', '#4dd2ff', '#7cff4d', '#ff6b4d', '#c14dff'];
   const STAMPS = ['💖', '⭐', '🌟', '✨', '🎀', '🌈', '🍓', '🧸', '👑', '🦄', '🌸', '💎', '🍭', '☁️', '🐰', '🎵'];
   // 「同意してはじめる」を押したら、まっすぐフレーム選びへ。
@@ -851,23 +858,67 @@ function App() {
   const [dragId, setDragId] = useState<number | null>(null);
   const bigShotRef = useRef<HTMLDivElement>(null);
 
+  // 指の当たっている場所を覚えておく。2本になったらひねりと開き具合を見る
+  const ptrsRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  // 2本指を置いた瞬間の状態。ここからの差でどれだけ回したか・広げたかを出す
+  const gestureRef = useRef<{ angle: number; dist: number; startAngle: number; startSize: number } | null>(null);
+
   const startDrag = (id: number) => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    ptrsRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    (e.target as Element).setPointerCapture?.(e.pointerId);
     setDragId(id);
   };
   useEffect(() => {
     if (dragId === null) return;
+    const ptrs = ptrsRef.current;
+
     const move = (e: PointerEvent) => {
+      if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       const box = bigShotRef.current?.getBoundingClientRect();
       if (!box || box.width === 0) return;
+      const pts = [...ptrs.values()];
+
+      // 指2本 … ひねって傾ける／広げて大きさを変える
+      // （2026-08-14、伊波さん「文字の傾きはそれこそ指でできない？」）。
+      // つまみを1本消せるので、画面も1行ぶん短くなる
+      if (pts.length >= 2) {
+        const [a, b] = pts;
+        const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+        const dist = Math.hypot(b.x - a.x, b.y - a.y);
+        if (!gestureRef.current) {
+          const cur = decosRef.current.find(d => d.id === dragId);
+          gestureRef.current = { angle, dist, startAngle: cur?.angle ?? 0, startSize: cur?.size ?? 9 };
+          return;
+        }
+        const g = gestureRef.current;
+        const turned = angle - g.angle;
+        const scale = g.dist > 0 ? dist / g.dist : 1;
+        setDecos(prev => prev.map(d => d.id === dragId
+          ? {
+              ...d,
+              angle: Math.max(-180, Math.min(180, Math.round(g.startAngle + turned))),
+              size: Math.max(3, Math.min(60, +(g.startSize * scale).toFixed(1))),
+            }
+          : d));
+        return;
+      }
+
+      // 指1本 … いままで通り、つまんで動かす
+      gestureRef.current = null;
       const x = ((e.clientX - box.left) / box.width) * 100;
       const y = ((e.clientY - box.top) / box.height) * 100;
       setDecos(prev => prev.map(d => d.id === dragId
         ? { ...d, x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) }
         : d));
     };
-    const up = () => setDragId(null);
+    const up = (e: PointerEvent) => {
+      ptrs.delete(e.pointerId);
+      // 2本目を離したら、次に置き直したときに測り直す
+      gestureRef.current = null;
+      if (ptrs.size === 0) setDragId(null);
+    };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
@@ -1782,79 +1833,49 @@ function App() {
                   />
                 </div>
 
-                {/* 書体。見本をその書体で出す。名前だけ並べても違いが分からない */}
-                <h3 className="setup-section-title" style={{ marginTop: 16 }}>文字の形</h3>
-                <div className="font-picker">
-                  {PHOTO_FONTS.map(f => (
-                    <button
-                      key={f.id}
-                      className={`font-btn ${photoFontId === f.id ? 'on' : ''}`}
-                      style={{ fontFamily: f.css }}
-                      onClick={() => {
-                        setPhotoFontId(f.id);
-                        // 置いてある文字も一緒に変える。置き直しをさせない
-                        setDecos(prev => prev.map(d =>
-                          d.shot === activeShot && d.kind === 'text' ? { ...d, font: f.css } : d));
-                      }}
-                    >{f.name}</button>
-                  ))}
+                {/* 見出しを1つずつ立てると、それだけで50px×4＝200px 使う。
+                    小さな札を操作の左に添える形にして、スクロールを無くす
+                    （2026-08-14、伊波さん「なるべく（フレーム選択以外）
+                    スクロール無しで作りたい」） */}
+                <div className="opt-row">
+                  <span className="opt-label">形</span>
+                  <div className="font-picker">
+                    {PHOTO_FONTS.map(f => (
+                      <button
+                        key={f.id}
+                        className={`font-btn ${photoFontId === f.id ? 'on' : ''}`}
+                        style={{ fontFamily: f.css }}
+                        onClick={() => {
+                          setPhotoFontId(f.id);
+                          // 置いてある文字も一緒に変える。置き直しをさせない
+                          setDecos(prev => prev.map(d =>
+                            d.shot === activeShot && d.kind === 'text' ? { ...d, font: f.css } : d));
+                        }}
+                      >{f.name}</button>
+                    ))}
+                  </div>
                 </div>
 
-                {/* 傾き。プリクラの落書きは斜めに入れるもの */}
-                <h3 className="setup-section-title" style={{ marginTop: 16 }}>文字の傾き</h3>
-                <div className="angle-row">
-                  <button
-                    className="zoom-btn"
-                    onClick={() => setPhotoAngle(a => {
-                      const n = Math.max(-45, a - 5);
-                      setDecos(prev => prev.map(d =>
-                        d.shot === activeShot && d.kind === 'text' ? { ...d, angle: n } : d));
-                      return n;
-                    })}
-                  >↺</button>
-                  <input
-                    className="zoom-range"
-                    type="range"
-                    min={-45}
-                    max={45}
-                    step={1}
-                    value={photoAngle}
-                    onChange={e => {
-                      const n = Number(e.target.value);
-                      setPhotoAngle(n);
-                      setDecos(prev => prev.map(d =>
-                        d.shot === activeShot && d.kind === 'text' ? { ...d, angle: n } : d));
-                    }}
-                  />
-                  <button
-                    className="zoom-btn"
-                    onClick={() => setPhotoAngle(a => {
-                      const n = Math.min(45, a + 5);
-                      setDecos(prev => prev.map(d =>
-                        d.shot === activeShot && d.kind === 'text' ? { ...d, angle: n } : d));
-                      return n;
-                    })}
-                  >↻</button>
-                </div>
-                <p className="sheet-note" style={{ textAlign: 'center' }}>{photoAngle}度</p>
+                <p className="sheet-note gesture-hint">写真の文字は、指1本で移動／2本でひねって傾け・大きさ</p>
 
-                <h3 className="setup-section-title" style={{ marginTop: 16 }}>文字の色</h3>
-                <div className="color-picker">
-                  {TEXT_COLORS.map(c => (
-                    <button
-                      key={c}
-                      className={`color-dot ${photoTextColor === c ? 'on' : ''}`}
-                      style={{ background: c }}
-                      onClick={() => {
-                        setPhotoTextColor(c);
-                        // すでに置いた文字の色も一緒に変える。
-                        // 置き直しをさせない
-                        setDecos(prev => prev.map(d =>
-                          d.shot === activeShot && d.kind === 'text' ? { ...d, color: c } : d));
-                      }}
-                      title={c}
-                    />
-                  ))}
+                <div className="opt-row">
+                  <span className="opt-label">色</span>
+                  <div className="color-picker">
+                    {TEXT_COLORS.map(c => (
+                      <button
+                        key={c}
+                        className={`color-dot ${photoTextColor === c ? 'on' : ''}`}
+                        style={{ background: c }}
+                        onClick={() => {
+                          setPhotoTextColor(c);
+                          // すでに置いた文字の色も一緒に変える。置き直しをさせない
+                          setDecos(prev => prev.map(d =>
+                            d.shot === activeShot && d.kind === 'text' ? { ...d, color: c } : d));
+                        }}
+                        title={c}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 <button
@@ -1879,39 +1900,38 @@ function App() {
                     「フォントでひょうげんできるじゃん」）。
                     文字スタンプ（書体・色・傾き）と絵スタンプで足りている。
                     タブも一緒に消したので、ここはスタンプだけ */}
-                <p className="sheet-note">押すと写真の真ん中に出ます。指でつまんで動かせます</p>
                 <div className="stamp-picker">
                   {STAMPS.map(s => (
                     <button key={s} className="stamp-btn" onClick={() => addDeco('stamp', s)}>{s}</button>
                   ))}
                 </div>
 
-                <h3 className="setup-section-title" style={{ marginTop: 16 }}>大きさ</h3>
-                <div className="shape-switch">
-                  <button onClick={() => setDecos(prev => prev.map(d =>
-                    d.shot === activeShot ? { ...d, size: Math.max(4, +(d.size - 2).toFixed(1)) } : d))}>小さく</button>
-                  <button onClick={() => setDecos(prev => prev.map(d =>
-                    d.shot === activeShot ? { ...d, size: Math.min(40, +(d.size + 2).toFixed(1)) } : d))}>大きく</button>
+                <div className="opt-row">
+                  <span className="opt-label">大きさ</span>
+                  <div className="shape-switch">
+                    <button onClick={() => setDecos(prev => prev.map(d =>
+                      d.shot === activeShot ? { ...d, size: Math.max(4, +(d.size - 2).toFixed(1)) } : d))}>小さく</button>
+                    <button onClick={() => setDecos(prev => prev.map(d =>
+                      d.shot === activeShot ? { ...d, size: Math.min(40, +(d.size + 2).toFixed(1)) } : d))}>大きく</button>
+                  </div>
                 </div>
 
-                <button
-                  className="start-btn"
-                  style={{ marginTop: 16, width: '100%' }}
-                  onClick={() => setDecos(prev => prev.filter(d => d.shot !== activeShot))}
-                  disabled={!decos.some(d => d.shot === activeShot)}
-                >この写真の飾りを全部消す</button>
+                {/* 「全部消す」と「撮り直す」は使う頻度が低いので横に並べる。
+                    縦に積むと1つ54px ずつ増えて、保存ボタンが画面の外へ出る */}
+                <div className="sub-btn-row">
+                  <button
+                    className="sub-btn"
+                    onClick={() => setDecos(prev => prev.filter(d => d.shot !== activeShot))}
+                    disabled={!decos.some(d => d.shot === activeShot)}
+                  >飾りを消す</button>
+                  <button className="sub-btn" onClick={retakePhotos}>撮り直す</button>
+                </div>
 
                 <button
                   className="start-btn save-btn"
                   style={{ marginTop: 10, width: '100%' }}
                   onClick={savePhotoSheet}
                 >3枚を保存する</button>
-
-                <button
-                  className="start-btn"
-                  style={{ marginTop: 10, width: '100%' }}
-                  onClick={retakePhotos}
-                >撮り直す</button>
               </div>
             )}
           </div>
