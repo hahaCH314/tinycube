@@ -1093,3 +1093,10 @@
   .photo-screen .shot-big,
   .photo-screen .shot-big > img { max-height: 24dvh; }
 }
+
+/* 記号のスタンプ（音符）。絵文字ではないので、大きさと太さを自分で整える。
+   絵文字と並べたときに同じ見え方になるよう、少し大きめにする */
+.stamp-btn.glyph {
+  font-size: 2.1rem; font-weight: 900; line-height: 1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}

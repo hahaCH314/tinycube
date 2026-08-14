@@ -375,7 +375,26 @@ function App() {
   // ここは「新しく作るスタンプの初期の傾き」としてだけ残っている
   const [photoAngle] = useState(0);
   const TEXT_COLORS = ['#ff4da6', '#ffffff', '#000000', '#ffe14d', '#4dd2ff', '#7cff4d', '#ff6b4d', '#c14dff'];
-  const STAMPS = ['💖', '⭐', '🌟', '✨', '🎀', '🌈', '🍓', '🧸', '👑', '🦄', '🌸', '💎', '🍭', '☁️', '🐰', '🎵'];
+  // 絵文字のスタンプ。value がそのまま写真に焼かれる。
+  // 音符だけは絵文字（🎵）をやめて、記号（♪）に色を付けて出す。
+  // 絵文字の音符は端末まかせで暗い青緑に転ぶことがあり、
+  // 「明るい黄色のオタマジャクシ」にならない（2026-08-14、伊波さん
+  // 「音符のスタンプは明るい黄色のオタマジャクシのほうがイイ」）。
+  // 記号なら色を自分で決められる
+  type StampDef = { v: string; color?: string };
+  //
+  // 星は ⭐🌟✨ と3つ並べていた。⭐ と 🌟 は同じ「星」で選ぶ意味が無いので
+  // 水色ひとつにまとめる。**きら（✨）は別物なので残す**
+  // （2026-08-14、伊波さん「星はパステルカラーの水色で1個でいいよ
+  // シンプルな法）」「水色濃いめ」「きらは残して」）。
+  // 淡すぎると明るい写真の上で消えるので、パステルより一段濃いところに置く
+  const STAMPS: StampDef[] = [
+    { v: '💖' }, { v: '★', color: '#4fc3f7' }, { v: '✨' },
+    { v: '🎀' }, { v: '🌈' }, { v: '🍓' }, { v: '🧸' },
+    { v: '👑' }, { v: '🦄' }, { v: '🌸' }, { v: '💎' },
+    { v: '🍭' }, { v: '☁️' }, { v: '🐱' },
+    { v: '♪', color: '#ffd83d' },
+  ];
   // 「同意してはじめる」を押したら、まっすぐフレーム選びへ。
   // 以前はここで使い方のガイド（長い文章）を挟んでいたが、
   // 実際に友達に使ってもらったら「何のアプリか、どう使うか分からない」だった。
@@ -767,6 +786,15 @@ function App() {
             g.fillText(d.value, 0, 0);
           } else {
             g.font = `${size}px sans-serif`;
+            // 絵文字は自前の色を持っているので触らない。
+            // 記号のスタンプ（音符）は色を当てないと黒で焼かれる
+            if (!/\p{Extended_Pictographic}/u.test(d.value)) {
+              g.lineWidth = Math.max(2, size * 0.10);
+              g.strokeStyle = 'rgba(0,0,0,0.5)';
+              g.lineJoin = 'round';
+              g.strokeText(d.value, 0, 0);
+              g.fillStyle = d.color;
+            }
             g.fillText(d.value, 0, 0);
           }
           g.restore();
@@ -835,7 +863,7 @@ function App() {
   };
 
   // デコるを1つ足す。まずは真ん中に置いて、指で動かしてもらう
-  const addDeco = (kind: 'text' | 'stamp', value: string) => {
+  const addDeco = (kind: 'text' | 'stamp', value: string, color?: string) => {
     if (!value.trim()) return;
     decoSeq.current += 1;
     setDecos(prev => [...prev, {
@@ -846,7 +874,8 @@ function App() {
       x: 50,
       y: kind === 'text' ? 78 : 50,
       size: kind === 'text' ? 9 : 14,
-      color: photoTextColor,
+      // 色付きの記号スタンプ（音符など）は自分の色を持つ
+      color: color ?? photoTextColor,
       // 文字はいま選んでいる傾きと書体で出す。スタンプはまっすぐ
       angle: kind === 'text' ? photoAngle : 0,
       font: kind === 'text' ? PHOTO_FONT : undefined,
@@ -1768,7 +1797,10 @@ function App() {
                     // 中央へ寄せてから回す。回してから寄せると位置がずれる
                     transform: `translate(-50%, -50%) rotate(${d.angle}deg)`,
                     fontSize: `${d.size}cqw`,
-                    color: d.kind === 'text' ? d.color : undefined,
+                    // 文字と、色付きの記号スタンプ（音符）は色を持つ。
+                    // 絵文字のスタンプは色を当てても効かないので触らない
+                    color: d.kind === 'text' || !/\p{Extended_Pictographic}/u.test(d.value)
+                      ? d.color : undefined,
                     fontFamily: d.kind === 'text' ? (d.font ?? PHOTO_FONT) : undefined,
                     // 白い文字は白い服に沈むので、必ず縁を付ける
                     WebkitTextStroke: d.kind === 'text'
@@ -1889,19 +1921,19 @@ function App() {
               <>
                 <div className="stamp-picker">
                   {STAMPS.map(st => (
-                    <button key={st} className="stamp-btn" onClick={() => addDeco('stamp', st)}>{st}</button>
+                    <button
+                      key={st.v}
+                      className={`stamp-btn ${st.color ? 'glyph' : ''}`}
+                      style={st.color ? { color: st.color } : undefined}
+                      onClick={() => addDeco('stamp', st.v, st.color)}
+                    >{st.v}</button>
                   ))}
                 </div>
 
-                <div className="opt-row">
-                  <span className="opt-label">大きさ</span>
-                  <div className="shape-switch">
-                    <button onClick={() => setDecos(prev => prev.map(d =>
-                      d.shot === activeShot ? { ...d, size: Math.max(4, +(d.size - 2).toFixed(1)) } : d))}>小さく</button>
-                    <button onClick={() => setDecos(prev => prev.map(d =>
-                      d.shot === activeShot ? { ...d, size: Math.min(40, +(d.size + 2).toFixed(1)) } : d))}>大きく</button>
-                  </div>
-                </div>
+                {/* 「小さく／大きく」のボタンは外した。写真の上で2本指を
+                    広げれば大きさが変わるので重複していた（2026-08-14、
+                    伊波さん「デコスタンプも大きさ指でできない？」
+                    「大きさボタン消して」）。1行ぶん画面も短くなる */}
               </>
               )}
 
