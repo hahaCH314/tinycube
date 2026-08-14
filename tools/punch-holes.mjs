@@ -147,33 +147,64 @@ for (const file of files) {
       sizes.push(count); edgeTouches.push(touchesEdge); next++;
     }
 
-    // **画像の中心から繋がっている黒だけ**を抜く。
-    // 「黒いところを全部」にすると、枠の中の暗い装飾まで消える
+    // **中心から測った四角の内側だけ**を抜く。
+    //
+    // 「中心から繋がっている黒」を辿る方式では駄目だった。中央の黒が
+    // 細い暗い筋を伝って枠の隅々まで繋がっていて、絵ごと抜けてしまう
+    // （2026-08-14、伊波さん「ホラーは絵も一緒に抜けてる」「漫画も」）。
+    // 実測：ホラーは本来 x157..867 のはずが x0..899 まで漏れ、
+    // 漫画は本来 x179..1490 が x0..1671（全幅）まで漏れていた。
+    //
+    // 中心の行と列を左右上下へたどって、黒が途切れる場所を四角の端とする。
+    // その内側だけを消せば、枠の中の暗い装飾は残る。
+    const cx = (W/2)|0, cy = (H/2)|0;
+    if (!dark[cy*W + cx]) return JSON.stringify({ cleared: 0 });
+
+    // まず中心の行・列で端を出す
+    let L = cx; while (L > 0 && dark[cy*W + L - 1]) L--;
+    let R = cx; while (R < W-1 && dark[cy*W + R + 1]) R++;
+    let T = cy; while (T > 0 && dark[(T-1)*W + cx]) T--;
+    let B = cy; while (B < H-1 && dark[(B+1)*W + cx]) B++;
+
+    // 端の1本だけで決めると、たまたま黒が伸びている行に当たると広がりすぎる。
+    // 内側の何本かで測り直して、**いちばん内側**を採る（安全側に倒す）
+    const probe = (frac) => {
+      const yy = Math.round(T + (B - T) * frac);
+      let l = cx; while (l > 0 && dark[yy*W + l - 1]) l--;
+      let r = cx; while (r < W-1 && dark[yy*W + r + 1]) r++;
+      return [l, r];
+    };
+    const probeV = (frac) => {
+      const xx = Math.round(L + (R - L) * frac);
+      let t = cy; while (t > 0 && dark[(t-1)*W + xx]) t--;
+      let b = cy; while (b < H-1 && dark[(b+1)*W + xx]) b++;
+      return [t, b];
+    };
+    // 内側の何本かで測り直す。ただし**縮めすぎないこと**。
+    // 中央が真っ黒ではなく黒い余白が広がっている絵（おふざけ）では、
+    // 安全側に倒しすぎて抜ける範囲が17.9%まで小さくなった（2026-08-14）。
+    // 中央値を採って、極端な1本に引きずられないようにする
+    const med = arr => { const a=[...arr].sort((x,y)=>x-y); return a[(a.length/2)|0]; };
+    const fr = [0.2, 0.35, 0.5, 0.65, 0.8];
+    const Ls = [], Rs = [], Ts = [], Bs = [];
+    for (const f of fr) { const [l, r] = probe(f); Ls.push(l); Rs.push(r); }
+    for (const f of fr) { const [t, b] = probeV(f); Ts.push(t); Bs.push(b); }
+    L = med(Ls); R = med(Rs); T = med(Ts); B = med(Bs);
+
+    // 四角の内側で、黒いところだけを消す（枠が食い込んでいる部分は残す）
     let cleared = 0;
-    const kept = [];
-    const centerLabel = label[((H/2)|0) * W + ((W/2)|0)];
-    if (centerLabel >= 0) kept.push(centerLabel);
-    const keptSet = new Set(kept);
-    // 抜いた場所の範囲も測っておく（frames.ts に書く座標の下ごしらえ）
-    const box = {};
-    for (let i = 0; i < N; i++) {
-      const l = label[i];
-      if (l >= 0 && keptSet.has(l)) {
-        d[i*4+3] = 0; cleared++;
-        const x = i % W, y = (i / W) | 0;
-        const b = box[l] || (box[l] = {minX:W,maxX:0,minY:H,maxY:0});
-        if (x < b.minX) b.minX = x; if (x > b.maxX) b.maxX = x;
-        if (y < b.minY) b.minY = y; if (y > b.maxY) b.maxY = y;
+    for (let y = T; y <= B; y++) {
+      for (let x = L; x <= R; x++) {
+        const i = y*W + x;
+        if (dark[i]) { d[i*4+3] = 0; cleared++; }
       }
     }
     if (cleared === 0) return JSON.stringify({ cleared: 0 });
     g.putImageData(im, 0, 0);
-    const holes = kept.map(l => {
-      const b = box[l];
-      return { x:+((b.minX/W)*100).toFixed(1), y:+((b.minY/H)*100).toFixed(1),
-               w:+(((b.maxX-b.minX)/W)*100).toFixed(1), h:+(((b.maxY-b.minY)/H)*100).toFixed(1),
-               size: sizes[l] };
-    }).sort((a,b) => b.size - a.size);
+    const holes = [{
+      x:+((L/W)*100).toFixed(1), y:+((T/H)*100).toFixed(1),
+      w:+(((R-L)/W)*100).toFixed(1), h:+(((B-T)/H)*100).toFixed(1), size: cleared
+    }];
     return JSON.stringify({ cleared, W, H, holes, png: c.toDataURL('image/png') });
   })()`;
 
