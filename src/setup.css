@@ -1317,7 +1317,34 @@
 
 /* 横持ちのときは既定でも詰める。高さが足りない */
 @media (orientation: landscape) and (max-height: 500px) {
-  .cam-tune { bottom: 96px; padding: 6px 10px; gap: 6px; }
+  /* **ズームを画面の真ん中に置かない。** 横持ちでは映像のいちばん見たい
+     ところを覆う（2026-08-14、伊波さん「カメラズームのボタンがやっぱり邪魔」）。
+     左下の隅へ寄せて、幅も抑える */
+  /* 左の柱（x=4..66）と重ならない位置へ。真ん中は映像なので避ける */
+  .cam-tune {
+    left: 76px; transform: none;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+    width: 210px; padding: 6px 10px; gap: 6px;
+  }
+  .cam-tune.over, .cam-tune.folded { transform: none; }
+
+  /* 左右の柱は、横持ちだと高さが足りずボタンが3個しか見えなかった
+     （実測。縦なら6個・5個ある）。
+     **文字を消すほど縮めてはいけない。** 0.5rem まで詰めたら絵文字と数字
+     だけになり、何のボタンか分からなくなった（2026-08-14、伊波さん
+     「縮んで隠れてる」）。「絵だけにはしない」は以前からの決まり。
+     縮めるのではなく、**柱の中を繰れるようにして全部に手が届くようにする** */
+  .side-panel { top: 42px !important; bottom: 74px !important; }
+  /* **1列を保つこと。** overflow-y だけ足したら横に折り返して2列になり、
+     柱が太って文字も「フ…」と切れた（2026-08-14、伊波さん「縮んで隠れてる」）。
+     縦一列のまま、入り切らないぶんは指で繰る */
+  .side-panel .panel-scroll {
+    display: flex; flex-direction: column; flex-wrap: nowrap;
+    gap: 5px;
+    overflow-y: auto; overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .side-panel .effect-btn { flex: 0 0 auto; }
   .cam-tune-label { font-size: 0.62rem; }
   .cam-tune .zoom-btn { width: 34px; height: 34px; flex: 0 0 34px; }
   .cam-face-btn { padding: 6px 4px; font-size: 0.74rem; }

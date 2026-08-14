@@ -322,8 +322,12 @@ function App() {
   const [camZoom, setCamZoom] = useState(1);
   // ズームの操作欄を畳めるようにする。横持ちだと画面の高さが足りず、
   // この欄が映像を覆ってしまう（2026-08-14、伊波さん）。
-  // 既定は開いた状態（畳んだままだとズームに気づかない）
-  const [camTuneOpen, setCamTuneOpen] = useState(true);
+  // **横持ちのときは畳んだ状態で始める**（同日「カメラズームのボタンが
+  // やっぱり邪魔」）。縦持ちは余裕があるので開いたまま出す
+  const [camTuneOpen, setCamTuneOpen] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !(window.innerWidth > window.innerHeight && window.innerHeight <= 500);
+  });
   useEffect(() => { liveRef.current.zoom = camZoom; }, [camZoom]);
 
   // ---- 写真（3枚連写 → テキスト → デコる → 保存） --------------------
@@ -1343,9 +1347,10 @@ function App() {
               />
               <button className="zoom-btn" onClick={() => setCamZoom(z => Math.min(2, +(z + 0.1).toFixed(2)))}>＋</button>
             </div>
-            <div className="cam-tune-label">
-              顔が入らないときは「−」で引いてね（{Math.round(camZoom * 100)}%）
-            </div>
+            {/* 説明の行は外した。＋−とスライダーがあれば何をするかは分かる
+                （2026-08-14、伊波さん「ズームは説明つけなくていいんじゃない？」
+                「だいたいわかるよ」）。いまの倍率だけ小さく出す */}
+            <div className="cam-tune-label">{Math.round(camZoom * 100)}%</div>
           </div>
         )}
         {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
