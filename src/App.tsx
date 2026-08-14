@@ -1750,8 +1750,8 @@ function App() {
             <button
               className="setup-close-btn"
               title="もどる"
-              onClick={() => (photoStep === 'deco' ? setPhotoStep('text') : retakePhotos())}
-            >{photoStep === 'deco' ? '戻る' : '撮り直す'}</button>
+              onClick={retakePhotos}
+            >撮り直す</button>
           </div>
 
           <div className="setup-content">
@@ -1812,17 +1812,25 @@ function App() {
               )))}
             </div>
 
-            {photoStep === 'text' && (
-              <div className="setup-section highlight-section">
-                {/* 入れた文字は、絵のスタンプと同じで指で動かせる。
-                    「言葉を入れる」だと入力欄にしか見えず、それが伝わらない。
-                    スタンプが作れる場所だと先に言う（2026-08-14、伊波さん
-                    「テキスト入力（好きな文字でスタンプ作れるよ」） */}
-                {/* 説明は別の行に置かず、入力欄の透かしに入れる。
-                    見出しと説明で2行使うと、そのぶん写真が下へ押される
-                    （2026-08-14、伊波さん「説明じゃなくテクスト入力欄の
-                    透かしに説明」） */}
-                <h3 className="setup-section-title">らくがきスタンプ</h3>
+            {/* らくがきスタンプ（文字）とデコスタンプ（絵）は1つの画面で
+                切り替える（2026-08-14、伊波さん「らくがきスタンプと
+                デコスタンプ同じ画面で切り替えできるようにしたら？」）。
+                前は「文字 → つぎへ → デコる」の2画面で、片方を直すたびに
+                行き来していた。保存はタブの外に置いて、どちらからでも押せる */}
+            <div className="setup-section highlight-section">
+              <div className="deco-tabs">
+                <button
+                  className={`deco-tab ${photoStep === 'text' ? 'on' : ''}`}
+                  onClick={() => setPhotoStep('text')}
+                >✏️ らくがき</button>
+                <button
+                  className={`deco-tab ${photoStep === 'deco' ? 'on' : ''}`}
+                  onClick={() => setPhotoStep('deco')}
+                >🎀 デコ</button>
+              </div>
+
+              {photoStep === 'text' ? (
+              <>
                 <div className="telop-row">
                   <input
                     className="telop-input"
@@ -1833,10 +1841,6 @@ function App() {
                   />
                 </div>
 
-                {/* 見出しを1つずつ立てると、それだけで50px×4＝200px 使う。
-                    小さな札を操作の左に添える形にして、スクロールを無くす
-                    （2026-08-14、伊波さん「なるべく（フレーム選択以外）
-                    スクロール無しで作りたい」） */}
                 <div className="opt-row">
                   <span className="opt-label">形</span>
                   <div className="font-picker">
@@ -1847,7 +1851,6 @@ function App() {
                         style={{ fontFamily: f.css }}
                         onClick={() => {
                           setPhotoFontId(f.id);
-                          // 置いてある文字も一緒に変える。置き直しをさせない
                           setDecos(prev => prev.map(d =>
                             d.shot === activeShot && d.kind === 'text' ? { ...d, font: f.css } : d));
                         }}
@@ -1855,8 +1858,6 @@ function App() {
                     ))}
                   </div>
                 </div>
-
-                <p className="sheet-note gesture-hint">写真の文字は、指1本で移動／2本でひねって傾け・大きさ</p>
 
                 <div className="opt-row">
                   <span className="opt-label">色</span>
@@ -1868,7 +1869,6 @@ function App() {
                         style={{ background: c }}
                         onClick={() => {
                           setPhotoTextColor(c);
-                          // すでに置いた文字の色も一緒に変える。置き直しをさせない
                           setDecos(prev => prev.map(d =>
                             d.shot === activeShot && d.kind === 'text' ? { ...d, color: c } : d));
                         }}
@@ -1880,29 +1880,16 @@ function App() {
 
                 <button
                   className="start-btn"
-                  style={{ marginTop: 16, width: '100%' }}
+                  style={{ width: '100%' }}
                   onClick={() => { addDeco('text', photoText); setPhotoText(''); }}
                   disabled={!photoText.trim()}
                 >この文字でスタンプを作る</button>
-
-                <button
-                  className="start-btn"
-                  style={{ marginTop: 10, width: '100%' }}
-                  onClick={() => setPhotoStep('deco')}
-                >つぎ（デコる）へ</button>
-              </div>
-            )}
-
-            {photoStep === 'deco' && (
-              <div className="setup-section highlight-section">
-                {/* 指で線を描く機能は 2026-08-14 に入れて同日に外した
-                    （伊波さん「指で書く機能いらないよ？」
-                    「フォントでひょうげんできるじゃん」）。
-                    文字スタンプ（書体・色・傾き）と絵スタンプで足りている。
-                    タブも一緒に消したので、ここはスタンプだけ */}
+              </>
+              ) : (
+              <>
                 <div className="stamp-picker">
-                  {STAMPS.map(s => (
-                    <button key={s} className="stamp-btn" onClick={() => addDeco('stamp', s)}>{s}</button>
+                  {STAMPS.map(st => (
+                    <button key={st} className="stamp-btn" onClick={() => addDeco('stamp', st)}>{st}</button>
                   ))}
                 </div>
 
@@ -1915,25 +1902,28 @@ function App() {
                       d.shot === activeShot ? { ...d, size: Math.min(40, +(d.size + 2).toFixed(1)) } : d))}>大きく</button>
                   </div>
                 </div>
+              </>
+              )}
 
-                {/* 「全部消す」と「撮り直す」は使う頻度が低いので横に並べる。
-                    縦に積むと1つ54px ずつ増えて、保存ボタンが画面の外へ出る */}
-                <div className="sub-btn-row">
-                  <button
-                    className="sub-btn"
-                    onClick={() => setDecos(prev => prev.filter(d => d.shot !== activeShot))}
-                    disabled={!decos.some(d => d.shot === activeShot)}
-                  >飾りを消す</button>
-                  <button className="sub-btn" onClick={retakePhotos}>撮り直す</button>
-                </div>
+              {/* 指の使い方はどちらのタブでも同じなので、タブの外に一度だけ */}
+              <p className="sheet-note gesture-hint">写真の飾りは、指1本で移動／2本でひねって傾け・大きさ</p>
 
+              {/* 保存と片付けはタブの外。どちらを開いていても押せる */}
+              <div className="sub-btn-row">
                 <button
-                  className="start-btn save-btn"
-                  style={{ marginTop: 10, width: '100%' }}
-                  onClick={savePhotoSheet}
-                >3枚を保存する</button>
+                  className="sub-btn"
+                  onClick={() => setDecos(prev => prev.filter(d => d.shot !== activeShot))}
+                  disabled={!decos.some(d => d.shot === activeShot)}
+                >飾りを消す</button>
+                <button className="sub-btn" onClick={retakePhotos}>撮り直す</button>
               </div>
-            )}
+
+              <button
+                className="start-btn save-btn"
+                style={{ width: '100%' }}
+                onClick={savePhotoSheet}
+              >3枚を保存する</button>
+            </div>
           </div>
         </div>
       )}

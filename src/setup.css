@@ -1044,3 +1044,52 @@
 @media (max-height: 700px) {
   .photo-screen .shot-thumb { width: auto; height: 44px; }
 }
+
+/* ---- らくがき／デコのタブ（2026-08-14、伊波さん「らくがきスタンプと
+   デコスタンプ同じ画面で切り替えできるようにしたら？」） -------------- */
+/* 前は2画面に分かれていて、片方を直すたびに行き来していた */
+.deco-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.deco-tab {
+  flex: 1; padding: 10px 8px; border-radius: 12px;
+  font-size: 0.86rem; font-weight: 800; color: #fff;
+  background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
+}
+.deco-tab.on {
+  border-color: #66e7ff; color: #66e7ff;
+  background: rgba(102, 231, 255, 0.16);
+  box-shadow: 0 0 14px rgba(102, 231, 255, 0.4);
+}
+
+/* タブ1行ぶん（約50px）増えたので、そのぶん写真を譲る。
+   下の操作が全部見えていることのほうが大事 */
+.photo-screen .shot-big,
+.photo-screen .shot-big > img { max-height: 27dvh; }
+@media (max-height: 700px) {
+  .photo-screen .shot-big,
+  .photo-screen .shot-big > img { max-height: 19dvh; }
+  .photo-screen .deco-tab { padding: 8px 6px; font-size: 0.8rem; }
+  .photo-screen .deco-tabs { margin-bottom: 8px; }
+}
+
+/* 背の低い端末（iPhone SE など）は、らくがき側がまだ入らない。
+   写真をもう一段譲り、押す場所以外の余白を削る */
+@media (max-height: 700px) {
+  .photo-screen .shot-big,
+  .photo-screen .shot-big > img { max-height: 15dvh; }
+  .photo-screen .shot-thumb { height: 38px; }
+  .photo-screen .shot-strip { margin-bottom: 2px; }
+  .photo-screen .gesture-hint { margin-top: 2px; }
+  .photo-screen .telop-input { padding: 8px 10px; font-size: 0.86rem; }
+  .photo-screen .opt-row { margin-top: 5px; }
+  .photo-screen .color-dot { width: 26px; height: 26px; }
+  .photo-screen .sub-btn { padding: 9px 4px; }
+  .photo-screen .sub-btn-row { margin-top: 8px; }
+}
+
+/* 背の低い端末は、詰めきると写真が15dvh まで縮んで飾る相手が見えなくなる。
+   スクロールを無くすことより、写真が見えることのほうが先
+   （2026-08-14、実機サイズで見て判断）。24dvh を下限にする */
+@media (max-height: 700px) {
+  .photo-screen .shot-big,
+  .photo-screen .shot-big > img { max-height: 24dvh; }
+}
