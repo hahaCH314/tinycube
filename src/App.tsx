@@ -814,10 +814,14 @@ function App() {
   // （2026-08-14、伊波さん「３枚の縦長写真（同じ大きさで１６：９）
   // 縦の時横の時も同じ表示」）。
   // 1コマを 16:9 の横長で揃え、それを3段積むので、出来上がりは縦長になる
-  const savePhotoSheet = async () => {
+  // 用紙を作るところと、保存するところを分けてある。
+  // 保存の前に「できあがり」を見せたい（2026-08-14、伊波さん
+  // 「保存する前にできあがり！！！見れるように」）ので、
+  // 同じ用紙をプレビューにも使う
+  const buildPhotoSheet = async (): Promise<HTMLCanvasElement | null> => {
     const rendered = await Promise.all([0, 1, 2].map(i => renderShot(i)));
     const cells = rendered.filter((c): c is HTMLCanvasElement => !!c);
-    if (cells.length === 0) return;
+    if (cells.length === 0) return null;
     // 1コマの形。3枚とも同じ大きさで縦に積む
     // （2026-08-14、伊波さん「３枚の縦長写真（同じ大きさで１６：９）
     // 縦の時横の時も同じ表示」）。
@@ -835,7 +839,7 @@ function App() {
     sheet.width = CELL_W + PAD * 2;
     sheet.height = PAD * 2 + CELL_H * cells.length + GAP * (cells.length - 1);
     const g = sheet.getContext('2d');
-    if (!g) return;
+    if (!g) return null;
     g.fillStyle = '#ffffff';
     g.fillRect(0, 0, sheet.width, sheet.height);
     cells.forEach((cell, i) => {
@@ -853,6 +857,24 @@ function App() {
     });
     // 透かしはここでは足さない。1コマ1コマに canvas の時点で焼かれているので、
     // 用紙にもう一枚置くと同じ文字が二重に出る（実測で下端に重なっていた）
+    return sheet;
+  };
+
+  // できあがりを見せる。ここで初めて「3枚が1枚になった姿」が分かる
+  const openPreview = async () => {
+    setPreviewBusy(true);
+    try {
+      const sheet = await buildPhotoSheet();
+      if (sheet) setPreviewUrl(sheet.toDataURL('image/jpeg', 0.92));
+    } finally {
+      setPreviewBusy(false);
+    }
+  };
+
+  // プレビューで見たものを、そのまま保存する
+  const savePhotoSheet = async () => {
+    const sheet = await buildPhotoSheet();
+    if (!sheet) return;
     const blob = await new Promise<Blob | null>(res => sheet.toBlob(res, 'image/jpeg', 0.92));
     if (blob) await save(blob, 'jpg');
   };
@@ -896,6 +918,9 @@ function App() {
   // over は「いま口が開いている」＝離せば捨てる、の合図
   const trashRef = useRef<HTMLDivElement>(null);
   const [overTrash, setOverTrash] = useState(false);
+  // できあがりの見本。保存の前に、3枚が1枚になった姿を見せる
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewBusy, setPreviewBusy] = useState(false);
   const overTrashRef = useRef(false);
   // 指がゴミ箱の上に来ているか。離した瞬間に state を読むと
   // 反映前の古い値を見ることがあるので、ref にも同じものを持つ
@@ -1849,18 +1874,6 @@ function App() {
                 </div>
               ))}
 
-              {/* ゴミ箱。飾りを指で運んできて、この上で離すと捨てる。
-                  **写真の中に置くこと。** 写真の下（待機の列のあたり）に
-                  置いたら、待機写真の裏に隠れて見えなかった。
-                  掴んでいるあいだだけ出す（普段は写真を隠さない） */}
-              <div
-                ref={trashRef}
-                className={`deco-trash ${dragId !== null ? 'show' : ''} ${overTrash ? 'over' : ''}`}
-                aria-hidden={dragId === null}
-              >
-                <span className="trash-icon">🗑</span>
-                <span className="trash-label">{overTrash ? 'はなすと捨てる' : 'ここへ運ぶと捨てる'}</span>
-              </div>
             </div>
 
             {/* 待機の2枚。**いま出している1枚はここに出さない。**
@@ -1884,6 +1897,22 @@ function App() {
                   {decos.some(d => d.shot === i) && <span className="shot-dot">●</span>}
                 </button>
               )))}
+
+              {/* ゴミ箱。飾りを指で運んできて、この上で離すと捨てる。
+                  **写真の外に置くこと。** 写真の中に置いたら、飾りを置きたい
+                  場所と重なって意図せず捨ててしまった（2026-08-14、伊波さん
+                  「スタンプのごみ箱が大きい写真に被ってすぐ捨てられてしまう」）。
+                  待機の列の場所へ、その手前に浮かせる。写真の外なので飾りとは
+                  重ならず、待機写真より前面なので隠れもしない。
+                  掴んでいるあいだだけ出す */}
+              <div
+                ref={trashRef}
+                className={`deco-trash ${dragId !== null ? 'show' : ''} ${overTrash ? 'over' : ''}`}
+                aria-hidden={dragId === null}
+              >
+                <span className="trash-icon">🗑</span>
+                <span className="trash-label">{overTrash ? 'はなすと捨てる' : 'ここへ運ぶと捨てる'}</span>
+              </div>
             </div>
 
             {/* らくがきスタンプ（文字）とデコスタンプ（絵）は1つの画面で
@@ -1988,11 +2017,39 @@ function App() {
                   あって重複していた（2026-08-14、伊波さん「飾りを消すじゃなく、
                   指で操作」「撮り直すも重複上だけあればいい」） */}
 
+              {/* 保存の前に、できあがりを見せる（2026-08-14、伊波さん
+                  「保存する前にできあがり！！！見れるように」）。
+                  3枚が1枚に並んだ姿は、ここまで一度も見えていない */}
               <button
                 className="start-btn save-btn"
                 style={{ width: '100%' }}
-                onClick={savePhotoSheet}
-              >3枚を保存する</button>
+                onClick={openPreview}
+                disabled={previewBusy}
+              >{previewBusy ? '作っています…' : 'できあがりを見る'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* できあがりの見本。ここで初めて「3枚が1枚になった姿」が見える。
+          気に入らなければ閉じて直せる（2026-08-14、伊波さん
+          「保存する前にできあがり！！！見れるように」） */}
+      {previewUrl && (
+        <div className="preview-screen" onClick={() => setPreviewUrl(null)}>
+          <div className="preview-inner" onClick={e => e.stopPropagation()}>
+            <div className="preview-head">できあがり！</div>
+            <div className="preview-sheet">
+              <img src={previewUrl} alt="できあがり" />
+            </div>
+            <div className="preview-btns">
+              <button
+                className="sub-btn"
+                onClick={() => setPreviewUrl(null)}
+              >もどって直す</button>
+              <button
+                className="start-btn save-btn preview-save"
+                onClick={async () => { await savePhotoSheet(); setPreviewUrl(null); }}
+              >これで保存する</button>
             </div>
           </div>
         </div>

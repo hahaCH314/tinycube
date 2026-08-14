@@ -1118,11 +1118,97 @@
 .trash-icon { font-size: 1.7rem; line-height: 1; }
 .trash-label { font-size: 0.64rem; font-weight: 800; color: #fff; }
 
-/* **写真の中の下寄りに置く。** 待機の列に重ねると、その裏に隠れて
-   どこへ運べばいいのか見えなかった（2026-08-14、実機サイズで確認）。
-   写真の中なら、飾りを掴んでいる指のすぐ近くに必ず見える */
-.photo-screen .shot-big { position: sticky; }
-.deco-trash { bottom: 8px; }
+/* **写真の外・すぐ下に置く。**
+   写真の中に置くと、飾りを置きたい場所と重なって意図せず捨ててしまう
+   （2026-08-14、伊波さん「ごみ箱が大きい写真に被ってすぐ捨てられてしまう」）。
+   待機の列に重ねると裏に隠れて見えないので、待機列より手前に出す。
+   写真のすぐ下＝運ぶ距離は短いまま、写真の上は自由に使える */
+/* 待機の列の場所へ、その手前に出す。写真の外なので飾りとは重ならず、
+   待機写真より前面なので隠れもしない */
+.photo-screen .shot-strip { position: relative; }
+.deco-trash { top: 50%; transform: translate(-50%, -50%); }
+.deco-trash.over { transform: translate(-50%, -50%) scale(1.12); }
 
-/* ゴミ箱は写真の中に浮かせる。写真が位置の基準になっている */
-.shot-big > .deco-trash { position: absolute; }
+/* ゴミ箱は写真の外。写真の下端のすぐ下に来るよう、実際の位置は
+   JS が写真の高さを見て決める（写真の高さは端末で変わる） */
+
+/* ---- スタンプを全部出す（2026-08-14、伊波さん「デコスタンプ
+   スクロール止めてだせる」） ---------------------------------------- */
+/* 横スクロールだと、隠れているものに気づかない。15個を折り返して
+   全部見せる。1個の大きさは残りの幅から自動で決める */
+/* 8列だと1個36pxで、指で押すには小さい。5列にして大きくする。
+   15個ちょうど3段に割り切れる */
+.stamp-picker {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  overflow: visible;
+  padding-bottom: 0;
+}
+.stamp-btn {
+  width: auto; height: auto; aspect-ratio: 1;
+  font-size: 2.1rem;
+}
+.stamp-btn.glyph { font-size: 2.5rem; }
+@media (max-height: 700px) {
+  .stamp-picker { gap: 6px; }
+  .stamp-btn { font-size: 1.8rem; }
+  .stamp-btn.glyph { font-size: 2.1rem; }
+}
+
+/* ---- 写真を大きく（2026-08-14、伊波さん「文字の色選択小さくして、
+   らくがきでこ切り替えタブも少し小さめに、編集するしゃしんのサイズを
+   もう少し広げられないかな」） -------------------------------------- */
+/* 色の丸とタブを詰めて、浮いたぶんを写真に回す */
+.photo-screen .opt-row .color-dot { width: 24px; height: 24px; border-width: 2px; }
+.photo-screen .opt-row .color-dot.on { box-shadow: 0 0 0 2px #66e7ff, 0 0 10px rgba(102,231,255,0.6); }
+.photo-screen .deco-tab { padding: 7px 6px; font-size: 0.78rem; }
+.photo-screen .deco-tabs { margin-bottom: 8px; }
+
+/* 浮いたぶんを写真へ。ここが主役なので、余裕はすべて写真に渡す */
+.photo-screen .shot-big,
+.photo-screen .shot-big > img { max-height: 35dvh; }
+@media (max-height: 700px) {
+  .photo-screen .opt-row .color-dot { width: 21px; height: 21px; }
+  .photo-screen .deco-tab { padding: 6px 4px; font-size: 0.74rem; }
+  .photo-screen .shot-big,
+  .photo-screen .shot-big > img { max-height: 26dvh; }
+}
+
+/* ---- できあがりの見本（2026-08-14、伊波さん「保存する前に
+   できあがり！！！見れるように」） ----------------------------------- */
+/* 3枚が1枚に並んだ姿は、ここまで一度も見えていない。
+   保存の前に必ず一度見せる */
+.preview-screen {
+  position: fixed; inset: 0; z-index: 160;
+  height: 100dvh; max-height: 100dvh;
+  background: rgba(6, 3, 18, 0.92);
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px
+           calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+.preview-inner {
+  width: 100%; max-width: 460px; max-height: 100%;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.preview-head {
+  text-align: center; font-size: 1.05rem; font-weight: 900; color: #66e7ff;
+  text-shadow: 2px 2px 0 #ff4fa3, 0 0 14px rgba(102, 231, 255, 0.6);
+  letter-spacing: 0.06em;
+}
+/* 用紙は縦に長い。ここだけはスクロールしてよい（全体を見たい人のため）。
+   まずは全体が入るように縮めて出す */
+.preview-sheet {
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto; border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  display: flex; justify-content: center;
+}
+.preview-sheet img {
+  width: auto; max-width: 100%; height: auto;
+  object-fit: contain; display: block;
+  border-radius: 10px;
+}
+.preview-btns { display: flex; gap: 10px; flex: 0 0 auto; }
+.preview-btns .sub-btn { flex: 0 0 38%; }
+.preview-save { flex: 1 1 auto; width: auto !important; min-height: 50px; margin: 0 !important; }
