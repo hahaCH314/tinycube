@@ -1351,10 +1351,54 @@
     max-height: 52dvh !important;
     overflow-y: auto !important;
   }
-  /* **決定ボタンを sticky にしない。** 横持ちでは案内文（「読み込んだ動画は
-     横長です…」）の上に貼り付いて、案内が読めなくなっていた（実測）。
-     画面が低いぶん一覧を繰る距離も短いので、普通に並べれば足りる */
-  .frame-decide { position: static; margin: 4px 0 8px; }
+  /* 決定ボタンは**画面の下に固定**する。
+     ここは3通り試して、最後に残った形（2026-08-14、実測しながら）:
+       - sticky で上に貼る → 案内文（「読み込んだ動画は横長です…」）を覆う
+       - 普通に並べる     → 一覧が長いので画面の外（y=-115）へ押し出される
+       - 下に固定         → どちらも起きない。一覧をどこまで繰っても押せる */
+  /* **top ではなく bottom で効かせるために、基準を画面にすること。**
+     .setup-content は overflow-y: auto を持つので、その中に fixed を置くと
+     基準がずれて上端に出た（実測。bottom を指定したのに y=0 に来た）。
+     .setup-screen は position: fixed なので、そちらに対して位置を決める */
+  .setup-screen { position: fixed; }
+  .frame-decide {
+    position: fixed;
+    left: 50%; transform: translateX(-50%);
+    top: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    width: min(420px, calc(100% - 32px));
+    margin: 0; z-index: 140;
+    /* **高さを固定すること。** skin 側が border-radius に pill を当てているので、
+       高さを決めずに幅だけ広げると、丸みが幅に合わせて育って正円になる。
+       実測で画面を覆う巨大な円になった（2026-08-14）*/
+    height: 46px; min-height: 0; line-height: 46px;
+    padding: 0 16px; font-size: 0.92rem;
+    border-radius: 23px;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.6);
+  }
+  /* 固定した決定ボタンのぶん、下に余白を作る。
+     **62px では足りなかった。** 一覧の下にある「ぜんぶ使う（買い切り）」の
+     箱と重なり、BOOTH で買うボタンの上にかぶさっていた（実測）*/
+  .setup-content { padding-bottom: 76px !important; }
+  /* 決定ボタンの後ろを暗くして、下の中身が透けて重なって見えないようにする */
+  .setup-screen::after {
+    content: ''; position: fixed; left: 0; right: 0; bottom: 0;
+    height: calc(env(safe-area-inset-bottom, 0px) + 62px);
+    background: linear-gradient(0deg, #10082b 55%, rgba(16,8,43,0));
+    z-index: 139; pointer-events: none;
+  }
+  /* 縦・横の切り替えは**一覧より上に貼り付ける**。
+     一覧が長いので、普通に置くと画面の外（実測 y=-5）へ押し出される。
+     ここが見えないと、横フレームから縦フレームへ戻れなくなる */
+  /* 縦・横の切り替えは一覧より上に貼り付ける。一覧が長いので、普通に置くと
+     画面の外（実測 y=-5）へ押し出され、横フレームから縦へ戻れなくなる。
+     **背景を不透明にすること。** 透けているとタイルが裏に見えて字が読めない */
+  .shape-switch--mini {
+    position: sticky; top: 0; z-index: 8;
+    background: #14092e;
+    padding: 6px 0; margin-bottom: 6px;
+    border-radius: 12px;
+  }
   .setup-content .sheet-note { font-size: 0.7rem; line-height: 1.4; margin-bottom: 4px; }
   /* 画面が低いので、余白と文字を詰める */
   .setup-content { padding-top: 8px; padding-bottom: 8px; gap: 8px; }
