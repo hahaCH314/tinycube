@@ -715,6 +715,18 @@ function App() {
       setTimeout(() => setSaveMessage(null), 3000);
     };
 
+    // 共有シートを出したときの知らせ。
+    // ⚠️ **「保存しました！」と言い切ってはいけない。**
+    //    共有シートは開いた時点で Promise が返るので、本人が
+    //    「ビデオを保存」を押したのか「キャンセル」したのかを
+    //    こちら側から知る手立てが無い（2026-08-14、ヒマワリさんの調べ）。
+    //    保存していないのに「保存しました」と出すと、撮ったものが
+    //    消えたことに気づけない。次にどうすればよいかだけを伝える
+    const showShared = () => {
+      setSaveMessage('「画像を保存」または「ビデオを保存」をえらんでね');
+      setTimeout(() => setSaveMessage(null), 4000);
+    };
+
     // ⚠️ **iPhone の Safari は a.download をほぼ無視する。**
     //    それだけに頼ると「録れたのに保存できない」で終わる。
     //    しかも以前は、保存できたか確かめずに 100ms 後に必ず
@@ -729,7 +741,7 @@ function App() {
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file] });
-        showSaved();
+        showShared();
         return;
       } catch (e: any) {
         // 本人が「キャンセル」を押しただけなら、失敗ではないので黙って戻る。

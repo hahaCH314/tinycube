@@ -26,12 +26,21 @@
 /** Play Console に登録する商品の ID。Console 側と一字一句そろえること */
 export const PRODUCT_ID = 'tinycube_unlock_all';
 
-/** いま Capacitor の入れ物（Android アプリ）の中で動いているか。
+/** いま Capacitor の入れ物（アプリ）の中で動いているか。
     Web ブラウザで開いているときは false */
 export function isNativeApp(): boolean {
   try {
     const cap = (window as any).Capacitor;
     return !!cap?.isNativePlatform?.();
+  } catch {
+    return false;
+  }
+}
+
+/** iPhone / iPad のアプリとして動いているか。売り場の選び分けに使う */
+export function isApple(): boolean {
+  try {
+    return (window as any).Capacitor?.getPlatform?.() === 'ios';
   } catch {
     return false;
   }
@@ -68,10 +77,15 @@ export async function initBilling(owned: () => void): Promise<void> {
 
   const cdv = (window as any).CdvPurchase;
   try {
+    // 売り場は端末で決まる。iPhone なら App Store、Android なら Play。
+    // **商品 ID は両方とも同じ**（tinycube_unlock_all）でよい
+    // （2026-08-14、ヒマワリさんの調べ）
+    const platform = isApple() ? cdv.Platform.APPLE_APPSTORE : cdv.Platform.GOOGLE_PLAY;
+
     s.register([{
       id: PRODUCT_ID,
       type: cdv.ProductType.NON_CONSUMABLE,   // 一度買えばずっと持つもの
-      platform: cdv.Platform.GOOGLE_PLAY,
+      platform,
     }]);
 
     // 買った／前に買っていたことが分かったとき
@@ -82,7 +96,7 @@ export async function initBilling(owned: () => void): Promise<void> {
         onOwned?.();
       });
 
-    await s.initialize([cdv.Platform.GOOGLE_PLAY]);
+    await s.initialize([platform]);
     ready = true;
     // 機種変えのあとでも取り戻せるよう、起動時に持ち物を確かめる
     await s.restorePurchases();
