@@ -1322,7 +1322,7 @@
      左下の隅へ寄せて、幅も抑える */
   /* 左の柱（x=4..66）と重ならない位置へ。真ん中は映像なので避ける */
   .cam-tune {
-    left: 76px; transform: none;
+    left: 138px; transform: none;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
     width: 210px; padding: 6px 10px; gap: 6px;
   }
@@ -1334,17 +1334,18 @@
      だけになり、何のボタンか分からなくなった（2026-08-14、伊波さん
      「縮んで隠れてる」）。「絵だけにはしない」は以前からの決まり。
      縮めるのではなく、**柱の中を繰れるようにして全部に手が届くようにする** */
-  .side-panel { top: 42px !important; bottom: 74px !important; }
-  /* **1列を保つこと。** overflow-y だけ足したら横に折り返して2列になり、
-     柱が太って文字も「フ…」と切れた（2026-08-14、伊波さん「縮んで隠れてる」）。
-     縦一列のまま、入り切らないぶんは指で繰る */
+  /* 横持ちは高さが足りず、繰れるようにしても**3個しか見えず「これで全部」に
+     見えてしまう**（2026-08-14、伊波さん「テキストと音エフェクトボタンも
+     直してね」）。横は幅に余裕があるので、**2列にして全部出す**。
+     縦持ちで2列にしたときは幅が足りず文字が切れたが、横なら足りる */
+  .side-panel { top: 42px !important; bottom: 74px !important; width: 124px; }
+  .side-panel.right { left: auto; right: 4px; }
   .side-panel .panel-scroll {
-    display: flex; flex-direction: column; flex-wrap: nowrap;
-    gap: 5px;
-    overflow-y: auto; overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 5px; overflow: visible;
+    align-content: start;
   }
-  .side-panel .effect-btn { flex: 0 0 auto; }
+  .side-panel .effect-btn { min-height: 0; }
   .cam-tune-label { font-size: 0.62rem; }
   .cam-tune .zoom-btn { width: 34px; height: 34px; flex: 0 0 34px; }
   .cam-face-btn { padding: 6px 4px; font-size: 0.74rem; }
@@ -1445,4 +1446,23 @@
   line-height: 1.15;
   word-break: break-all;   /* カタカナの長い語も折る */
   max-width: 100%;
+}
+
+/* ---- 設定の画面は横持ちを想定しない（2026-08-14、伊波さん
+   「横向き指示は、横フレームの時だけ、基本は縦使い、設定が終わり横向き誘導」）
+   ------------------------------------------------------------------- */
+/* 「なにを撮る？」「どのカメラ？」「フレーム選択」は**縦で使うもの**。
+   横フレームを選んだ人には、設定が終わってから撮影画面で
+   「スマホを横にしてください」と案内する流れになっている。
+   一度ここに横持ち用の詰めを書いたが、そもそも横で開く画面ではないので
+   全部外した。横向きで整えるのは撮影画面まわりだけ。 */
+
+/* ---- 横持ちの黒帯を消す（2026-08-14、伊波さん「黒の帯が横に入ってるよ」）--- */
+/* skin 側は object-fit: contain。canvas の中身は 16:9（1920x1080）だが、
+   横持ちの画面は 844x382（約2.21:1）で形が違うため、左右に黒帯が出ていた。
+   cover にして画面いっぱいに広げる。
+   **映像の上下は切れる**（16:9 を 2.21:1 に合わせるので約2割）。
+   全部見えることより、帯が無いことを選んだ（同日、伊波さん「いいよ」）*/
+@media (orientation: landscape) and (max-height: 500px) {
+  .stage-canvas { object-fit: cover; }
 }
