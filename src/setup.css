@@ -1432,3 +1432,17 @@
   .setup-section { padding: 10px; }
   .shape-switch--mini button { padding: 6px 4px; font-size: 0.8rem; }
 }
+
+/* ---- 柱の文字を切らない（2026-08-14、伊波さん「縮んで隠れてる」）------ */
+/* skin 側が nowrap + ellipsis を当てているので、「フラッシュ」「ミラーボール」が
+   「フ…」「ミ…」になって何のボタンか読めなかった。柱の幅は62pxしかない。
+   **2行に折り返して全部見せる。**「絵だけにはしない。小さな言葉を必ず下に置く」
+   という決まりは、字が読めて初めて意味がある */
+.side-panel .effect-btn .btn-label {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.15;
+  word-break: break-all;   /* カタカナの長い語も折る */
+  max-width: 100%;
+}
