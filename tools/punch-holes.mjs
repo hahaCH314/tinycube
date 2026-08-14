@@ -118,12 +118,27 @@ for (const file of files) {
     const im = g.getImageData(0, 0, W, H);
     const d = im.data;
 
-    // 黒いところを拾う（透明な場所は対象外）
-    const dark = new Uint8Array(N);
-    for (let i = 0; i < N; i++) {
-      const o = i * 4;
-      if (d[o+3] > 8 && d[o] < 16 && d[o+1] < 16 && d[o+2] < 16) dark[i] = 1;
+    // **「ほぼ真っ黒」から試す（明るさ4未満）。**
+    // 16未満まで拾うと、額縁の内側にある暗い装飾（垂れ下がった鎖・彫刻・
+    // 血の飛沫）まで消える（2026-08-14、伊波さん「枠が出来てない」「絵がない」）。
+    // ホラーの絵で四角の中の明るさを測ったところ、96.7%が0〜3、
+    // 残り3.3%が装飾だった。ここを分ける線が4になる。
+    //
+    // ただし**絵によって「黒」の濃さが違う**。中央がやや明るい絵
+    // （ギャラクシー・ヲタ芸）は4では拾えないので、段階的に緩める。
+    // 厳しいほうから試して、中心が拾えた時点で止める
+    const THRESHOLDS = [4, 10, 16, 24, 34];
+    const cx0 = (W/2)|0, cy0 = (H/2)|0;
+    let dark = null, usedTh = 0;
+    for (const th of THRESHOLDS) {
+      const m = new Uint8Array(N);
+      for (let i = 0; i < N; i++) {
+        const o = i * 4;
+        if (d[o+3] > 8 && d[o] < th && d[o+1] < th && d[o+2] < th) m[i] = 1;
+      }
+      if (m[cy0*W + cx0]) { dark = m; usedTh = th; break; }
     }
+    if (!dark) return JSON.stringify({ cleared: 0 });
 
     // つながっているかたまりごとに分ける
     const label = new Int32Array(N).fill(-1);
@@ -205,7 +220,7 @@ for (const file of files) {
       x:+((L/W)*100).toFixed(1), y:+((T/H)*100).toFixed(1),
       w:+(((R-L)/W)*100).toFixed(1), h:+(((B-T)/H)*100).toFixed(1), size: cleared
     }];
-    return JSON.stringify({ cleared, W, H, holes, png: c.toDataURL('image/png') });
+    return JSON.stringify({ cleared, W, H, holes, th: usedTh, png: c.toDataURL('image/png') });
   })()`;
 
   const res = await send('Runtime.evaluate', { expression: code, returnByValue: true, awaitPromise: true });
@@ -221,7 +236,7 @@ for (const file of files) {
   const dest = join(outDir, `${name}.png`);
   writeFileSync(dest, buf);
   const pct = ((out.cleared / (out.W * out.H)) * 100).toFixed(1);
-  console.log(`  ✓ ${name} … ${out.holes.length}か所 / 抜いた面積${pct}% / ${out.W}x${out.H}`);
+  console.log(`  ✓ ${name} … ${out.holes.length}か所 / 抜いた面積${pct}% / ${out.W}x${out.H} / しきい値${out.th}`);
   done.push({ name, holes: out.holes });
 }
 
