@@ -177,26 +177,14 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
     const a = t < 0.25 ? t / 0.25 : t > 0.6 ? (1 - t) / 0.4 : 1;
 
     // 中心をふわっと明るく、外へ長く伸ばす。輪郭が出ないよう途中を厚めに取る。
-    // 色は水色〜紫。赤色を避けて「録画マーク」に見間違われないようにする
-    const h = m.hue;
-    const grad = g.createRadialGradient(x, m.y, 0, x, m.y, m.r);
-    if (m.big) {
-      // 手前の玉。ふわっと大きく、中心はより白く光るように
-      grad.addColorStop(0,    `hsla(${h}, 85%, 95%, ${0.40 * a})`);
-      grad.addColorStop(0.30, `hsla(${h}, 80%, 85%, ${0.25 * a})`);
-      grad.addColorStop(0.65, `hsla(${h}, 75%, 75%, ${0.10 * a})`);
-      grad.addColorStop(1,    `hsla(${h}, 70%, 70%, 0)`);
-    } else {
-      // 奥の玉。縁をわずかに強くすると、シャボン玉らしく見える
-      grad.addColorStop(0,    `hsla(${h}, 85%, 95%, ${0.30 * a})`);
-      grad.addColorStop(0.55, `hsla(${h}, 80%, 85%, ${0.15 * a})`);
-      grad.addColorStop(0.86, `hsla(${h}, 85%, 90%, ${0.30 * a})`);
-      grad.addColorStop(1,    `hsla(${h}, 80%, 80%, 0)`);
-    }
-    g.fillStyle = grad;
-    g.beginPath();
-    g.arc(x, m.y, m.r, 0, Math.PI * 2);
-    g.fill();
+    // 色は水色〜紫。赤色を避けて「録画マーク」に見間違われないようにする。
+    //
+    // ⚠️ **ここで createRadialGradient を呼んではいけない。**
+    //    エモーショナルは点けっぱなしなので、毎フレーム11個ぶん作ると
+    //    ずっと重いままになる。焼いた絵を貼るだけにする（2026-08-15）
+    g.globalAlpha = a;
+    g.drawImage(moteSprite(m.hue, m.big), x - m.r, m.y - m.r, m.r * 2, m.r * 2);
+    g.globalAlpha = 1;
   }
 
   // フィルムの粒子。少しざらつかせると、のっぺりした映像が写真っぽくなる
@@ -215,11 +203,9 @@ function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
     g.globalCompositeOperation = 'lighter';
   }
 
-  // 全体にうっすら暖かい膜をかける。粒だけだと点の集まりに見える
-  const veil = g.createRadialGradient(W * 0.5, H * 0.42, unit * 0.1, W * 0.5, H * 0.5, unit * 0.85);
-  veil.addColorStop(0, 'hsla(220, 90%, 85%, 0.08)');
-  veil.addColorStop(1, 'hsla(280, 85%, 78%, 0)');
-  g.fillStyle = veil;
+  // 全体にうっすら暖かい膜をかける。粒だけだと点の集まりに見える。
+  // これも毎フレーム作らず使い回す（2026-08-15）
+  g.fillStyle = ambientVeilFor(g, W, H, unit);
   g.fillRect(0, 0, W, H);
   g.restore();
 }
@@ -312,6 +298,103 @@ function spotAt(i: number, spin: number, W: number, H: number) {
 }
 
 /** 光の粒が回りながら流れる。映像はそのまま見えて、光を足すだけ */
+// エモーショナルの玉を焼いておく置き場。
+//
+// ⚠️ **点けっぱなしのエフェクトなので、ここが一番効く。**
+//    毎フレーム11個ぶんグラデーションを作ると、ずっと重いままになる
+//    （2026-08-15、伊波さん「エフェクトかなぁ」）。
+//    色は 180〜320 の連続値なので、10 きざみに丸めて数を抑える（15種類 × 大小）。
+const moteCache = new Map<string, HTMLCanvasElement>();
+
+function moteSprite(hue: number, big: boolean): HTMLCanvasElement {
+  const h = Math.round(hue / 10) * 10;          // 10きざみに丸める
+  const key = h + (big ? 'B' : 's');
+  const hit = moteCache.get(key);
+  if (hit) return hit;
+
+  const S = 128;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const cg = c.getContext('2d')!;
+  const r = S / 2;
+  const grad = cg.createRadialGradient(r, r, 0, r, r, r);
+  if (big) {
+    // 手前の玉。ふわっと大きく、中心はより白く光るように
+    grad.addColorStop(0,    `hsla(${h}, 85%, 95%, 0.40)`);
+    grad.addColorStop(0.30, `hsla(${h}, 80%, 85%, 0.25)`);
+    grad.addColorStop(0.65, `hsla(${h}, 75%, 75%, 0.10)`);
+    grad.addColorStop(1,    `hsla(${h}, 70%, 70%, 0)`);
+  } else {
+    // 奥の玉。縁をわずかに強くすると、シャボン玉らしく見える
+    grad.addColorStop(0,    `hsla(${h}, 85%, 95%, 0.30)`);
+    grad.addColorStop(0.55, `hsla(${h}, 80%, 85%, 0.15)`);
+    grad.addColorStop(0.86, `hsla(${h}, 85%, 90%, 0.30)`);
+    grad.addColorStop(1,    `hsla(${h}, 80%, 80%, 0)`);
+  }
+  cg.fillStyle = grad;
+  cg.fillRect(0, 0, S, S);
+
+  moteCache.set(key, c);
+  return c;
+}
+
+// 全体に乗せる色（エモーショナル）。画面の大きさが変わったときだけ作り直す
+let ambientVeilCache: { w: number; h: number; grad: CanvasGradient } | null = null;
+
+function ambientVeilFor(g: CanvasRenderingContext2D, W: number, H: number, unit: number): CanvasGradient {
+  if (ambientVeilCache && ambientVeilCache.w === W && ambientVeilCache.h === H) return ambientVeilCache.grad;
+  const grad = g.createRadialGradient(W * 0.5, H * 0.42, unit * 0.1, W * 0.5, H * 0.5, unit * 0.85);
+  grad.addColorStop(0, 'hsla(220, 90%, 85%, 0.08)');
+  grad.addColorStop(1, 'hsla(280, 85%, 78%, 0)');
+  ambientVeilCache = { w: W, h: H, grad };
+  return grad;
+}
+
+// 粒の絵をあらかじめ焼いておく置き場。
+//
+// ⚠️ **毎フレーム createRadialGradient を呼んではいけない。**
+//    粒28個ぶんを毎回作ると、1秒あたり1680回グラデーションを作ることになり、
+//    スマホの実機で撮影中の映像がカクついた
+//    （2026-08-15、伊波さん「動画が遅い？固まる？」「エフェクトかなぁ」）。
+//    色は3種類しか使わないので、小さな絵にして焼いておき、貼るだけにする。
+const ballCache = new Map<string, HTMLCanvasElement>();
+
+/** 指定の色の光の粒を、使い回せる絵にして返す */
+function ballSprite(hue: number): HTMLCanvasElement {
+  const key = String(hue);
+  const hit = ballCache.get(key);
+  if (hit) return hit;
+
+  // 貼るときに拡大縮小するので、元は固定の大きさでよい
+  const S = 128;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const cg = c.getContext('2d')!;
+  const r = S / 2;
+  const grad = cg.createRadialGradient(r, r, 0, r, r, r);
+  grad.addColorStop(0, `hsla(${hue}, 100%, 92%, 1)`);
+  grad.addColorStop(0.45, `hsla(${hue}, 95%, 78%, 0.42)`);
+  grad.addColorStop(1, `hsla(${hue}, 90%, 70%, 0)`);
+  cg.fillStyle = grad;
+  cg.fillRect(0, 0, S, S);
+
+  ballCache.set(key, c);
+  return c;
+}
+
+// 全体に乗せる色。画面の大きさが変わったときだけ作り直す
+let veilCache: { w: number; h: number; grad: CanvasGradient } | null = null;
+
+function veilFor(g: CanvasRenderingContext2D, W: number, H: number): CanvasGradient {
+  if (veilCache && veilCache.w === W && veilCache.h === H) return veilCache.grad;
+  const grad = g.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, 'hsla(320, 90%, 70%, 1)');
+  grad.addColorStop(0.5, 'hsla(275, 90%, 70%, 1)');
+  grad.addColorStop(1, 'hsla(190, 90%, 70%, 1)');
+  veilCache = { w: W, h: H, grad };
+  return grad;
+}
+
 function drawMirrorball(g: CanvasRenderingContext2D, W: number, H: number, t: number) {
   const unit = Math.min(W, H);
   // 出るのは速く、消えるのはゆっくり。ふっと現れてすっと引く
@@ -333,14 +416,10 @@ function drawMirrorball(g: CanvasRenderingContext2D, W: number, H: number, t: nu
     // ディスコの照明の色。ピンク・水色・紫を粒ごとに配る
     const hue = (i * 47) % 360 < 120 ? 320 : (i % 3 === 0 ? 190 : 275);
 
-    const grad = g.createRadialGradient(x, y, 0, x, y, r);
-    grad.addColorStop(0,    `hsla(${hue}, 100%, 92%, ${a})`);
-    grad.addColorStop(0.45, `hsla(${hue}, 95%, 78%, ${a * 0.42})`);
-    grad.addColorStop(1,    `hsla(${hue}, 90%, 70%, 0)`);
-    g.fillStyle = grad;
-    g.beginPath();
-    g.arc(x, y, r, 0, Math.PI * 2);
-    g.fill();
+    // 焼いてある粒を貼るだけ。濃さは globalAlpha で付ける
+    g.globalAlpha = a;
+    g.drawImage(ballSprite(hue), x - r, y - r, r * 2, r * 2);
+    g.globalAlpha = 1;
 
     // 中心の芯。四角く置くと、鏡の破片が光っているように見える
     const core = r * 0.18;
@@ -348,13 +427,10 @@ function drawMirrorball(g: CanvasRenderingContext2D, W: number, H: number, t: nu
     g.fillRect(x - core, y - core, core * 2, core * 2);
   }
 
-  // 全体にうっすら色を乗せる。粒だけだと点の集まりに見える
+  // 全体にうっすら色を乗せる。粒だけだと点の集まりに見える。
+  // これも毎フレーム作らず、画面の大きさが変わったときだけ作り直す
   g.globalAlpha = fade * 0.10;
-  const veil = g.createLinearGradient(0, 0, W, H);
-  veil.addColorStop(0, 'hsla(320, 90%, 70%, 1)');
-  veil.addColorStop(0.5, 'hsla(275, 90%, 70%, 1)');
-  veil.addColorStop(1, 'hsla(190, 90%, 70%, 1)');
-  g.fillStyle = veil;
+  g.fillStyle = veilFor(g, W, H);
   g.fillRect(0, 0, W, H);
   g.restore();
 }

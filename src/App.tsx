@@ -7,6 +7,7 @@ import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
 import { t, getLang, setLang } from './i18n'
 import { isUnlocked, tryUnlock, savedKey, relock, startBilling, onUnlockChange } from './unlock'
 import { isNativeApp, buy as buyInApp, restore as restoreInApp } from './billing'
+import { saveMedia } from './save'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
 // ---- 開いたときのお願い（2026-08-12、伊波さんの原文） -------------------
@@ -727,43 +728,22 @@ function App() {
       setTimeout(() => setSaveMessage(null), 4000);
     };
 
-    // ⚠️ **iPhone の Safari は a.download をほぼ無視する。**
-    //    それだけに頼ると「録れたのに保存できない」で終わる。
-    //    しかも以前は、保存できたか確かめずに 100ms 後に必ず
-    //    「保存しました！」を出していた。**何も起きていなくても成功と出る**ので、
-    //    撮ったものが消えたことに気づけない。子どもが使うものでこれは一番まずい
-    //    （2026-08-14 に発見。コメントには「共有シートを先に試す」と書いてあったが、
-    //     実装は a.download だけで、Web Share はどこにも無かった）。
-    //
-    //    iOS が確実に持っている共有シート（Web Share）を先に試す。
-    //    そこから「画像を保存」「ビデオを保存」でカメラロールへ入る。
-    const file = new File([blob], name, { type: blob.type || (ext === 'mp4' ? 'video/mp4' : 'image/png') });
-    if (navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file] });
-        showShared();
-        return;
-      } catch (e: any) {
-        // 本人が「キャンセル」を押しただけなら、失敗ではないので黙って戻る。
-        // ここで下のダウンロードへ進むと、やめたはずの保存が走ってしまう
-        if (e?.name === 'AbortError') return;
-        // 共有できなかったときは、下のダウンロードで拾う
-      }
-    }
+    // 保存のやり方は src/save.ts に分けてある。
+    // Web とアプリ（Capacitor）でまったく違ううえ、**アプリでは
+    // a.download も navigator.share も通らず、黙って何も起きなかった**
+    //（2026-08-15、伊波さんが内部テストの実機で発見）。
+    const r = await saveMedia(blob, name);
 
-    // 共有シートが無い環境（PC のブラウザなど）は、今までどおり落とす
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    if (r.how === 'shared') {
+      showShared();          // 保存したかは本人しか知らないので言い切らない
+    } else if (r.how === 'downloaded') {
       showSaved();
-    }, 100);
+    } else if (r.how === 'failed') {
+      // **黙って消えるのが一番まずい。** 何が起きたかを出す
+      setSaveMessage('保存できませんでした（' + r.why.slice(0, 40) + '）');
+      setTimeout(() => setSaveMessage(null), 5000);
+    }
+    // cancelled のときは、本人がやめただけなので何も出さない
   };
 
   // 下見の開始・停止。録らないので、音は動画そのものの出力で鳴る
