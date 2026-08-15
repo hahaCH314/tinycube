@@ -230,16 +230,30 @@
   /* iPhone の切り欠き・ステータスバーのぶんを空ける。
      18px 固定だと、その下に見出しと戻るボタンが潜り込む
      （2026-08-13、伊波さんの実機テストで発覚） */
+  /* 右の余白は**戻るボタンの実寸より広く**取ること。
+     ボタンは position:absolute で浮いていて場所を取らないので、
+     余白が足りないと見出しの尻がボタンの下に潜る。
+     60px にしていたが、ボタンは min-width 64px + 右12px = 76px あり、
+     「どのカメラで撮りますか？」の「？」に戻るが重なっていた
+     （2026-08-15、伊波さん「カメラの選択の画面とか」）。
+     88px = 76px + 余裕12px */
   padding: calc(env(safe-area-inset-top, 0px) + 18px)
-           calc(env(safe-area-inset-right, 0px) + 60px) 12px
-           calc(env(safe-area-inset-left, 0px) + 60px);
+           calc(env(safe-area-inset-right, 0px) + 88px) 12px
+           calc(env(safe-area-inset-left, 0px) + 88px);
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .setup-title {
   margin: 0;
   font-family: 'Outfit', sans-serif;
-  font-size: 1.3rem; font-weight: 900; font-style: italic;
+  /* 両側に 88px ずつ空けたぶん、長い見出しは入る幅が狭くなる。
+     clamp で、狭いときだけ字を小さくして1行に収める。
+     折り返すと見出しが2行になり、下の内容まで押し下げてしまう */
+  /* 下限 0.95rem では 320px 端末（iPhone SE 相当）で 11px 食い込んだ。
+     0.8rem まで許すと 320px でも収まる（2026-08-15 に4サイズで測った） */
+  font-size: clamp(0.75rem, 4.0vw, 1.3rem);
+  white-space: nowrap;
+  font-weight: 900; font-style: italic;
   color: #66e7ff;
   text-shadow: 2px 2px 0 #ff4fa3, 0 0 14px rgba(102, 231, 255, 0.6);
 }
