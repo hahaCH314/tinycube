@@ -38,4 +38,19 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- ⚠️ **ここが無いと実機でカメラが許可できない。**
+         Capacitor の初期状態は INTERNET だけで、カメラもマイクも
+         宣言されていなかった。Web ブラウザでは動くのに、アプリに
+         したとたん「カメラが許可できない」になる
+         （2026-08-15、伊波さんが内部テストの実機で発見）。 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- カメラが無い端末（一部のタブレット）でも入れられるようにする。
+         required="true" にすると、そういう端末が Play の対象から外れる -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 </manifest>
