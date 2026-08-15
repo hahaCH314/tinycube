@@ -38,8 +38,9 @@ android {
         //    （4 = 横持ちでフレームが切れるのも直した版。2026-08-15）
         //    （5 = カメラ選びのアイコンを SVG にした版。2026-08-15）
         //    （6 = 保存ボタンに「準備中」を出した版。2026-08-15）
-        versionCode 6
-        versionName "1.0.5"
+        //    （7 = **全部無料にした版**。フレームの並び替えも入る。2026-08-15）
+        versionCode 7
+        versionName "1.0.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
