@@ -118,23 +118,14 @@ export const FRAMES: Frame[] = [
   // 2026-08-13、伊波さんが元の絵を入れ直してくださった。
   // それまでは 320x180 まで潰れたものが入っていて、「光の粒を散らしただけ」に
   // 見えていた（本当はランタンと白薔薇の写真風）。1672x941 から作り直し
-  { id: 'green_garden', name: 'グリーンガーデン', file: './frames/green_garden_hd.webp', anchor: 'wide' },
-  { id: 'biotope',      name: 'ビオトープ',       file: './frames/biotope.webp',      anchor: 'wide' },
-  { id: 'deep_sea',     name: '深海',            file: './frames/deep_sea.webp',     anchor: 'wide' },
   { id: 'mushroom',     name: 'きのこ',           file: './frames/mushroom.webp',     anchor: 'wide' },
-  { id: 'horror',       name: 'ホラー',           file: './frames/horror.webp',       anchor: 'wide' },
-  { id: 'festival',     name: '祭り',            file: './frames/festival.webp',     anchor: 'wide' },
-  { id: 'heart',        name: 'ハート',           file: './frames/heart.webp',        anchor: 'wide' },
   { id: 'emotional',    name: 'エモーショナル',    file: './frames/emotional.webp',    anchor: 'wide' },
-  { id: 'cyber',        name: '電脳',            file: './frames/cyber.webp',        anchor: 'wide' },
   { id: 'cyberpunk',    name: 'サイバーパンク',    file: './frames/cyberpunk.webp',    anchor: 'wide' },
   { id: 'otaku',        name: 'オタク',           file: './frames/otaku.webp',        anchor: 'wide' },
   { id: 'voxel',        name: 'ボクセル',         file: './frames/voxel.webp',        anchor: 'wide' },
-  { id: 'manga',        name: '漫画',            file: './frames/manga.webp',        anchor: 'wide' },
   { id: 'animal_pop',   name: '動物POP',         file: './frames/animal_pop.webp',   anchor: 'wide' },
   { id: 'retro_pop',    name: 'レトロポップ',      file: './frames/retro_pop.webp',    anchor: 'wide' },
   { id: 'chappy_chaos', name: 'おふざけ1',        file: './frames/chappy_chaos.webp', anchor: 'wide' },
-  { id: 'chaos_meme',   name: 'おふざけ2',        file: './frames/chaos_meme.webp',   anchor: 'wide' },
   { id: 'oiwai',        name: 'お祝い',           file: './frames/oiwai.webp',        anchor: 'wide' },
   { id: 'oiwai_cool',   name: 'お祝い（クール）',  file: './frames/oiwai_cool.webp',   anchor: 'wide' },
   { id: 'oiwai_momo',   name: 'お祝い（もも）',    file: './frames/oiwai_momo.webp',   anchor: 'wide' },
