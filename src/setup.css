@@ -253,6 +253,13 @@
      0.8rem まで許すと 320px でも収まる（2026-08-15 に4サイズで測った） */
   font-size: clamp(0.75rem, 4.0vw, 1.3rem);
   white-space: nowrap;
+  /* **これが「ボタンが反応しない」の正体だった**（2026-08-15）。
+     見出しは中央寄せだが、当たり判定は横いっぱいに広がっている。
+     「戻る」は position:absolute で上に浮いているのに、
+     押した座標を elementFromPoint で調べると、返ってくるのは
+     この H2 のほうだった（見出しが後に来るので上に乗る）。
+     ただの文字なので、指はそのまま下へ通す */
+  pointer-events: none;
   font-weight: 900; font-style: italic;
   color: #66e7ff;
   text-shadow: 2px 2px 0 #ff4fa3, 0 0 14px rgba(102, 231, 255, 0.6);
@@ -1557,5 +1564,77 @@
     object-fit: contain;
     /* 帯の部分。skin の背景と同じ側に寄せる */
     background: transparent;
+  }
+}
+
+/* ===== 押したときの手応え（2026-08-15） =====================================
+ *
+ * 伊波さん「ボタンの反応が全体的に遅い」。
+ *
+ * 実際に測ると、押してから画面が変わるまでは 20〜330ms で、**処理は速い**。
+ * 遅いのは見た目のほうだった。
+ *
+ *   :active の指定が 6個しか無く、主要なボタンには**ひとつも無かった**
+ *     戻る / ❓ / 👾 / 写真を撮る / 動画を撮る / 自分を写す / 外カメ
+ *     / フレームのタイル / 保存
+ *
+ * 押しても沈まない・色も変わらないので「効いたのか分からない」→「遅い」
+ * と感じる。処理を速くするのではなく、**押した瞬間に必ず何か起きる**ように
+ * するのが正しい直しかた。
+ *
+ * touch-action: manipulation は、ブラウザが「ダブルタップ拡大かも」と
+ * 待つぶん（端末により最大300ms）を捨てて、すぐ反応させるもの。
+ * 拡大そのものは禁じない（index.html で user-scalable=no を入れていないのと
+ * 同じ理由で、見えにくい人が困る）
+ */
+
+button,
+.frame-tile,
+.big-choice-btn,
+.shot-thumb {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 押している間だけ、少し沈めて暗くする。
+   transform と filter だけを変える（レイアウトを動かさないので軽い） */
+button:active,
+.frame-tile:active,
+.big-choice-btn:active,
+.shot-thumb:active {
+  transform: scale(0.96);
+  filter: brightness(1.25);
+}
+
+/* 指を離したときだけ、ゆっくり戻す。
+   押した瞬間は 0s で即座に反応させたいので transition を分けている */
+button,
+.frame-tile,
+.big-choice-btn,
+.shot-thumb {
+  transition: transform 140ms ease, filter 140ms ease;
+}
+button:active,
+.frame-tile:active,
+.big-choice-btn:active,
+.shot-thumb:active {
+  transition: transform 0s, filter 0s;
+}
+
+/* 飾り（スタンプ）は指で運ぶものなので、押しても縮めない。
+   縮むと掴んだ位置がずれる */
+.deco-item:active,
+.deco-item {
+  transform: none;
+  filter: none;
+}
+
+/* 動きを減らす設定の人には、沈む動きを出さない（色だけ変える） */
+@media (prefers-reduced-motion: reduce) {
+  button:active,
+  .frame-tile:active,
+  .big-choice-btn:active,
+  .shot-thumb:active {
+    transform: none;
   }
 }
