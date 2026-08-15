@@ -36,8 +36,9 @@ android {
         //    （2 = 実機でカメラが許可できなかったのを直した版。2026-08-15）
         //    （3 = 保存できなかったのとエフェクトの重さを直した版。2026-08-15）
         //    （4 = 横持ちでフレームが切れるのも直した版。2026-08-15）
-        versionCode 4
-        versionName "1.0.3"
+        //    （5 = カメラ選びのアイコンを SVG にした版。2026-08-15）
+        versionCode 5
+        versionName "1.0.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
