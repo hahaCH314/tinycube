@@ -224,6 +224,55 @@ export function fitsShape(frame: Frame, shape: OutShape): boolean {
   return shape === 'landscape' ? frame.anchor === 'wide' : frame.anchor === 'full';
 }
 
+// ---- 一覧に出す順番（2026-08-15）---------------------------------------
+//
+// 127枚あるので、スクロールだけで目当てのものに着くのは難しい。
+// ただし**分類のタブは付けない**。伊波さん「あえて、分類しないで、
+// 見つけていく楽しさもあるよね」。並び順だけ変えて、探す体験は残す。
+//
+//   1. 目を引くもの  … 最初の画面で「面白そう」と思ってもらう
+//   2. 平成          … テーマとしてまとまっている
+//   3. 推し色        … 9色。散らばっていると自分の色を探せない
+//   4. 残り          … FRAMES に書いた順のまま。ここで発見の楽しさが残る
+//
+// ⚠️ **FRAMES の並びは動かさないこと。** ここに id を書くだけで順番が変わる。
+//    127行を並べ替えると、どれかを落としても気づけない。
+//    ここに無い id は、書いた順のまま後ろに続く。
+
+/** 先頭に出したいもの。この順に並ぶ */
+const FRONT_ORDER: string[] = [
+  // 目を引くもの。開いた瞬間に見えるところ
+  'tc_fun', 'tc_fun2', 'tc_otaku', 'tc_animal', 'tc_mushroom',
+
+  // 平成。ギャル・V系・アイドルのまとまり
+  'white', 'black', 'frame_08', 'frame_15', 'frame_13', 'retro_pop',
+
+  // 推し色。横(_w)と縦(_p)が対になっている。
+  // 画面には形の合うほうだけが出るので、両方書いておく
+  'oshi_red_w', 'oshi_red_p',
+  'oshi_pink_w', 'oshi_pink_p',
+  'oshi_orange_w', 'oshi_orange_p',
+  'oshi_yellow_w', 'oshi_yellow_p',
+  'oshi_green_w', 'oshi_green_p',
+  'oshi_blue_w', 'oshi_blue_p',
+  'oshi_purple_w', 'oshi_purple_p',
+  'oshi_white_w', 'oshi_white_p',
+  'oshi_black_w', 'oshi_black_p',
+];
+
+/** 一覧に出す順に並べ替える。FRONT_ORDER に無いものは元の順のまま後ろへ */
+export function inDisplayOrder(list: Frame[]): Frame[] {
+  const rank = new Map(FRONT_ORDER.map((id, i) => [id, i]));
+  const front: Frame[] = [];
+  const rest: Frame[] = [];
+  for (const f of list) {
+    if (rank.has(f.id)) front.push(f);
+    else rest.push(f);
+  }
+  front.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+  return [...front, ...rest];
+}
+
 /** 読み込みが終わるまで待つ。録画中に間に合わないと、枠だけ抜けた動画が出てしまう */
 export async function loadFrame(frame: { file: string; bgFile?: string }): Promise<{ img: HTMLImageElement; bgImg?: HTMLImageElement }> {
   const loadSingle = (src: string): Promise<HTMLImageElement> => {

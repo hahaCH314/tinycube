@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import '../docs/tinycube-skin-shibuya.css'
 import './setup.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor, type FaceHole } from './frames'
+import { FRAMES, loadFrame, fitsShape, inDisplayOrder, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
 import { t, getLang, setLang } from './i18n'
 // savedKey / relock は 2026-08-15 に全部無料にしたとき使わなくなった。
@@ -1832,7 +1832,11 @@ function App() {
                     全部出すと129件が並び、しかも形の合わないものは端が
                     切れて壊れて見える（2026-08-13、伊波さん「フレームが
                     アホほど入ってるし、壊れてる」） */}
-                {FRAMES.filter(f => fitsShape(f, shape)).map(f => (
+                {/* 並び順は frames.ts の FRONT_ORDER で決めている。
+                    目を引くもの → 平成 → 推し色 → 残りは書いた順。
+                    **分類のタブは付けない**（2026-08-15、伊波さん
+                    「あえて、分類しないで、見つけていく楽しさもあるよね」） */}
+                {inDisplayOrder(FRAMES.filter(f => fitsShape(f, shape))).map(f => (
                   <button
                     key={f.id}
                     className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
