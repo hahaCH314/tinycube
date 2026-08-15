@@ -5,7 +5,9 @@ import { startRecording, startStage, type RecordHandle, type OutShape } from './
 import { FRAMES, loadFrame, fitsShape, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
 import { t, getLang, setLang } from './i18n'
-import { isUnlocked, tryUnlock, savedKey, relock, startBilling, onUnlockChange } from './unlock'
+// savedKey / relock は 2026-08-15 に全部無料にしたとき使わなくなった。
+// unlock.ts 側には残してある（気が変わったときに戻せるように）
+import { isUnlocked, tryUnlock, startBilling, onUnlockChange } from './unlock'
 import { isNativeApp, buy as buyInApp, restore as restoreInApp } from './billing'
 import { saveMedia } from './save'
 import { FaceIcon, SceneIcon } from './CamIcon'
@@ -1853,13 +1855,12 @@ function App() {
               <div className={`unlock-box ${unlocked ? 'done' : ''}`} ref={unlockRef}>
                 {unlocked ? (
                   <>
+                    {/* 2026-08-15、全部無料にした（[[unlock.ts]] の isUnlocked）。
+                        ここは元「買った人へのお知らせ」。いまは開発者からの
+                        あいさつを出す。キーの表示と「解除をやめる」ボタンは、
+                        買う仕組みが動いていない以上どちらも意味がないので外した */}
                     <b className="unlock-done">{t('unlock_done')}</b>
                     <p className="sheet-note">{t('unlock_done_note')}</p>
-                    {savedKey() && <p className="unlock-key">{savedKey()}</p>}
-                    <button
-                      className="unlock-relock"
-                      onClick={() => { relock(); setUnlocked(false); }}
-                    >{t('unlock_relock')}</button>
                   </>
                 ) : (
                   <>

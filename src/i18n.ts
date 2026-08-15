@@ -168,8 +168,13 @@ const dictJa: I18nDict = {
   unlock_go: '解除する',
   unlock_ok: '解除しました。ありがとうございます！',
   unlock_ng: 'このキーは使えませんでした。打ち間違いがないか見てください。',
-  unlock_done: '✓ 解除ずみ',
-  unlock_done_note: 'キーは大切に取っておいてください。機種を変えたときや、ブラウザの記録を消したときに、もう一度必要になります。',
+  // 2026-08-15、全部無料にした。ここは「買った人へのお知らせ」だった場所。
+  // いまは開発者からのあいさつを置いている。
+  // **文章は伊波さんが書いたもの。言い換え・要約をしないこと**
+  unlock_done: '🎁 ぜんぶ使えます',
+  unlock_done_note: `開発者から、みんなのフレームで遊ぶ姿、楽しく遊んでくれていたら嬉しいです。
+いつかSNSでtinyCUBEで撮った写真たちに出会えることを、楽しみにしております。
+スポンサーも募集中だよW`,
   unlock_relock: 'この端末の解除をやめる',
   frame_locked: '🔒',
   locked_hint: 'このフレームは「ぜんぶ使う」に入っています。',
@@ -289,8 +294,13 @@ const dictEn: I18nDict = {
   unlock_go: 'Unlock',
   unlock_ok: 'Unlocked. Thank you!',
   unlock_ng: 'That key did not work. Please check for typos.',
-  unlock_done: '✓ Unlocked',
-  unlock_done_note: 'Keep your key somewhere safe. You will need it again if you change phones or clear your browser data.',
+  // 2026-08-15、全部無料にした。日本語側と同じあいさつを置く。
+  // 伊波さんの原文の気持ち（遊ぶ姿がうれしい／SNSで出会えるのが楽しみ／
+  // スポンサー募集）をそのまま英語にしている
+  unlock_done: '🎁 Everything unlocked',
+  unlock_done_note: `From the developer: I hope you have fun playing with all the frames.
+I am looking forward to the day I run into your tinyCUBE shots on social media.
+Also, sponsors welcome :)`,
   unlock_relock: 'Remove the unlock from this device',
   frame_locked: '🔒',
   locked_hint: 'This frame is part of "Unlock everything".',
