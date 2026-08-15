@@ -8,6 +8,7 @@ import { t, getLang, setLang } from './i18n'
 import { isUnlocked, tryUnlock, savedKey, relock, startBilling, onUnlockChange } from './unlock'
 import { isNativeApp, buy as buyInApp, restore as restoreInApp } from './billing'
 import { saveMedia } from './save'
+import { FaceIcon, SceneIcon } from './CamIcon'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
 // ---- 開いたときのお願い（2026-08-12、伊波さんの原文） -------------------
@@ -1674,13 +1675,16 @@ function App() {
               {/* 「インカメ／アウトカメ」では通じない。何が写るかで書く
                   （2026-08-14、伊波さん「cameraの選択がわからない（ユーザー50代から）」） */}
               <div className="source-picker">
+                {/* ⚠️ 絵文字に戻さないこと。🤳 は端末ごとに絵が違い、
+                    何の絵か分からなかった（2026-08-15、伊波さん）。
+                    SVG なら端末が変わっても同じ絵になる。中身は CamIcon.tsx */}
                 <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
-                  <span className="source-icon">🤳</span>
+                  <span className="source-icon"><FaceIcon on={camOn && camFront} /></span>
                   <span className="source-text">自分を写す</span>
                   <span className="source-sub">画面side（インカメラ）</span>
                 </button>
                 <button className={`source-btn ${camOn && !camFront ? 'on' : ''}`} onClick={() => startCam(false)}>
-                  <span className="source-icon">📷</span>
+                  <span className="source-icon"><SceneIcon on={camOn && !camFront} /></span>
                   {/* 「前を写す」だと自分の前なのか画面の前なのか紛れる。
                       呼び名のほうを主にする（2026-08-14、伊波さん
                       「外カメの前の表記は外カメで」） */}

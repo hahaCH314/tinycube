@@ -58,7 +58,9 @@
   box-shadow: 0 0 16px rgba(102, 231, 255, 0.3);
   color: #fff;
 }
-.source-icon { font-size: 1.8rem; }
+/* 中身は絵文字ではなく SVG（CamIcon.tsx）。
+   端末ごとに絵が変わらないようにするため（2026-08-15） */
+.source-icon { display: flex; align-items: center; justify-content: center; height: 40px; }
 .source-text { font-size: 0.8rem; font-weight: 800; }
 
 .setup-footer {
