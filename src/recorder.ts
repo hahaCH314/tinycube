@@ -95,6 +95,12 @@ export type StageOptions = {
    *  video も毎回聞き直す。動画を読み込む前は要素そのものが無いので、
    *  最初に一度だけ受け取る形にすると、いつまでも動かない */
   read: () => {
+    /** true のあいだは描かない。フレーム選びのように、画面が別のもので
+     *  覆われているとき。1920x1080 を毎秒60回描き続けると、非力な端末では
+     *  スクロールと取り合ってカクつく（2026-08-16、伊波さん
+     *  「かくかくする、フレーム選択が」）。**止めるのではなく休ませる**。
+     *  止めると戻ってきたとき静止画のままになる */
+    idle?: boolean;
     video: HTMLVideoElement | null;
     /** true なら画面いっぱいに広げる（カメラ）。false は切らずに収める（動画） */
     fill: boolean;
@@ -164,7 +170,11 @@ export function startStage(opts: StageOptions): () => void {
     if (!running) return;
     beat++;
     try {
-    const { video, shape, frame, watermark, mirror, zoom } = read();
+    const { video, shape, frame, watermark, mirror, zoom, idle } = read();
+    // 画面が別のもので覆われているあいだは描かない。**ループは回したまま**に
+    // して、戻ってきたら次のコマからすぐ絵が出るようにする。
+    // 抜け方は下の requestAnimationFrame(draw) を必ず通ること
+    if (!idle) {
     const camZoom = zoom && zoom > 0 ? zoom : 1;
     const { w: OUT_W, h: OUT_H } = SIZES[shape];
     if (canvas.width !== OUT_W) canvas.width = OUT_W;
@@ -299,6 +309,7 @@ export function startStage(opts: StageOptions): () => void {
     drawEffects(g, OUT_W, OUT_H);
     if (watermark) {
       drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
+    }
     }
     } catch (e: any) {
       // 一度だけ伝える。毎コマ出すと読めない

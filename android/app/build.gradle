@@ -48,8 +48,9 @@ android {
         //    （13 = カメラが静止する件の見張り役＋推し・黒の絵を作り直した。
         //          2026-08-16）
         //    （14 = 元・鍵つき53枚の絵を全部作り直した。2026-08-16）
-        versionCode 14
-        versionName "1.1.4"
+        //    （15 = フレーム選びのカクつきを直した。2026-08-16）
+        versionCode 15
+        versionName "1.1.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

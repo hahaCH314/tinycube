@@ -298,6 +298,9 @@ function App() {
   const [camInfo, setCamInfo] = useState<string | null>(null);
   // 描画の係が毎フレーム読む。state を直接見ると古い値のままになる
   const camOnRef = useRef(false);
+  // フレーム選びを開いているか。描く係が毎コマ聞きにくるので ref で持つ
+  // （state だと、描く係を作り直さないと新しい値が見えない）
+  const pickerOpenRef = useRef(false);
   // 効果音の差し替え（soundInputRef / soundSlot / soundVer）は 08cf11c で廃止
   // 文字の色。白は暗い映像に、黒は明るい映像に強い
   const [telopDark, setTelopDark] = useState(() => {
@@ -628,7 +631,11 @@ function App() {
       canvas: c,
       // video は毎回聞き直す。読み込む前は要素そのものが無い
       // カメラのときだけ画面いっぱいに広げる
-      read: () => ({ ...liveRef.current, video: videoRef.current, fill: camOnRef.current }),
+      // フレーム選びを開いているあいだは休ませる。誰も見ていない 1920x1080 を
+      // 毎秒60回描き続けると、非力な端末ではスクロールとCPUを取り合う
+      // （2026-08-16、伊波さん「かくかくする、フレーム選択が」）
+      read: () => ({ ...liveRef.current, video: videoRef.current, fill: camOnRef.current,
+        idle: pickerOpenRef.current }),
       onTrouble: msg => setCamInfo(msg || null),
     });
   }, []);
@@ -704,6 +711,9 @@ function App() {
 
   // 効果音の読み込み（sounds.ts）は 08cf11c で廃止。
   // いまの3つは effects.ts が自分で鳴らすので、ここで用意するものは無い
+
+  // フレーム選びの画面にいるあいだは、描く係を休ませる
+  useEffect(() => { pickerOpenRef.current = screen === 'setup'; }, [screen]);
 
   // <video> が画面に出てから、カメラの映像を繋ぐ
   useEffect(() => {
