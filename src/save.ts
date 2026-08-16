@@ -68,6 +68,12 @@ export async function saveMedia(blob: Blob, name: string): Promise<SaveResult> {
     try {
       // いったん端末の中に書き出す。共有シートは「ファイルの場所」を求めるので、
       // Blob のままでは渡せない
+      // ⚠️ **重い処理の前に、画面を一度描かせること。**
+      //    base64 への変換は数MBだと1〜3秒かかる。呼ばれてすぐ始めると、
+      //    直前に出した「準備しています…」が画面に出ないまま固まる
+      //    （2026-08-16、伊波さん「保存の画面がでる…遅い」）。
+      //    1コマ譲るだけで、待たされている理由が見えるようになる
+      await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
       const data = await toBase64(blob);
       const written = await Filesystem.writeFile({
         path: name,

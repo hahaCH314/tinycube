@@ -301,6 +301,10 @@ function App() {
   // フレーム選びを開いているか。描く係が毎コマ聞きにくるので ref で持つ
   // （state だと、描く係を作り直さないと新しい値が見えない）
   const pickerOpenRef = useRef(false);
+  // できあがりのシート。プレビューで作ったものを保存でも使い回す。
+  // ⚠️ **撮り直し・飾りの変更があったら捨てること。** 古い絵を保存して
+  //    しまう（捨て忘れが一番こわい）
+  const sheetRef = useRef<HTMLCanvasElement | null>(null);
   // 効果音の差し替え（soundInputRef / soundSlot / soundVer）は 08cf11c で廃止
   // 文字の色。白は暗い映像に、黒は明るい映像に強い
   const [telopDark, setTelopDark] = useState(() => {
@@ -715,6 +719,11 @@ function App() {
   // フレーム選びの画面にいるあいだは、描く係を休ませる
   useEffect(() => { pickerOpenRef.current = screen === 'setup'; }, [screen]);
 
+  // 写真か飾りが変わったら、取ってあるシートを捨てる。
+  // **一箇所で見張る。** 撮り直し・飾りの追加・移動…と呼び出し側で消して
+  // 回ると、必ずどこかで消し忘れて古い絵を保存することになる
+  useEffect(() => { sheetRef.current = null; }, [shots, decos]);
+
   // <video> が画面に出てから、カメラの映像を繋ぐ
   useEffect(() => {
     camOnRef.current = camOn;
@@ -1004,7 +1013,15 @@ function App() {
     setPreviewBusy(true);
     try {
       const sheet = await buildPhotoSheet();
-      if (sheet) setPreviewUrl(sheet.toDataURL('image/jpeg', 0.92));
+      if (sheet) {
+        // ⚠️ **作ったシートは取っておくこと。** 捨てると保存のときに
+        //    もう一度3枚を焼き直すことになり、押してから6秒以上
+        //    無反応に見える（2026-08-16、伊波さん「保存の画面がでる…遅い」）。
+        //    プレビューで見えているものと保存するものは同じなので、作り直す
+        //    理由がない
+        sheetRef.current = sheet;
+        setPreviewUrl(sheet.toDataURL('image/jpeg', 0.92));
+      }
     } finally {
       setPreviewBusy(false);
     }
@@ -1018,8 +1035,12 @@ function App() {
    * シートは一度だけ作って使い回す。
    */
   const savePhotoTo = async (where: 'both' | 'device' | 'album') => {
-    const sheet = await buildPhotoSheet();
+    // プレビューで作ったものをそのまま使う。無ければ作る（撮り直しなどで
+    // 取っておいたものが古くなっている場合に備えて）
+    const sheet = sheetRef.current ?? await buildPhotoSheet();
     if (!sheet) return;
+    // 押した瞬間に何か出す。この先は端末へ書き出す処理で数秒かかる
+    setSaveMessage('しまっています…');
 
     // プリクラ帳へ
     if (where === 'both' || where === 'album') {
@@ -1040,6 +1061,7 @@ function App() {
       if (r.ok && where === 'album') {
         setSaveMessage(`プリクラ帳にしまいました（${r.count}/${ALBUM_LIMIT}）`);
         setTimeout(() => setSaveMessage(null), 3000);
+        backToStart();
         return;
       }
     }
@@ -1047,6 +1069,24 @@ function App() {
     // 端末へ
     const blob = await new Promise<Blob | null>(res => sheet.toBlob(res, 'image/jpeg', 0.92));
     if (blob) await save(blob, 'jpg');
+    backToStart();
+  };
+
+  /**
+   * しまい終わったら「なにを撮る？」へ戻す（2026-08-16、伊波さん
+   * 「保存終わったら、写真と動画選択画面へ」）。
+   *
+   * 撮ったものは片付ける。**残したまま戻すと、次に撮ろうとしたとき
+   * 前の写真が出てくる。**
+   */
+  const backToStart = () => {
+    setShots([]);
+    setDecos([]);
+    setPreviewUrl(null);
+    setAskWhere(false);
+    sheetRef.current = null;
+    setSetupStep('kind');
+    setScreen('setup');
   };
 
   /** プリクラ帳を開く。一覧は見本だけなので軽い */

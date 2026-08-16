@@ -49,8 +49,10 @@ android {
         //          2026-08-16）
         //    （14 = 元・鍵つき53枚の絵を全部作り直した。2026-08-16）
         //    （15 = フレーム選びのカクつきを直した。2026-08-16）
-        versionCode 15
-        versionName "1.1.5"
+        //    （16 = 保存が遅いのと、保存後に最初の画面へ戻すのを直した。
+        //          2026-08-16）
+        versionCode 16
+        versionName "1.1.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
