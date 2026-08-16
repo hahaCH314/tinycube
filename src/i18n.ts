@@ -149,6 +149,10 @@ type I18nDict = {
   eff_omg: string;
   eff_party: string;
   eff_choberigu: string;
+  label_shape: string;
+  label_color: string;
+  msg_drop_here: string;
+  msg_release_del: string;
   font_marumoji: string;
   font_note: string;
   my_frame: string;
@@ -364,6 +368,10 @@ SNSへの投稿等及び、二次使用は
   eff_omg: 'やば',
   eff_party: 'パーティータイム',
   eff_choberigu: 'チョベリグー',
+  label_shape: '形',
+  label_color: '色',
+  msg_drop_here: 'ここへ運ぶと捨てる',
+  msg_release_del: 'はなすと捨てる',
   font_marumoji: 'まるもじ',
   font_note: 'ノート',
   my_frame: 'マイフレーム',
@@ -577,6 +585,10 @@ Thank you.`,
   eff_omg: 'OMG',
   eff_party: 'Party Time',
   eff_choberigu: 'Very Good',
+  label_shape: 'Shape',
+  label_color: 'Color',
+  msg_drop_here: 'Drag here to delete',
+  msg_release_del: 'Release to delete',
   font_marumoji: 'Marumoji',
   font_note: 'Note',
   my_frame: 'My Frame',

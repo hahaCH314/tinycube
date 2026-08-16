@@ -402,8 +402,8 @@ function App() {
   // （2026-08-14、伊波さん「フォント2種類にできない？」）。
   // 残したのは平成ギャルの2本柱。細い線のサインペン系は外した
   const PHOTO_FONTS = [
-    { id: 'maru', name: 'まるもじ', css: '"Hachi Maru Pop", cursive' },
-    { id: 'note', name: 'ノート',   css: '"Klee One", serif' },
+    { id: 'maru', name: t('font_marumoji'), css: '"Hachi Maru Pop", cursive' },
+    { id: 'note', name: t('font_note'),   css: '"Klee One", serif' },
   ] as const;
   const [photoFontId, setPhotoFontId] = useState<string>('maru');
   const PHOTO_FONT = PHOTO_FONTS.find(f => f.id === photoFontId)?.css ?? PHOTO_FONTS[0].css;
@@ -1550,7 +1550,7 @@ function App() {
               title="3枚つづけて撮る"
             >
               <span className="ctrl-icon">📸</span>
-              <span className="ctrl-label">{isBursting ? '撮影中…' : '3枚撮る'}</span>
+              <span className="ctrl-label">{isBursting ? t('msg_shooting') : t('btn_shoot_3')}</span>
             </button>
           ) : (
           <>
@@ -2188,7 +2188,7 @@ function App() {
               </div>
 
               <div className="opt-row">
-                <span className="opt-label">色</span>
+                <span className="opt-label">{t('label_color')}</span>
                 <div className="shape-switch">
                   <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
                   <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
@@ -2330,7 +2330,7 @@ function App() {
                 aria-hidden={dragId === null}
               >
                 <span className="trash-icon">🗑</span>
-                <span className="trash-label">{overTrash ? 'はなすと捨てる' : 'ここへ運ぶと捨てる'}</span>
+                <span className="trash-label">{overTrash ? t('msg_release_del') : t('msg_drop_here')}</span>
               </div>
             </div>
 
@@ -2364,7 +2364,7 @@ function App() {
                 </div>
 
                 <div className="opt-row">
-                  <span className="opt-label">形</span>
+                  <span className="opt-label">{t('label_shape')}</span>
                   <div className="font-picker">
                     {PHOTO_FONTS.map(f => (
                       <button
@@ -2382,7 +2382,7 @@ function App() {
                 </div>
 
                 <div className="opt-row">
-                  <span className="opt-label">色</span>
+                  <span className="opt-label">{t('label_color')}</span>
                   <div className="color-picker">
                     {TEXT_COLORS.map(c => (
                       <button
