@@ -1240,19 +1240,11 @@
 .preview-inner {
   width: 100%; max-width: 460px; max-height: 100%;
   display: flex; flex-direction: column; gap: 10px;
-  /* ⚠️ **入りきらないときはここが縦にスクロールする。**
-     機種によってボタンが画面の外に出るという報告があった（2026-08-16、
-     テスターより「画面のはみだし（機種によって）」）。手元では 360x600 まで
-     狭めても再現しなかったが、アプリの下ナビが画面を食う端末では起こりうる。
-     受け皿が無いと、はみ出したボタンに指が届かなくなる */
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-/* 決めるボタンは、はみ出しても最後まで見えるように下へ貼り付ける */
-.preview-btns {
-  position: sticky; bottom: 0;
-  padding-top: 8px;
-  background: linear-gradient(to top, rgba(6,3,18,0.96) 72%, rgba(6,3,18,0));
+  /* ⚠️ **ここをスクロールさせないこと。** 一度 overflow-y:auto と
+     sticky ボタンで手当てしたが、用紙が縦に伸びてボタンが絵に被さり
+     かえって見にくくなった。用紙側（.preview-sheet img）に max-height を
+     効かせて、はみ出させないのが正しい直し方 */
+  overflow: hidden;
 }
 .preview-head {
   text-align: center; font-size: 1.05rem; font-weight: 900; color: #66e7ff;
@@ -1263,12 +1255,20 @@
    まずは全体が入るように縮めて出す */
 .preview-sheet {
   flex: 1 1 auto; min-height: 0;
-  overflow-y: auto; border-radius: 12px;
+  border-radius: 12px;
   background: rgba(255,255,255,0.06);
-  display: flex; justify-content: center;
+  /* ⚠️ **中央に置いて、はみ出させないこと。** 以前は overflow-y:auto で
+     スクロールさせていたが、用紙が縦に長いぶん絵が画面から出て
+     「保存ボタンがはみ出して絵が分かりにくい」ことになった
+     （2026-08-16、テスターより。機種は Pixel 9a）*/
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
 .preview-sheet img {
-  width: auto; max-width: 100%; height: auto;
+  /* **縦も横も枠の中に収める。** height:auto だと幅いっぱいに広がって
+     縦に伸び、画面からはみ出す。max-height を効かせるのが肝 */
+  max-width: 100%; max-height: 100%;
+  width: auto; height: auto;
   object-fit: contain; display: block;
   border-radius: 10px;
 }
