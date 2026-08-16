@@ -145,8 +145,24 @@ export function startStage(opts: StageOptions): () => void {
 
   let told = false;
   let running = true;
+  // ⚠️ **ループが死んだら戻れるようにしておくこと。**
+  //    requestAnimationFrame は画面が隠れているあいだ呼ばれない。Android で
+  //    ホームに戻って開き直したり、権限のダイアログが被さったりすると、
+  //    次の1回が来ないまま止まることがある。そうなるとカメラは動いていて
+  //    映像も来ているのに、canvas だけ固まって静止画に見える
+  //    （2026-08-16、伊波さん「カメラが動いてない」「静止画面のまま」
+  //     「カメラは起動してる」）。
+  //    見張り役を置いて、止まっていたら回し直す
+  let beat = 0;
+  const watchdog = setInterval(() => {
+    if (!running) return;
+    const last = beat;
+    // 200ms 経っても絵が1コマも進んでいなければ、ループが死んでいる
+    setTimeout(() => { if (running && beat === last) requestAnimationFrame(draw); }, 200);
+  }, 1000);
   const draw = () => {
     if (!running) return;
+    beat++;
     try {
     const { video, shape, frame, watermark, mirror, zoom } = read();
     const camZoom = zoom && zoom > 0 ? zoom : 1;
@@ -291,7 +307,14 @@ export function startStage(opts: StageOptions): () => void {
     requestAnimationFrame(draw);
   };
   requestAnimationFrame(draw);
-  return () => { running = false; };
+  // 画面が戻ってきたら、その場で回し直す。見張り役の1秒を待たずに済む
+  const onVisible = () => { if (running && !document.hidden) requestAnimationFrame(draw); };
+  document.addEventListener('visibilitychange', onVisible);
+  return () => {
+    running = false;
+    clearInterval(watchdog);
+    document.removeEventListener('visibilitychange', onVisible);
+  };
 }
 
 export async function startRecording(opts: RecordOptions): Promise<RecordHandle> {

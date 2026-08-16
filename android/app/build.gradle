@@ -45,8 +45,10 @@ android {
         //    （11 = 飾りが焼くと小さくなるのと、顔ハメ10枚が黒いままだった
         //          のを直した。2026-08-16）
         //    （12 = フレーム一覧に見本の絵を使うようにした。2026-08-16）
-        versionCode 12
-        versionName "1.1.2"
+        //    （13 = カメラが静止する件の見張り役＋推し・黒の絵を作り直した。
+        //          2026-08-16）
+        versionCode 13
+        versionName "1.1.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
