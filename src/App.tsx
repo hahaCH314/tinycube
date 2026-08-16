@@ -1044,7 +1044,18 @@ function App() {
 
     // プリクラ帳へ
     if (where === 'both' || where === 'album') {
-      const r = await album.add(sheet.toDataURL('image/jpeg', 0.92), shots.length);
+      // ⚠️ **プリクラ帳は1コマずつ、端末は3連シート**（2026-08-16、伊波さん
+      //    「それか、3連1枚ずつ保存」）。帳では1枚ずつ大きく見返せて、
+      //    失敗したコマだけ消せる。端末はSNSに上げるのでシートのまま。
+      //    3コマぶん枠を使うので、いっぱいのときは**入った分だけ残す**
+      //    （途中で断ってもすでに入れたものは消さない）
+      const cells = await Promise.all([0, 1, 2].map(i => renderShot(i)));
+      let r: Awaited<ReturnType<typeof album.add>> = { ok: true, count: albumHas };
+      for (const c of cells) {
+        if (!c) continue;
+        r = await album.add(c.toDataURL('image/jpeg', 0.92), 1);
+        if (!r.ok) break;
+      }
       if (!r.ok && r.why === 'full') {
         // ⚠️ **勝手に消して場所を空けない。** 本人に選んで消してもらう
         setSaveMessage(`プリクラ帳がいっぱいです（${ALBUM_LIMIT}枚）。いらないものを消してね`);
@@ -1059,7 +1070,7 @@ function App() {
       // 入口に出す枚数を数え直す。しまえていてもいなくても、ここで揃える
       await refreshAlbumCount();
       if (r.ok && where === 'album') {
-        setSaveMessage(`プリクラ帳にしまいました（${r.count}/${ALBUM_LIMIT}）`);
+        setSaveMessage(`プリクラ帳に3枚しまいました（${r.count}/${ALBUM_LIMIT}）`);
         setTimeout(() => setSaveMessage(null), 3000);
         backToStart();
         return;
