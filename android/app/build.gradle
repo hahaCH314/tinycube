@@ -52,8 +52,10 @@ android {
         //    （16 = 保存が遅いのと、保存後に最初の画面へ戻すのを直した。
         //          2026-08-16）
         //    （17 = プリクラ帳へは1コマずつ3枚入れるようにした。2026-08-16）
-        versionCode 17
-        versionName "1.1.7"
+        //    （18 = 保存の待ち画面／アイコンのハート消し／また来てね。
+        //          2026-08-16）
+        versionCode 18
+        versionName "1.1.8"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

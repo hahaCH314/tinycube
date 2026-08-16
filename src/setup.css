@@ -1240,6 +1240,19 @@
 .preview-inner {
   width: 100%; max-width: 460px; max-height: 100%;
   display: flex; flex-direction: column; gap: 10px;
+  /* ⚠️ **入りきらないときはここが縦にスクロールする。**
+     機種によってボタンが画面の外に出るという報告があった（2026-08-16、
+     テスターより「画面のはみだし（機種によって）」）。手元では 360x600 まで
+     狭めても再現しなかったが、アプリの下ナビが画面を食う端末では起こりうる。
+     受け皿が無いと、はみ出したボタンに指が届かなくなる */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* 決めるボタンは、はみ出しても最後まで見えるように下へ貼り付ける */
+.preview-btns {
+  position: sticky; bottom: 0;
+  padding-top: 8px;
+  background: linear-gradient(to top, rgba(6,3,18,0.96) 72%, rgba(6,3,18,0));
 }
 .preview-head {
   text-align: center; font-size: 1.05rem; font-weight: 900; color: #66e7ff;
@@ -1816,3 +1829,30 @@ button:active,
 }
 .album-view-btns { display: flex; gap: 10px; flex: 0 0 auto; }
 .album-view-btns button { flex: 1 1 0; min-height: 50px; }
+
+/* しまっているあいだの待ち画面（2026-08-16、伊波さん「保存のタイムラグ」）。
+   共有シートが開くまでの数秒、文字だけだと固まって見えるので点を動かす。
+   ⚠️ **押せなくする画面なので、必ず消えること**（App.tsx 側は finally で消している） */
+.save-busy {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(6, 3, 18, 0.86);
+  display: flex; align-items: center; justify-content: center;
+}
+.save-busy-inner { text-align: center; }
+.save-busy-dots { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
+.save-busy-dots span {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #ff4fa3; display: inline-block;
+  animation: save-bounce 1.05s infinite ease-in-out both;
+}
+.save-busy-dots span:nth-child(1) { animation-delay: -0.28s; }
+.save-busy-dots span:nth-child(2) { animation-delay: -0.14s; }
+@keyframes save-bounce {
+  0%, 70%, 100% { transform: translateY(0); opacity: 0.55; }
+  35%           { transform: translateY(-12px); opacity: 1; }
+}
+.save-busy-text {
+  color: #66e7ff; font-weight: 900; font-size: 1.1rem; letter-spacing: 0.06em;
+  text-shadow: 2px 2px 0 #ff4fa3;
+}
+.save-busy-note { color: #cbd5e1; font-size: 0.85rem; margin-top: 6px; }

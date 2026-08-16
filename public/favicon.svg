@@ -35,9 +35,10 @@
   <path d="M 410 380 Q 430 380 430 360 Q 430 380 450 380 Q 430 380 430 400 Q 430 380 410 380 Z" fill="#00ffff" filter="url(#glow)"/>
   <path d="M 120 400 Q 135 400 135 385 Q 135 400 150 400 Q 135 400 135 415 Q 135 400 120 400 Z" fill="#ff00ff" filter="url(#glow)"/>
 
-  <!-- Hearts -->
-  <path d="M 360 280 A 25 25 0 0 1 410 280 A 25 25 0 0 1 460 280 Q 460 330 410 370 Q 360 330 360 280 Z" fill="#ff66b2" stroke="#ffffff" stroke-width="4" transform="rotate(-15 410 325)"/>
-  <path d="M 60 250 A 20 20 0 0 1 100 250 A 20 20 0 0 1 140 250 Q 140 290 100 320 Q 60 290 60 250 Z" fill="#ff33cc" stroke="#ffffff" stroke-width="3" transform="rotate(20 100 285)"/>
+  <!-- ハートは外した（2026-08-16、伊波さん「アイコンのハート消し」）。
+       キューブが主役なので、両脇の飾りがあると目がそちらへ行く。
+       戻したくなったときのために形は履歴に残っている -->
+
 
   <!-- 3D Cube (Center) -->
   <g transform="translate(256, 250) scale(1.1)">

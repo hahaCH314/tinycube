@@ -505,6 +505,10 @@ function App() {
   };
   const [cantClose, setCantClose] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  // しまっている最中か。**画面全体で待ちを見せる**ために持つ。
+  // 小さな帯だけだと、共有シートが開くまでの数秒が「固まった」に見える
+  // （2026-08-16、伊波さん「保存のタイムラグ」）
+  const [saveBusy, setSaveBusy] = useState(false);
   const [loopVideo, setLoopVideo] = useState(true);
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
   // （2026-08-11、伊波さん「両方」）
@@ -780,8 +784,16 @@ function App() {
     //    「押しても反応しない」ように見える
     //   （2026-08-15、伊波さん「保存ボタンの反応が少し悪かった」）。
     setSaveMessage('保存の準備をしています…');
+    setSaveBusy(true);
 
-    const r = await saveMedia(blob, name);
+    let r: Awaited<ReturnType<typeof saveMedia>>;
+    try {
+      r = await saveMedia(blob, name);
+    } finally {
+      // ⚠️ **必ず消すこと。** 例外で抜けたときに出したままだと、
+      //    画面が覆われて何も押せなくなる
+      setSaveBusy(false);
+    }
 
     if (r.how === 'shared') {
       showShared();          // 保存したかは本人しか知らないので言い切らない
@@ -1445,6 +1457,19 @@ function App() {
               </svg>
             </div>
             <p>{t('upload_hint')}</p>
+          </div>
+        )}
+        {/* しまっているあいだ。共有シートが開くまで数秒かかることがあるので、
+            **動くもの**を出して「止まっていない」と伝える。
+            文字だけだと固まったように見える（2026-08-16、伊波さん
+            「保存のタイムラグ」） */}
+        {saveBusy && (
+          <div className="save-busy">
+            <div className="save-busy-inner">
+              <div className="save-busy-dots"><span /><span /><span /></div>
+              <div className="save-busy-text">しまっています…</div>
+              <div className="save-busy-note">ちょっとまってね</div>
+            </div>
           </div>
         )}
         {camInfo && <div className="cam-info">{camInfo}</div>}
@@ -2431,7 +2456,10 @@ function App() {
       {cantClose && (
         <div className="preview-screen" onClick={() => setCantClose(false)}>
           <div className="preview-inner" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
-            <div className="preview-head">おつかれさま！</div>
+            {/* 「おつかれさま」だと、そこで終わりの挨拶になる。また遊びに
+                来てほしいので「また来てね」にした（2026-08-16、伊波さん
+                「最後のページはお疲れ様、じゃなく、また来てね」） */}
+            <div className="preview-head">また来てね！</div>
             <p className="sheet-note" style={{ textAlign: 'center', lineHeight: 1.8 }}>
               カメラは止めました。<br />
               このページはブラウザのタブを閉じて終わってください。
