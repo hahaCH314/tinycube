@@ -1331,7 +1331,15 @@ function App() {
                 （2026-08-12、伊波さん「撮影画面の設定ボタンは消して設定に戻るボタンを付ける」） */}
             <button className="tool-btn-small" onClick={() => setScreen('setup')} title="設定に戻る" style={{ width: 'auto', padding: '0 12px', fontSize: '13px', fontWeight: 'bold' }}>戻る</button>
             <button className="tool-btn-small" onClick={() => setScreen('manner')} title="使い方">❓</button>
-            <button className="tool-btn-small discord-btn" onClick={() => window.open('https://discord.gg/wVnyfnv7d', '_blank', 'noopener,noreferrer')} title="公式Discord">👾</button>
+            {/* Discord から会社HPへ差し替えた（2026-08-15、伊波さん
+                「ディスコードよりインスタのほうがいい？」
+                →「会社のSNS並んでるページにする？」）。
+                Discord は誰もいない状態で、空のサーバーに招くと逆効果。
+                HP のフッターに Instagram / TikTok / X / YouTube が
+                並んでいるので、そこへ送れば見た人が好きなところへ行ける。
+                **製品から製品へは直リンクせず、会社HPをハブにする**方針にも合う。
+                絵文字は 👾（ゲーム機）だと会社のページだと伝わらないので 🏠 に */}
+            <button className="tool-btn-small" onClick={() => window.open('https://cubicenginestudio.vercel.app/', '_blank', 'noopener,noreferrer')} title="CUBICENGINEstudio（SNSはこちら）">🏠</button>
           </div>
         </header>
 
