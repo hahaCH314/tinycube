@@ -57,8 +57,9 @@ android {
         //    （19 = できあがりの用紙が画面からはみ出していたのを直した。
         //          2026-08-16）
         //    （20 = 英語版ができた。2026-08-16）
-        versionCode 20
-        versionName "1.2.0"
+        //    （21 = 英語版の取りこぼしを潰した。2026-08-16）
+        versionCode 21
+        versionName "1.2.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

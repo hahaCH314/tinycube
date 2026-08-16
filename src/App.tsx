@@ -2444,7 +2444,7 @@ function App() {
                 style={{ width: '100%' }}
                 onClick={openPreview}
                 disabled={previewBusy}
-              >{previewBusy ? '作っています…' : 'できあがりを見る'}</button>
+              >{previewBusy ? t('msg_making') : t('btn_see_result')}</button>
             </div>
           </div>
         </div>
