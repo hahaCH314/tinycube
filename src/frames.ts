@@ -195,16 +195,16 @@ export const FRAMES: Frame[] = [
 
 
   // --- 顔ハメ（2026-08-11 追加。有料の枠）。穴から映像が見える ---
-  { id: 'goya',             name: 'ゴーヤ（顔ハメ）',         file: './frames/goya.webp',             anchor: 'wide', paid: true },
-  { id: 'japan_face',       name: '日本（顔ハメ）',          file: './frames/japan_face.webp',       anchor: 'wide', paid: true },
-  { id: 'kabuki_face',      name: '歌舞伎（顔ハメ）',         file: './frames/kabuki_face.webp',      anchor: 'wide', paid: true },
-  { id: 'bath_face',        name: 'お風呂（顔ハメ）',         file: './frames/bath_face.webp',        anchor: 'wide', paid: true },
-  { id: 'dog_face_w',       name: '犬（顔ハメ）',           file: './frames/dog_face_w.webp',       anchor: 'wide', paid: true },
-  { id: 'lemon_face',       name: 'レモン（顔ハメ）',         file: './frames/lemon_face.webp',       anchor: 'full', paid: true },
-  { id: 'otaku_face',       name: 'ヲタ（顔ハメ）',          file: './frames/otaku_face.webp',       anchor: 'full', paid: true },
-  { id: 'onnagata',         name: '女形（顔ハメ）',          file: './frames/onnagata.webp',         anchor: 'full', paid: true },
-  { id: 'dog_face_p',       name: '犬 1（顔ハメ）',         file: './frames/dog_face_p.webp',       anchor: 'full', paid: true },
-  { id: 'dog_face_p_2',     name: '犬 2（顔ハメ）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', paid: true },
+  { id: 'goya',             name: 'ゴーヤ（顔ハメ）',         file: './frames/goya.webp',             anchor: 'wide', faceHoles: [{ x: 23.0, y: 27.5, w: 21.4, h: 47.1 }, { x: 56.2, y: 28.0, w: 20.6, h: 46.6 }], paid: true },
+  { id: 'japan_face',       name: '日本（顔ハメ）',          file: './frames/japan_face.webp',       anchor: 'wide', faceHoles: [{ x: 26.9, y: 26.9, w: 17.5, h: 34.4 }, { x: 53.8, y: 29.0, w: 17.9, h: 36.3 }], paid: true },
+  { id: 'kabuki_face',      name: '歌舞伎（顔ハメ）',         file: './frames/kabuki_face.webp',      anchor: 'wide', faceHoles: [{ x: 20.9, y: 25.4, w: 18.4, h: 46.1 }, { x: 62.1, y: 28.7, w: 17.8, h: 45.3 }], paid: true },
+  { id: 'bath_face',        name: 'お風呂（顔ハメ）',         file: './frames/bath_face.webp',        anchor: 'wide', faceHoles: [{ x: 31.8, y: 32.7, w: 12.7, h: 22.7 }, { x: 55.1, y: 30.6, w: 13.3, h: 23.4 }], paid: true },
+  { id: 'dog_face_w',       name: '犬（顔ハメ）',           file: './frames/dog_face_w.webp',       anchor: 'wide', faceHoles: [{ x: 29.6, y: 24.1, w: 14.3, h: 29.6 }, { x: 54.1, y: 25.3, w: 14.2, h: 30.7 }], paid: true },
+  { id: 'lemon_face',       name: 'レモン（顔ハメ）',         file: './frames/lemon_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.6, w: 32.2, h: 21.4 }, paid: true },
+  { id: 'otaku_face',       name: 'ヲタ（顔ハメ）',          file: './frames/otaku_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 27.3, w: 26.9, h: 20.1 }, { x: 53.9, y: 31.1, w: 25.6, h: 19.4 }], paid: true },
+  { id: 'onnagata',         name: '女形（顔ハメ）',          file: './frames/onnagata.webp',         anchor: 'full', faceHole: { x: 28.8, y: 33.3, w: 45.6, h: 37.9 }, paid: true },
+  { id: 'dog_face_p',       name: '犬 1（顔ハメ）',         file: './frames/dog_face_p.webp',       anchor: 'full', faceHole: { x: 25.6, y: 18.3, w: 48.1, h: 34.5 }, paid: true },
+  { id: 'dog_face_p_2',     name: '犬 2（顔ハメ）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', faceHole: { x: 33.2, y: 13.9, w: 34.8, h: 26.4 }, paid: true },
 ];
 
 /** その枠が、いまの書き出しの形にぴったり合うか。
