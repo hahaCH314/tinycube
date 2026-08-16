@@ -1972,7 +1972,26 @@ function App() {
                     onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
                     title={locked(f) ? t('locked_hint') : f.name}
                   >
-                    <img src={f.file + '?v=20260813_raw'} alt={f.name} />
+                    {/* 一覧は**見本の絵**を使う。元の絵は 1400px、タイルは 145px ほどで、
+                        1/10 近くまで潰すと細かい飾りがギザギザに割れる
+                        （2026-08-16、伊波さん「絵が汚いまま」）。
+                        見本は 320px に縮めてあるので、そのまま出せばきれいに見える。
+                        ⚠️ **撮影側は元の絵のまま。** ここは見本なので、透明が
+                        抜けている必要はない（伊波さん「こっちは、抜かれてる絵じゃ
+                        なくてもいい」「撮影の時にちゃんとできてればいい」）。
+                        見本が無いものは元の絵に落ちる */}
+                    <img
+                      src={f.file.replace('./frames/', './frames/thumb/') + '?v=20260816_thumb'}
+                      alt={f.name}
+                      loading="lazy"
+                      onError={e => {
+                        const el = e.currentTarget;
+                        if (!el.dataset.fellBack) {
+                          el.dataset.fellBack = '1';
+                          el.src = f.file + '?v=20260813_raw';
+                        }
+                      }}
+                    />
                     {locked(f) && <span className="lock-mark">{t('frame_locked')}</span>}
                     {/* タイルは絵だけ。名前は出さない（2026-08-12、伊波さん「絵だけの方が
                       見やすいよ」）。読み上げ用に img の alt には残してある */}

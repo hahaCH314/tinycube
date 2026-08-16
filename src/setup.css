@@ -345,7 +345,17 @@
 }
 .frame-tile:hover { transform: scale(1.05); }
 .frame-tile.on { border-color: #66e7ff; box-shadow: 0 0 12px rgba(102, 231, 255, 0.4); }
-.frame-tile img { width: 100%; height: 100%; object-fit: contain; }
+/* ⚠️ **縮め方を指定すること。** 元の絵は 1024〜1400px、タイルは 145px ほど。
+   1/8 近くまで潰すので、任せると点を間引くだけの縮小になり、細かい飾りが
+   ギザギザに割れる（2026-08-16、伊波さん「絵が汚いまま」）。
+   撮影画面がきれいなのは等倍に近い大きさで出しているから。
+   ここは一覧のタイルだけに効かせる */
+.frame-tile img {
+  width: 100%; height: 100%; object-fit: contain;
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;   /* Android WebView の縮小をなめらかにする */
+  transform: translateZ(0);
+}
 .frame-tile.none { color: #94a3b8; font-size: 0.8rem; font-weight: 700; }
 
 .sound-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }

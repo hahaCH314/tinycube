@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 500" width="1024" height="500">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#4a0072"/>
+      <stop offset="60%" stop-color="#1a0033"/>
+      <stop offset="100%" stop-color="#0d001a"/>
+    </radialGradient>
+    <radialGradient id="g1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(236, 72, 153, 0.4)"/>
+      <stop offset="100%" stop-color="rgba(236, 72, 153, 0)"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(6, 182, 212, 0.3)"/>
+      <stop offset="100%" stop-color="rgba(6, 182, 212, 0)"/>
+    </radialGradient>
+    <linearGradient id="titleGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#ff80df"/>
+      <stop offset="100%" stop-color="#ff007f"/>
+    </linearGradient>
+    <linearGradient id="badgeGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff007f"/>
+      <stop offset="100%" stop-color="#00d2ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="500" fill="url(#bg)"/>
+
+  <!-- Glows -->
+  <circle cx="300" cy="150" r="250" fill="url(#g1)"/>
+  <circle cx="750" cy="350" r="200" fill="url(#g2)"/>
+
+  <!-- Sparkles -->
+  <text x="140" y="130" font-size="32" fill="#ffdf00">✨</text>
+  <text x="860" y="140" font-size="32" fill="#ff66cc">💖</text>
+  <text x="180" y="420" font-size="28" fill="#00ffff">⭐</text>
+  <text x="830" y="410" font-size="28" fill="#ffffff">🪩</text>
+
+  <!-- Badge -->
+  <rect x="362" y="195" width="300" height="34" rx="17" fill="url(#badgeGrad)"/>
+  <text x="512" y="218" font-family="sans-serif" font-size="15" font-weight="900" fill="#ffffff" text-anchor="middle">平成レトロ × Y2K 撮影＆動画編集</text>
+
+  <!-- Title -->
+  <text x="512" y="295" font-family="'Outfit', sans-serif, Arial" font-size="64" font-weight="900" fill="url(#titleGrad)" text-anchor="middle" letter-spacing="2">tinyCUBE</text>
+
+  <!-- Tagline -->
+  <text x="512" y="348" font-family="sans-serif" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">あの頃のプリクラがスマホで復活！？ポンッと顔はめ＆動画編集！</text>
+
+  <!-- Chips -->
+  <g transform="translate(182, 390)">
+    <rect x="0" y="0" width="210" height="38" rx="10" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)"/>
+    <text x="105" y="24" font-family="sans-serif" font-size="13" font-weight="bold" fill="#f8fafc" text-anchor="middle">✨ 加工なし！ありのまま体験</text>
+
+    <rect x="225" y="0" width="210" height="38" rx="10" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)"/>
+    <text x="330" y="24" font-family="sans-serif" font-size="13" font-weight="bold" fill="#f8fafc" text-anchor="middle">🎮 ゲーム実況動画 読込対応</text>
+
+    <rect x="450" y="0" width="210" height="38" rx="10" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.4)"/>
+    <text x="555" y="24" font-family="sans-serif" font-size="13" font-weight="bold" fill="#f8fafc" text-anchor="middle">🔰 広告なし・端末内完結</text>
+  </g>
+</svg>

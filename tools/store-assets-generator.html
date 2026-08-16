@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>tinycube - ストア掲載用スクリーンショット ジェネレーター</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&family=Outfit:wght@800;900&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #0f111a;
+      color: #fff;
+      font-family: 'Zen Maru Gothic', 'M PLUS Rounded 1c', sans-serif;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+    }
+
+    header {
+      text-align: center;
+      max-width: 900px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #ff66cc, #ffcc00, #00ffff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      color: #99aab5;
+      font-size: 15px;
+    }
+
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      justify-content: center;
+      max-width: 1900px;
+    }
+
+    .card-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .download-btn {
+      background: linear-gradient(135deg, #ff007f, #7928ca);
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 800;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 0, 127, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 0, 127, 0.6);
+    }
+
+    /* 9:16 Aspect Ratio Store Card (360x640 preview, exports to 1080x1920) */
+    .store-card {
+      width: 360px;
+      height: 640px;
+      border-radius: 24px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 16px 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      user-select: none;
+    }
+
+    /* Typography */
+    .header-area {
+      text-align: center;
+      z-index: 10;
+      width: 100%;
+    }
+
+    .tag-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .main-title {
+      font-size: 21px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      word-break: keep-all;
+    }
+
+    .sub-title {
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 4px;
+      opacity: 0.95;
+    }
+
+    /* Mockup Frame */
+    .mockup-container {
+      position: relative;
+      width: 235px;
+      height: 418px; /* 9:16 */
+      background: #000;
+      border: 6px solid #1a1a24;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,255,255,0.15);
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mockup-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #111;
+      overflow: hidden;
+    }
+
+    .mockup-frame {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      z-index: 2;
+    }
+
+    .footer-area {
+      text-align: center;
+      z-index: 10;
+      width: 100%;
+    }
+
+    .footer-text {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    /* THEMES FOR CARDS */
+
+    /* Card 1: 02.png (平成プリクラ風) */
+    .card-1 {
+      background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 50%, #7afcff 100%);
+    }
+    .card-1 .tag-badge { background: #fff; color: #ff007f; box-shadow: 0 2px 8px rgba(255,0,127,0.3); }
+    .card-1 .main-title { color: #ffffff; text-shadow: 2px 2px 0px #ff007f, -2px -2px 0px #ff007f, 2px -2px 0px #ff007f, -2px 2px 0px #ff007f, 0 4px 10px rgba(0,0,0,0.3); }
+    .card-1 .sub-title { color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .card-1 .footer-text { background: rgba(255,255,255,0.9); color: #ff007f; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+
+    /* Card 2: 05.png (アナログ顔はめ・ネタ) */
+    .card-2 {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    }
+    .card-2 .tag-badge { background: #333; color: #ffeb3b; }
+    .card-2 .main-title { color: #ffffff; text-shadow: 2px 2px 0px #e65100, -2px -2px 0px #e65100, 2px -2px 0px #e65100, -2px 2px 0px #e65100, 0 4px 10px rgba(0,0,0,0.3); }
+    .card-2 .sub-title { color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .card-2 .footer-text { background: rgba(0,0,0,0.75); color: #fff; }
+
+    /* Card 3: E９.png (ゲーム実況・エモ系) */
+    .card-3 {
+      background: radial-gradient(circle at center, #2e0854 0%, #0c0217 100%);
+      border: 2px solid #00ffff;
+    }
+    .card-3::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(rgba(0, 255, 255, 0.08) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(0, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .card-3 .tag-badge { background: #00ffff; color: #000; font-family: 'Outfit', sans-serif; }
+    .card-3 .main-title { color: #00ffff; text-shadow: 0 0 10px rgba(0,255,255,0.8), 0 0 20px rgba(255,0,255,0.8); }
+    .card-3 .sub-title { color: #ff77ff; }
+    .card-3 .footer-text { background: rgba(0,255,255,0.2); color: #00ffff; border: 1px solid #00ffff; }
+
+    /* Card 4: 推し赤１６.png (推し活・推し色) */
+    .card-4 {
+      background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+    }
+    .card-4 .tag-badge { background: #fff; color: #ff0844; }
+    .card-4 .main-title { color: #ffffff; text-shadow: 2px 2px 0px #b3002d, -2px -2px 0px #b3002d, 2px -2px 0px #b3002d, -2px 2px 0px #b3002d; }
+    .card-4 .sub-title { color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .card-4 .footer-text { background: rgba(255,255,255,0.95); color: #ff0844; }
+
+    /* Card 5: 女形９.png / 日本顔１png.png (和風・日本カルチャー) */
+    .card-5 {
+      background: linear-gradient(135deg, #8a0e28 0%, #d42345 50%, #f7c59f 100%);
+    }
+    .card-5 .tag-badge { background: #ffd700; color: #4a0000; }
+    .card-5 .main-title { color: #ffffff; text-shadow: 2px 2px 0px #5c0011, -2px -2px 0px #5c0011, 2px -2px 0px #5c0011, -2px 2px 0px #5c0011; }
+    .card-5 .sub-title { color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .card-5 .footer-text { background: #ffd700; color: #4a0000; }
+
+    /* Card 6: tinycubeおふざけ_mural.png (爆笑ネタ枠) */
+    .card-6 {
+      background: linear-gradient(135deg, #ffe259 0%, #ffa751 100%);
+    }
+    .card-6 .tag-badge { background: #ff5722; color: #fff; }
+    .card-6 .main-title { color: #ffffff; text-shadow: 2px 2px 0px #d84315, -2px -2px 0px #d84315, 2px -2px 0px #d84315, -2px 2px 0px #d84315; }
+    .card-6 .sub-title { color: #333; font-weight: 900; }
+    .card-6 .footer-text { background: #d84315; color: #fff; }
+
+    /* Card 7: ハイビスカス１６.png / きのこ (南国＆バラエティ) */
+    .card-7 {
+      background: linear-gradient(135deg, #ff5e62 0%, #ff9966 100%);
+    }
+    .card-7 .tag-badge { background: #fff; color: #ff5e62; }
+    .card-7 .main-title { color: #ffffff; text-shadow: 2px 2px 0px #c0392b, -2px -2px 0px #c0392b, 2px -2px 0px #c0392b, -2px 2px 0px #c0392b; }
+    .card-7 .sub-title { color: #fff; }
+    .card-7 .footer-text { background: rgba(255,255,255,0.9); color: #ff5e62; }
+
+    /* Card 8: Safe & Privacy */
+    .card-8 {
+      background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    }
+    .card-8 .tag-badge { background: #00796b; color: #fff; }
+    .card-8 .main-title { color: #004d40; text-shadow: 1px 1px 0px #fff; }
+    .card-8 .sub-title { color: #004d40; }
+    .card-8 .footer-text { background: #004d40; color: #fff; }
+
+    .stamp {
+      position: absolute;
+      font-size: 28px;
+      opacity: 0.8;
+      z-index: 8;
+      animation: float 3s ease-in-out infinite alternate;
+    }
+    @keyframes float {
+      from { transform: translateY(0px) rotate(0deg); }
+      to { transform: translateY(-8px) rotate(6deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>tinycube ストア掲載画像ジェネレーター</h1>
+    <p class="subtitle">伊波さん厳選マスター素材をすべて反映した【ストア上限MAX・全8枚完全版】</p>
+  </header>
+
+  <div class="gallery">
+
+    <!-- Card 1 (02.png) -->
+    <div class="card-wrapper">
+      <div class="store-card card-1" id="card-1">
+        <span class="stamp" style="top: 15px; right: 15px;">💖</span>
+        <span class="stamp" style="bottom: 70px; left: 10px;">✨</span>
+        <div class="header-area">
+          <span class="tag-badge">HEISEI RETRO</span>
+          <h2 class="main-title">あの頃のプリクラが<br>スマホで復活！？</h2>
+          <p class="sub-title">難しい操作ゼロ！ポンッと顔を合わせるだけ📸</p>
+        </div>
+
+        <div class="mockup-container">
+          <div class="mockup-inner">
+            <img src="../../assets/06_9x16_FaceHole/02.png" class="mockup-frame" alt="02.png">
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">懐かしくて新しい動画＆写真アプリ</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-1', '01_main_02.png')">1枚目を保存 (02.png)</button>
+    </div>
+
+    <!-- Card 2 (05.png) -->
+    <div class="card-wrapper">
+      <div class="store-card card-2" id="card-2">
+        <span class="stamp" style="top: 18px; left: 15px;">✌️</span>
+        <div class="header-area">
+          <span class="tag-badge">100% ANALOG</span>
+          <h2 class="main-title">AI加工なし！<br>ありのままが一番楽しい✨</h2>
+          <p class="sub-title">観光地の顔はめパネルみたいなアナログ体験！</p>
+        </div>
+
+        <div class="mockup-container">
+          <div class="mockup-inner">
+            <img src="../../assets/06_9x16_FaceHole/05.png" class="mockup-frame" alt="05.png">
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">盛らないからこそ面白い！</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-2', '02_analog_05.png')">2枚目を保存 (05.png)</button>
+    </div>
+
+    <!-- Card 3 (E９.png) -->
+    <div class="card-wrapper">
+      <div class="store-card card-3" id="card-3">
+        <span class="stamp" style="top: 15px; right: 15px;">🎮</span>
+        <div class="header-area">
+          <span class="tag-badge">NEW FEATURE</span>
+          <h2 class="main-title">録画したゲーム動画で<br>ライブ実況編集！</h2>
+          <p class="sub-title">スマホの画録を読み込んでワイプ実況動画に！</p>
+        </div>
+
+        <div class="mockup-container">
+          <div class="mockup-inner">
+            <img src="../../assets/812CMcube/E９.png" class="mockup-frame" alt="E９.png">
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">CMCUBE公認 ゲーム実況対応</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-3', '03_game_E9.png')">3枚目を保存 (E９.png)</button>
+    </div>
+
+    <!-- Card 4 (推し赤１６.png / 推し活) -->
+    <div class="card-wrapper">
+      <div class="store-card card-4" id="card-4">
+        <span class="stamp" style="top: 15px; right: 15px;">🎀</span>
+        <span class="stamp" style="bottom: 70px; left: 10px;">❤️</span>
+        <div class="header-area">
+          <span class="tag-badge">OSHI-KATSU</span>
+          <h2 class="main-title">推し活にも大活躍！<br>推し色でかわいく応援📣</h2>
+          <p class="sub-title">赤・青・緑・紫…あなたの推し色でキメちゃおう！</p>
+        </div>
+
+        <div class="mockup-container">
+          <div class="mockup-inner">
+            <img src="../../assets/oshiiro/推し赤１６.png" class="mockup-frame" alt="推し赤１６.png">
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">推し色フレーム全色対応！</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-4', '04_oshiiro_red.png')">4枚目を保存 (推し赤１６.png)</button>
+    </div>
+
+    <!-- Card 5 (女形９.png / 和風カルチャー ✨NEW!) -->
+    <div class="card-wrapper">
+      <div class="store-card card-5" id="card-5">
+        <span class="stamp" style="top: 15px; left: 15px;">🎌</span>
+        <div class="header-area">
+          <span class="tag-badge">JAPAN CULTURE</span>
+          <h2 class="main-title">まるで観光地！？<br>日本の伝統・和風顔はめ👘</h2>
+          <p class="sub-title">女形・日本顔・歌舞伎など独特の世界観！</p>
+        </div>
+
+        <div class="mockup-container">
+          <div class="mockup-inner">
+            <img src="../../assets/cube.frame/女形９.png" class="mockup-frame" alt="女形９.png">
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">日本レトロカルチャー満載！</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-5', '05_japan_culture.png')">5枚目を保存 (女形９.png)</button>
+    </div>
+
+    <!-- Card 6 (tinycubeおふざけ_mural.png / 爆笑ネタ) -->
+    <div class="card-wrapper">
+      <div class="store-card card-6" id="card-6">
+        <span class="stamp" style="top: 15px; right: 15px;">🤣</span>
+        <div class="header-area">
+          <span class="tag-badge">FUNNY & MEME</span>
+          <h2 class="main-title">思わず笑っちゃう！<br>面白フレーム満載🤪</h2>
+          <p class="sub-title">友達や家族と遊べば絶対に盛り上がる！</p>
+        </div>
+
+        <div class="mockup-container">
+          <div class="mockup-inner">
+            <img src="../../assets/tinycube用/tinycubeおふざけ_mural.png" class="mockup-frame" alt="おふざけ">
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">クスッと笑えるネタ系も充実！</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-6', '06_funny_meme.png')">6枚目を保存 (おふざけ)</button>
+    </div>
+
+    <!-- Card 7 (ハイビスカス１６.png / バラエティ ✨NEW!) -->
+    <div class="card-wrapper">
+      <div class="store-card card-7" id="card-7">
+        <span class="stamp" style="top: 15px; left: 15px;">🌺</span>
+        <div class="header-area">
+          <span class="tag-badge">VARIATION</span>
+          <h2 class="main-title">南国・日常・きのこ…<br>25種類以上を収録！🎨</h2>
+          <p class="sub-title">気分に合わせてフレームをチェンジ！</p>
+        </div>
+
+        <div class="mockup-container">
+          <div class="mockup-inner">
+            <img src="../../assets/cube.frame/ハイビスカス１６.png" class="mockup-frame" alt="ハイビスカス">
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">お気に入りフレームが必ず見つかる！</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-7', '07_variety_hibiscus.png')">7枚目を保存 (ハイビスカス)</button>
+    </div>
+
+    <!-- Card 8 (Safe & Privacy) -->
+    <div class="card-wrapper">
+      <div class="store-card card-8" id="card-8">
+        <span class="stamp" style="top: 15px; right: 15px;">🛡️</span>
+        <div class="header-area">
+          <span class="tag-badge">SAFE & CLEAN</span>
+          <h2 class="main-title">完全買い切り！<br>広告なし＆データ送信なし</h2>
+          <p class="sub-title">写真や動画は端末内だけに保存。お子様も安心！</p>
+        </div>
+
+        <div class="mockup-container" style="background: #ffffff;">
+          <div class="mockup-inner" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center;">
+            <div style="font-size: 50px; margin-bottom: 10px;">🔰</div>
+            <h3 style="color: #004d40; font-size: 22px; font-weight: 900;">tinycube</h3>
+            <p style="color: #00796b; font-size: 12px; margin-top: 6px; font-weight: 700;">Produced by<br>CUBICENGINEstudio</p>
+          </div>
+        </div>
+
+        <div class="footer-area">
+          <span class="footer-text">安心のプライバシー保護設計</span>
+        </div>
+      </div>
+      <button class="download-btn" onclick="downloadCard('card-8', '08_safety_privacy.png')">8枚目を保存 (安心設計)</button>
+    </div>
+
+  </div>
+
+  <script>
+    function downloadCard(elementId, filename) {
+      const element = document.getElementById(elementId);
+      html2canvas(element, {
+        scale: 3, /* 1080x1920 Super Crisp Output */
+        useCORS: true,
+        backgroundColor: null
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+  </script>
+</body>
+</html>

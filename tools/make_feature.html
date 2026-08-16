@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>tinyCUBE フィーチャーグラフィック自動生成</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    img {
+      border: 3px solid #ff007f;
+      border-radius: 8px;
+      max-width: 90%;
+      box-shadow: 0 10px 30px rgba(255,0,127,0.5);
+    }
+    .btn {
+      display: inline-block;
+      margin: 15px;
+      padding: 14px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #ff007f, #7928ca);
+      border-radius: 30px;
+      text-decoration: none;
+      box-shadow: 0 4px 15px rgba(255,0,127,0.4);
+    }
+  </style>
+</head>
+<body>
+  <h2>✨ 白ギャル１６ フィーチャーグラフィック (1024x500)</h2>
+  <div>
+    <a id="dl" class="btn" download="feature-graphic.png">💾 この画像をダウンロードする</a>
+  </div>
+  <p>※ボタンで保存できない場合は、下の画像を<b>右クリックして「名前を付けて画像を保存」</b>してください！</p>
+  <br>
+  <img id="view" src="">
+  <canvas id="cv" width="1024" height="500" style="display: none;"></canvas>
+
+  <script>
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = '../../assets/812CMcube/白ギャル１６.png';
+    img.onload = () => {
+      // 1024x500に高品質トリミング＆リサイズ描画
+      ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, 1024, 500);
+
+      // tinyCUBE ロゴバッジを中央上にちょこんと配置
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 15;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath();
+      ctx.roundRect(512 - 120, 20, 240, 44, 22);
+      ctx.fill();
+      ctx.strokeStyle = '#ff007f';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '900 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('tinyCUBE', 512, 51);
+      ctx.restore();
+
+      const dataUrl = cv.toDataURL('image/png');
+      document.getElementById('view').src = dataUrl;
+      document.getElementById('dl').href = dataUrl;
+    };
+  </script>
+</body>
+</html>

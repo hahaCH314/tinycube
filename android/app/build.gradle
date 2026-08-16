@@ -42,10 +42,11 @@ android {
         //    （8 = ボタンが押せない不具合を直し、同名の枠9つを外した。2026-08-15）
         //    （9 = Discord を会社HPへ差し替えた。2026-08-15）
         //    （10 = プリクラ帳を付けた。2026-08-16）
-        //    （11 = **急ぎの修正**。飾りが焼くと小さくなるのと、
-        //          顔ハメ10枚が黒いままだったのを直した。2026-08-16）
-        versionCode 11
-        versionName "1.1.1"
+        //    （11 = 飾りが焼くと小さくなるのと、顔ハメ10枚が黒いままだった
+        //          のを直した。2026-08-16）
+        //    （12 = フレーム一覧に見本の絵を使うようにした。2026-08-16）
+        versionCode 12
+        versionName "1.1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>tinyCUBE フィーチャーグラフィック (1024x500)</title>
+  <style>
+    body {
+      background: #0f111a;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 30px 20px;
+    }
+    h1 {
+      font-size: 26px;
+      color: #ff66cc;
+      margin-bottom: 10px;
+    }
+    .instruction {
+      font-size: 18px;
+      font-weight: bold;
+      color: #00ffff;
+      background: rgba(0, 255, 255, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    #result-img {
+      border: 3px solid #ff007f;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(255, 0, 127, 0.5);
+      max-width: 90%;
+      height: auto;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>✨ tinyCUBE フィーチャーグラフィック (1024x500)</h1>
+  <div class="instruction">
+    👉 下の画像を<strong>「右クリック」して「名前を付けて画像を保存」</strong>（またはデスクトップへドラッグ）してください！
+  </div>
+  <br>
+  <img id="result-img" alt="フィーチャーグラフィック画像" src="">
+
+  <canvas id="cv" width="1024" height="500" style="display: none;"></canvas>
+
+  <script>
+    window.onload = function() {
+      const cv = document.getElementById('cv');
+      const ctx = cv.getContext('2d');
+
+      // Background Gradient
+      const bgGrad = ctx.createRadialGradient(512, 200, 50, 512, 250, 600);
+      bgGrad.addColorStop(0, '#4a0072');
+      bgGrad.addColorStop(0.6, '#1a0033');
+      bgGrad.addColorStop(1, '#0d001a');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1024, 500);
+
+      // Grid Lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < 1024; x += 32) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 500); ctx.stroke();
+      }
+      for (let y = 0; y < 500; y += 32) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1024, y); ctx.stroke();
+      }
+
+      // Glow Circles
+      const g1 = ctx.createRadialGradient(300, 150, 0, 300, 150, 250);
+      g1.addColorStop(0, 'rgba(236, 72, 153, 0.35)');
+      g1.addColorStop(1, 'rgba(236, 72, 153, 0)');
+      ctx.fillStyle = g1;
+      ctx.beginPath(); ctx.arc(300, 150, 250, 0, Math.PI*2); ctx.fill();
+
+      const g2 = ctx.createRadialGradient(750, 350, 0, 750, 350, 200);
+      g2.addColorStop(0, 'rgba(6, 182, 212, 0.25)');
+      g2.addColorStop(1, 'rgba(6, 182, 212, 0)');
+      ctx.fillStyle = g2;
+      ctx.beginPath(); ctx.arc(750, 350, 200, 0, Math.PI*2); ctx.fill();
+
+      // Load Icon
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = '../public/icon-512.png';
+      
+      function renderText() {
+        // Badge
+        ctx.fillStyle = '#ff007f';
+        ctx.beginPath();
+        ctx.roundRect(512 - 150, 195, 300, 34, 17);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 15px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('平成レトロ × Y2K 撮影＆動画編集', 512, 218);
+
+        // Title
+        ctx.save();
+        ctx.font = '900 58px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(255, 0, 127, 0.8)';
+        ctx.shadowBlur = 20;
+        const tGrad = ctx.createLinearGradient(0, 240, 0, 300);
+        tGrad.addColorStop(0, '#ffffff');
+        tGrad.addColorStop(0.6, '#ff80df');
+        tGrad.addColorStop(1, '#ff007f');
+        ctx.fillStyle = tGrad;
+        ctx.fillText('tinyCUBE', 512, 290);
+        ctx.restore();
+
+        // Tagline
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 10;
+        ctx.fillText('あの頃のプリクラがスマホで復活！？ポンッと顔はめ＆動画編集！', 512, 345);
+
+        // Chips
+        const chips = ['✨ 加工なし！ありのまま体験', '🎮 ゲーム実況動画 読込対応', '🔰 広告なし・端末内完結'];
+        const startX = 512 - 330;
+        chips.forEach((c, idx) => {
+          const cx = startX + idx * 225;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.beginPath();
+          ctx.roundRect(cx, 390, 210, 38, 10);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.stroke();
+
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = 'bold 13px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(c, cx + 105, 414);
+        });
+
+        // Sparkles
+        ctx.font = '30px sans-serif';
+        ctx.fillText('✨', 160, 120);
+        ctx.fillText('💖', 860, 130);
+        ctx.fillText('⭐', 200, 420);
+        ctx.fillText('🪩', 820, 410);
+
+        // Put to <img> tag
+        document.getElementById('result-img').src = cv.toDataURL('image/png');
+      }
+
+      img.onload = () => {
+        ctx.save();
+        ctx.shadowColor = 'rgba(236, 72, 153, 0.7)';
+        ctx.shadowBlur = 30;
+        ctx.drawImage(img, 512 - 65, 45, 130, 130);
+        ctx.restore();
+        renderText();
+      };
+      img.onerror = () => {
+        renderText();
+      };
+    };
+  </script>
+</body>
+</html>
