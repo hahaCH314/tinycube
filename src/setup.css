@@ -1638,3 +1638,171 @@ button:active,
     transform: none;
   }
 }
+
+/* ===== プリクラ帳（2026-08-15）=============================================
+ *
+ * 伊波さん「プリクラ帳機能はできない？」「写真だけ」「50枚」
+ * 「勝手に消すんじゃなく」「自分で選んで消せるように」。
+ *
+ * 撮ったプリクラをファイルに貼って友達と見せ合った、あの感覚をアプリの中に。
+ * **中身は IndexedDB**（localStorage は5MBで写真1枚も入らない）。
+ */
+
+/* ---- どこにしまうか選ぶ ---- */
+.where-screen {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(6, 8, 20, 0.86);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.where-inner {
+  width: 100%; max-width: 360px;
+  background: #161a2e;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 20px;
+  padding: 20px 16px 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.where-head {
+  text-align: center; font-weight: 900; font-size: 1.1rem;
+  color: #66e7ff; margin-bottom: 14px;
+  text-shadow: 1px 1px 0 #ff4fa3;
+}
+.where-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; margin-bottom: 10px;
+  padding: 14px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 14px;
+  color: #fff; text-align: left;
+  /* 指の的を大きく。並んだボタンを押し間違えないように */
+  min-height: 60px;
+}
+/* いちばん勧めたいものを目立たせる */
+.where-both {
+  background: linear-gradient(135deg, rgba(255,79,163,0.28), rgba(102,231,255,0.22));
+  border-color: rgba(255,79,163,0.6);
+}
+.where-emoji { font-size: 22px; flex: 0 0 auto; }
+.where-label { font-weight: 800; font-size: 15px; }
+.where-note {
+  font-size: 11px; color: rgba(255,255,255,0.6);
+  margin-left: auto; text-align: right; line-height: 1.3;
+}
+.where-cancel {
+  justify-content: center; min-height: 48px;
+  background: transparent; border-color: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.65); margin-bottom: 0;
+}
+.where-cancel .where-label { font-weight: 600; font-size: 14px; }
+
+/* ---- 最初の画面にある入口 ---- */
+.album-open-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; margin-top: 14px; padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(255,79,163,0.18), rgba(102,231,255,0.14));
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px; color: #fff; min-height: 56px;
+}
+.album-open-emoji { font-size: 22px; }
+.album-open-label { font-weight: 800; font-size: 15px; }
+.album-open-count {
+  margin-left: auto; font-size: 12px;
+  color: rgba(255,255,255,0.65);
+}
+
+/* ---- プリクラ帳そのもの ---- */
+.album-screen {
+  position: fixed; inset: 0; z-index: 290;
+  background: #0d1022;
+  display: flex; flex-direction: column;
+}
+.album-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex: 0 0 auto;
+}
+.album-close {
+  min-width: 64px; height: 40px; padding: 0 14px;
+  border-radius: 20px; font-size: 14px; font-weight: 700;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18); color: #fff;
+}
+.album-title {
+  font-weight: 900; font-size: 1.05rem; color: #66e7ff;
+  text-shadow: 1px 1px 0 #ff4fa3;
+}
+.album-count { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.6); }
+
+.album-tools {
+  display: flex; gap: 8px; padding: 10px 14px; flex: 0 0 auto;
+}
+.album-tool {
+  height: 38px; padding: 0 14px; border-radius: 19px;
+  font-size: 13px; font-weight: 700;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18); color: #fff;
+}
+.album-del {
+  margin-left: auto;
+  background: rgba(255,79,99,0.22); border-color: rgba(255,79,99,0.55);
+}
+.album-del:disabled { opacity: 0.45; }
+
+.album-grid {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 8px; padding: 4px 14px calc(env(safe-area-inset-bottom, 0px) + 20px);
+}
+.album-cell {
+  position: relative; padding: 0; border-radius: 10px; overflow: hidden;
+  background: rgba(255,255,255,0.05);
+  border: 2px solid transparent;
+  aspect-ratio: 3 / 5;   /* 3枚シートは縦長 */
+}
+.album-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.album-cell.picked { border-color: #ff4fa3; }
+.album-check {
+  position: absolute; top: 5px; right: 5px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); border: 2px solid #fff;
+  color: #ff4fa3; font-size: 13px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+}
+.album-cell.picked .album-check { background: #ff4fa3; color: #fff; border-color: #fff; }
+
+.album-empty {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  text-align: center; padding: 20px;
+}
+.album-empty-emoji { font-size: 46px; opacity: 0.9; }
+.album-empty-main {
+  font-size: 17px; font-weight: 900; color: #66e7ff;
+  text-shadow: 1px 1px 0 #ff4fa3;
+}
+.album-empty-sub {
+  font-size: 12px; line-height: 2;
+  color: rgba(255,255,255,0.55);
+}
+
+/* ---- 1枚を大きく見る ---- */
+.album-view {
+  position: fixed; inset: 0; z-index: 310;
+  background: rgba(4, 6, 16, 0.92);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+}
+.album-view-inner {
+  max-width: 420px; width: 100%;
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 100%;
+}
+.album-view-inner img {
+  max-width: 100%; min-height: 0; flex: 1 1 auto;
+  object-fit: contain; border-radius: 12px;
+}
+.album-view-btns { display: flex; gap: 10px; flex: 0 0 auto; }
+.album-view-btns button { flex: 1 1 0; min-height: 50px; }

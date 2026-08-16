@@ -3,6 +3,8 @@ import '../docs/tinycube-skin-shibuya.css'
 import './setup.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
 import { FRAMES, loadFrame, fitsShape, inDisplayOrder, type Frame, type FrameAnchor, type FaceHole } from './frames'
+import * as album from './album'
+import { ALBUM_LIMIT, type AlbumItem } from './album'
 import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
 import { t, getLang, setLang } from './i18n'
 // savedKey / relock は 2026-08-15 に全部無料にしたとき使わなくなった。
@@ -971,12 +973,69 @@ function App() {
   };
 
   // プレビューで見たものを、そのまま保存する
-  const savePhotoSheet = async () => {
+  /**
+   * 選んだ行き先へしまう（2026-08-15）。
+   *
+   * プリクラ帳へは data URL、端末へは Blob と、要るものが違うので
+   * シートは一度だけ作って使い回す。
+   */
+  const savePhotoTo = async (where: 'both' | 'device' | 'album') => {
     const sheet = await buildPhotoSheet();
     if (!sheet) return;
+
+    // プリクラ帳へ
+    if (where === 'both' || where === 'album') {
+      const r = await album.add(sheet.toDataURL('image/jpeg', 0.92), shots.length);
+      if (!r.ok && r.why === 'full') {
+        // ⚠️ **勝手に消して場所を空けない。** 本人に選んで消してもらう
+        setSaveMessage(`プリクラ帳がいっぱいです（${ALBUM_LIMIT}枚）。いらないものを消してね`);
+        setTimeout(() => setSaveMessage(null), 5000);
+        // 端末にも入れる約束だったなら、そちらは続ける
+        if (where === 'album') return;
+      } else if (!r.ok) {
+        setSaveMessage('プリクラ帳にしまえませんでした');
+        setTimeout(() => setSaveMessage(null), 4000);
+        if (where === 'album') return;
+      }
+      // 入口に出す枚数を数え直す。しまえていてもいなくても、ここで揃える
+      await refreshAlbumCount();
+      if (r.ok && where === 'album') {
+        setSaveMessage(`プリクラ帳にしまいました（${r.count}/${ALBUM_LIMIT}）`);
+        setTimeout(() => setSaveMessage(null), 3000);
+        return;
+      }
+    }
+
+    // 端末へ
     const blob = await new Promise<Blob | null>(res => sheet.toBlob(res, 'image/jpeg', 0.92));
     if (blob) await save(blob, 'jpg');
   };
+
+  /** プリクラ帳を開く。一覧は見本だけなので軽い */
+  const openAlbum = async () => {
+    setAlbumList(await album.list());
+    setAlbumPicked(new Set());
+    setAlbumEditing(false);
+    setAlbumOpen(true);
+  };
+
+  /** 選んだものを消す */
+  const deletePicked = async () => {
+    if (!albumPicked.size) return;
+    await album.remove(...albumPicked);
+    const rest = await album.list();
+    setAlbumList(rest);
+    setAlbumHas(rest.length);
+    setAlbumPicked(new Set());
+    setAlbumEditing(false);
+  };
+
+  // 何枚入っているかを数える。**しまった直後と消した直後に呼ぶこと**。
+  // 呼び忘れると入口の数字が古いまま残る
+  const refreshAlbumCount = async () => {
+    try { setAlbumHas(await album.countItems()); } catch { /* 数えられなくても動く */ }
+  };
+  useEffect(() => { void refreshAlbumCount(); }, []);
 
   // 撮り直し。撮影画面へ戻して、編集中のものを捨てる
   const retakePhotos = () => {
@@ -1019,6 +1078,25 @@ function App() {
   const [overTrash, setOverTrash] = useState(false);
   // できあがりの見本。保存の前に、3枚が1枚になった姿を見せる
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // ---- プリクラ帳（2026-08-15）------------------------------------------
+  // 伊波さん「プリクラ帳機能はできない？」「写真だけ」「50枚」
+  // 「勝手に消すんじゃなく」「自分で選んで消せるように」。
+  // 撮ったプリクラをファイルに貼って見せ合った、あの感覚をアプリの中に。
+  /** 保存先を選ぶ画面を出しているか */
+  const [askWhere, setAskWhere] = useState(false);
+  /** プリクラ帳の一覧（見本だけ。本体は開いたときに読む） */
+  const [albumList, setAlbumList] = useState<AlbumItem[]>([]);
+  /** プリクラ帳を開いているか */
+  const [albumOpen, setAlbumOpen] = useState(false);
+  /** 大きく見ている1枚 */
+  const [albumView, setAlbumView] = useState<AlbumItem | null>(null);
+  /** 消すために選んだもの */
+  const [albumPicked, setAlbumPicked] = useState<Set<number>>(new Set());
+  /** 消すモードかどうか */
+  const [albumEditing, setAlbumEditing] = useState(false);
+  /** いま何枚入っているか。0枚なら入口を出さない */
+  const [albumHas, setAlbumHas] = useState(0);
   const [previewBusy, setPreviewBusy] = useState(false);
   // 撮れた動画。止めた直後に黙って保存すると、何が起きたのか分からない
   // （2026-08-14、伊波さん「停止後の操作が不明」
@@ -1680,6 +1758,21 @@ function App() {
                   <span className="kind-note">先に飾りを決めてから撮ります{'\n'}撮りながらスタンプを出せます</span>
                 </button>
               </div>
+
+              {/* プリクラ帳への入口（2026-08-15）。
+                  「なにを撮る？」のすぐ下に置く。
+                  ⚠️ **0枚でも出すこと。**（伊波さん「プリクラ帳自体は
+                  なにを撮る？のページにいつでも開けるように置いておいて」）
+                  最初は空でも、そこに置き場所があると分かるほうが大事。
+                  隠すと「どこにあるの？」になる */}
+              <button className="album-open-btn" onClick={openAlbum}>
+                <span className="album-open-emoji">📖</span>
+                <span className="album-open-label">プリクラ帳</span>
+                <span className="album-open-count">
+                  {albumHas > 0 ? `${albumHas}/${ALBUM_LIMIT}枚` : 'まだ空っぽ'}
+                </span>
+              </button>
+
               <div style={{ textAlign: 'center', padding: '24px 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
                 <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
                   ©２０２６CUBICENGINEstudio
@@ -2293,8 +2386,140 @@ function App() {
               >もどって直す</button>
               <button
                 className="start-btn save-btn preview-save"
-                onClick={async () => { await savePhotoSheet(); setPreviewUrl(null); }}
+                onClick={() => setAskWhere(true)}
               >これで保存する</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* どこへしまうか選ぶ（2026-08-15、伊波さん
+          「保存の時にプリクラ帳と端末保存、自分の端末保存のみ、保存しない
+            みたいな」）。
+          「保存しない」は取り消しなので、preview に戻さず閉じるだけ */}
+      {askWhere && (
+        <div className="where-screen" onClick={() => setAskWhere(false)}>
+          <div className="where-inner" onClick={e => e.stopPropagation()}>
+            <div className="where-head">どこにしまう？</div>
+            <button
+              className="where-btn where-both"
+              onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('both'); }}
+            >
+              <span className="where-emoji">📖📱</span>
+              <span className="where-label">プリクラ帳と端末</span>
+              <span className="where-note">どちらにも残す</span>
+            </button>
+            <button
+              className="where-btn"
+              onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('device'); }}
+            >
+              <span className="where-emoji">📱</span>
+              <span className="where-label">端末だけ</span>
+              <span className="where-note">スマホの写真に入る</span>
+            </button>
+            <button
+              className="where-btn"
+              onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('album'); }}
+            >
+              <span className="where-emoji">📖</span>
+              <span className="where-label">プリクラ帳だけ</span>
+              <span className="where-note">アプリの中に貯める</span>
+            </button>
+            <button
+              className="where-btn where-cancel"
+              onClick={() => setAskWhere(false)}
+            >
+              <span className="where-label">保存しない</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* プリクラ帳。撮ったものを貯めて、後から見返す。
+          **消すのは本人が選んだものだけ**（2026-08-15、伊波さん
+          「勝手に消すんじゃなく」「自分で選んで消せるように」） */}
+      {albumOpen && (
+        <div className="album-screen">
+          <div className="album-head">
+            <button className="album-close" onClick={() => setAlbumOpen(false)}>戻る</button>
+            <span className="album-title">プリクラ帳</span>
+            <span className="album-count">{albumList.length}/{ALBUM_LIMIT}</span>
+          </div>
+
+          {/* 空のときの言葉。**事務的にしないこと**（2026-08-15、伊波さん
+              「何も置かれて（写真）いないときは、写真を撮って集めてね！
+              みたいな感じで」）。「まだ何も入っていません」だと
+              できていない感じがする。集めたくなる言い方にする */}
+          {albumList.length === 0 ? (
+            <div className="album-empty">
+              <span className="album-empty-emoji">📖</span>
+              <span className="album-empty-main">写真を撮って集めてね！</span>
+              <span className="album-empty-sub">
+                お気に入りの1枚を、ここに貼っていこう<br />
+                {ALBUM_LIMIT}枚まで入るよ
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="album-tools">
+                {albumEditing ? (
+                  <>
+                    <button className="album-tool" onClick={() => { setAlbumEditing(false); setAlbumPicked(new Set()); }}>やめる</button>
+                    <button
+                      className="album-tool album-del"
+                      disabled={!albumPicked.size}
+                      onClick={deletePicked}
+                    >{albumPicked.size ? `${albumPicked.size}枚を消す` : '消すものを選んでね'}</button>
+                  </>
+                ) : (
+                  <button className="album-tool" onClick={() => setAlbumEditing(true)}>選んで消す</button>
+                )}
+              </div>
+
+              <div className="album-grid">
+                {albumList.map(it => (
+                  <button
+                    key={it.id}
+                    className={`album-cell ${albumPicked.has(it.id) ? 'picked' : ''}`}
+                    onClick={async () => {
+                      if (albumEditing) {
+                        // 選ぶ・選び直す
+                        const next = new Set(albumPicked);
+                        if (next.has(it.id)) next.delete(it.id); else next.add(it.id);
+                        setAlbumPicked(next);
+                      } else {
+                        // 大きく見る。ここで初めて本体を読む（一覧は見本だけなので軽い）
+                        setAlbumView(await album.get(it.id));
+                      }
+                    }}
+                  >
+                    <img src={it.thumb} alt="" />
+                    {albumEditing && (
+                      <span className="album-check">{albumPicked.has(it.id) ? '✓' : ''}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* プリクラ帳の1枚を大きく見る */}
+      {albumView && (
+        <div className="album-view" onClick={() => setAlbumView(null)}>
+          <div className="album-view-inner" onClick={e => e.stopPropagation()}>
+            <img src={albumView.full} alt="" />
+            <div className="album-view-btns">
+              <button className="sub-btn" onClick={() => setAlbumView(null)}>とじる</button>
+              <button
+                className="start-btn save-btn"
+                onClick={async () => {
+                  // 端末へ出す。プリクラ帳からは消さない
+                  const res = await fetch(albumView.full!);
+                  await save(await res.blob(), 'jpg');
+                }}
+              >端末に保存</button>
             </div>
           </div>
         </div>
