@@ -141,6 +141,96 @@ type I18nDict = {
   alert_load_first: string;
   alert_rec_fail: string;
   alert_mic_fail: string;
+  // 2026-08-16、ヒマワリが App.tsx から93箇所を辞書へ移したぶん。
+  // ⚠️ **型・dictJa・dictEn は3つで1組。** 辞書だけ足すと
+  //    TS2345 が76個出てビルドが止まる（実際に起きた）
+  eff_toutoi: string;
+  eff_huh: string;
+  eff_omg: string;
+  eff_party: string;
+  eff_choberigu: string;
+  font_marumoji: string;
+  font_note: string;
+  my_frame: string;
+  err_play_rejected: string;
+  label_none: string;
+  msg_saved: string;
+  msg_save_hint: string;
+  msg_saving_prep: string;
+  err_save_failed: string;
+  msg_storing: string;
+  err_store_failed: string;
+  msg_wait: string;
+  warn_land_frame1: string;
+  warn_land_frame2: string;
+  msg_push_record: string;
+  btn_back: string;
+  msg_shooting: string;
+  btn_shoot_3: string;
+  tab_cam_zoom: string;
+  btn_cam_in: string;
+  btn_cam_out: string;
+  lang_ja: string;
+  btn_detail: string;
+  about_app: string;
+  about_planning: string;
+  about_tech: string;
+  about_natto: string;
+  title_what_to_shoot: string;
+  title_which_cam: string;
+  title_stamp_text: string;
+  btn_quit_app: string;
+  btn_return: string;
+  btn_quit: string;
+  btn_take_photo: string;
+  btn_take_video: string;
+  tab_album: string;
+  kind_photo_note: string;
+  kind_video_note: string;
+  msg_album_empty: string;
+  desc_shoot_self: string;
+  desc_cam_in: string;
+  desc_shoot_world: string;
+  btn_loop_no: string;
+  btn_loop_yes: string;
+  title_choose_frame: string;
+  btn_decide_frame: string;
+  btn_add: string;
+  confirm_del_frame: string;
+  title_edit_stamp: string;
+  title_position: string;
+  title_rec_btn_pos: string;
+  btn_shoot_with_setting: string;
+  btn_reshoot: string;
+  msg_drop_to_trash: string;
+  msg_drag_to_trash: string;
+  tab_doodle: string;
+  tab_deco: string;
+  btn_make_stamp: string;
+  msg_deco_hint: string;
+  msg_making: string;
+  btn_see_result: string;
+  msg_come_again: string;
+  msg_photo_taken: string;
+  btn_redo: string;
+  btn_save_video: string;
+  msg_done: string;
+  btn_back_to_edit: string;
+  btn_save_this: string;
+  title_where_to_save: string;
+  opt_save_both: string;
+  desc_save_both: string;
+  opt_save_device: string;
+  desc_save_device: string;
+  opt_save_album: string;
+  desc_save_album: string;
+  opt_save_none: string;
+  msg_collect_photos: string;
+  btn_cancel: string;
+  msg_choose_del: string;
+  btn_choose_del: string;
+  btn_close: string;
+  btn_save_to_device: string;
 };
 
 const dictJa: I18nDict = {
@@ -269,6 +359,7 @@ SNSへの投稿等及び、二次使用は
   alert_load_first: '先に動画を読み込んでください！',
   alert_rec_fail: '録画に失敗しました: ',
   alert_mic_fail: '録画の開始に失敗しました。マイクの許可設定を確認してください。\nエラー: ',
+  eff_toutoi: '尊い',
   eff_huh: 'は？',
   eff_omg: 'やば',
   eff_party: 'パーティータイム',
@@ -309,6 +400,8 @@ SNSへの投稿等及び、二次使用は
   btn_take_photo: '写真を撮る',
   btn_take_video: '動画を撮る',
   tab_album: 'プリクラ帳',
+  kind_photo_note: '3枚つづけて撮ります\n撮ったあとに文字とスタンプで飾れます',
+  kind_video_note: '先に飾りを決めてから撮ります\n撮りながらスタンプを出せます',
   msg_album_empty: 'まだ空っぽ',
   desc_shoot_self: '自分を写す',
   desc_cam_in: '画面side（インカメラ）',
@@ -479,6 +572,7 @@ Thank you.`,
   alert_load_first: 'Please load a video first!',
   alert_rec_fail: 'Recording failed: ',
   alert_mic_fail: 'Failed to start recording. Check your microphone permissions.\nError: ',
+  eff_toutoi: 'Precious',
   eff_huh: 'Huh?',
   eff_omg: 'OMG',
   eff_party: 'Party Time',
@@ -519,6 +613,8 @@ Thank you.`,
   btn_take_photo: 'Take photo',
   btn_take_video: 'Take video',
   tab_album: 'Album',
+  kind_photo_note: 'Three shots in a row.\nAdd text and stickers afterwards.',
+  kind_video_note: 'Pick your decorations first.\nDrop stickers while you record.',
   msg_album_empty: 'Still empty',
   desc_shoot_self: 'Shoot yourself',
   desc_cam_in: 'Screen side (Selfie)',

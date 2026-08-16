@@ -136,7 +136,7 @@ function App() {
   // （08cf11c「かんたん化」。対象は40〜50代と子どもなので、選ぶものを減らす）
   const TELOP_MINE = 5;
   const [myTelops, setMyTelops] = useState<string[]>(() => {
-    const base = ['尊い', t('eff_huh'), t('eff_omg'), t('eff_party'), t('eff_choberigu')];
+    const base = [t('eff_toutoi'), t('eff_huh'), t('eff_omg'), t('eff_party'), t('eff_choberigu')];
     try {
       // ⚠️ 保存キーは v2。旧キー（tinycube.telops）のままだと3つぶんの配列が
       //    読まれて、4・5番目だけ既定に戻る
@@ -1824,9 +1824,9 @@ function App() {
               {/* フレームの段は、小窓の中に「フレームを選ぶ」と出るので
                   上には何も書かない。空けた場所には小窓を上げる
                   （2026-08-13、伊波さん「上の無駄なスペースにモニター置けばいい」） */}
-              {setupStep === 'kind' ? 'なにを撮る？'
-                : setupStep === 'mode' ? 'どのカメラで撮りますか？'
-                : setupStep === 'telop' ? 'スタンプの文字'
+              {setupStep === 'kind' ? t('title_what_to_shoot')
+                : setupStep === 'mode' ? t('title_which_cam')
+                : setupStep === 'telop' ? t('title_edit_stamp')
                 : ''}
             </h2>
             {/* 段階を1つ戻す。前は「撮影画面へ飛ぶ」だけだったので、
@@ -1841,7 +1841,7 @@ function App() {
               className="setup-close-btn"
               title={setupStep === 'kind' ? 'アプリを終わる' : 'もどる'}
               onClick={goBackStep}
-            >{setupStep === 'kind' ? '終わる' : '戻る'}</button>
+            >{setupStep === 'kind' ? t('btn_quit') : t('btn_back')}</button>
           </div>
           
           <div className="setup-content">
@@ -1861,7 +1861,7 @@ function App() {
                 >
                   <span className="kind-icon">📸</span>
                   <span className="kind-title">{t('btn_take_photo')}</span>
-                  <span className="kind-note">3枚つづけて撮ります{'\n'}撮ったあとに文字とスタンプで飾れます</span>
+                  <span className="kind-note">{t('kind_photo_note')}</span>
                 </button>
                 <button
                   className={`kind-btn ${captureKind === 'video' ? 'on' : ''}`}
@@ -1869,7 +1869,7 @@ function App() {
                 >
                   <span className="kind-icon">🎬</span>
                   <span className="kind-title">{t('btn_take_video')}</span>
-                  <span className="kind-note">先に飾りを決めてから撮ります{'\n'}撮りながらスタンプを出せます</span>
+                  <span className="kind-note">{t('kind_video_note')}</span>
                 </button>
               </div>
 
@@ -1883,7 +1883,7 @@ function App() {
                 <span className="album-open-emoji">📖</span>
                 <span className="album-open-label">{t('tab_album')}</span>
                 <span className="album-open-count">
-                  {albumHas > 0 ? `${albumHas}/${ALBUM_LIMIT}枚` : 'まだ空っぽ'}
+                  {albumHas > 0 ? `${albumHas}/${ALBUM_LIMIT}` : t('msg_album_empty')}
                 </span>
               </button>
 
