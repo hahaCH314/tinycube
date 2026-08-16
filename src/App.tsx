@@ -15,6 +15,23 @@ import { saveMedia } from './save'
 import { FaceIcon, SceneIcon } from './CamIcon'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
+/**
+ * 飾りを焼くときの補正（2026-08-16）。
+ *
+ * 画面では fontSize:`${d.size}cqw` で出しており、そこに行の高さや
+ * 絵文字まわりの余白が乗る。canvas の fillText は字面そのものの大きさで
+ * 描くので、**同じ数字でも canvas のほうが小さく出る**。
+ *
+ * 💖 を1つ置いて「高さ ÷ 幅」で比べた実測：
+ *
+ *     画面 16.80%  ／  補正なしの保存 10.00%
+ *
+ * 16.80 ÷ 10.00 = 1.68。この差を埋めて、画面で見たとおりに焼く。
+ * 画面側の指定（cqw）を変えるとスタンプの操作感まで変わるので、
+ * **保存側を画面に合わせている**。
+ */
+const DECO_SCALE = 1.68
+
 // ---- 開いたときのお願い（2026-08-12、伊波さんの原文） -------------------
 //
 // この文章は伊波さんが書いたもの。要約・言い換え・整形をしないこと。
@@ -870,8 +887,19 @@ function App() {
         for (const d of decos.filter(x => x.shot === i)) {
           const px = c.width * d.x / 100;
           const py = c.height * d.y / 100;
-          // 文字の大きさは幅を基準にする。縦横で見え方が変わらないように
-          const size = c.width * d.size / 100;
+          // 文字の大きさは幅を基準にする。縦横で見え方が変わらないように。
+          //
+          // ⚠️ **画面と同じ見え方になるよう DECO_SCALE を掛けること。**
+          //    画面側は fontSize:`${d.size}cqw`（.shot-big の幅が基準）で、
+          //    そこに行の高さや絵文字の余白が乗るため、同じ数字でも
+          //    実際に見えている大きさは canvas の fillText より大きくなる。
+          //    掛けずに焼くと、できあがりだけ小さくなる
+          //    （2026-08-16、伊波さん「スタンプの文字が出来上がりが
+          //     小さくなる」）。
+          //
+          //    実測（💖 を置いて、高さ÷幅で比べた）
+          //      画面 16.80% ／ 保存 10.00% → 1.68倍ぶん足りていなかった
+          const size = c.width * d.size / 100 * DECO_SCALE;
           g.save();
           g.textAlign = 'center';
           g.textBaseline = 'middle';
