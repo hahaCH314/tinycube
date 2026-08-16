@@ -136,7 +136,7 @@ function App() {
   // （08cf11c「かんたん化」。対象は40〜50代と子どもなので、選ぶものを減らす）
   const TELOP_MINE = 5;
   const [myTelops, setMyTelops] = useState<string[]>(() => {
-    const base = ['尊い', 'は？', 'やば', 'パーティータイム', 'チョベリグー'];
+    const base = ['尊い', t('eff_huh'), t('eff_omg'), t('eff_party'), t('eff_choberigu')];
     try {
       // ⚠️ 保存キーは v2。旧キー（tinycube.telops）のままだと3つぶんの配列が
       //    読まれて、4・5番目だけ既定に戻る
@@ -737,7 +737,7 @@ function App() {
     if (!camOn || !v || !camStreamRef.current) return;
     v.srcObject = camStreamRef.current;
     v.muted = true;                          // 自分の声が返ってきて回るのを防ぐ
-    v.play().catch(e => setCamInfo('再生を断られました: ' + (e?.name ?? '')));
+    v.play().catch(e => setCamInfo(t('err_play_rejected') + (e?.name ?? '')));
     // しばらくして絵が来ていなければ、その中身を画面に出す
     setCamInfo(null);
     const check = setTimeout(() => {
@@ -757,7 +757,7 @@ function App() {
     const name = `tinycube_${Date.now()}.${ext}`;
 
     const showSaved = () => {
-      setSaveMessage('保存しました！');
+      setSaveMessage(t('msg_saved'));
       setTimeout(() => setSaveMessage(null), 3000);
     };
 
@@ -769,7 +769,7 @@ function App() {
     //    保存していないのに「保存しました」と出すと、撮ったものが
     //    消えたことに気づけない。次にどうすればよいかだけを伝える
     const showShared = () => {
-      setSaveMessage('「画像を保存」または「ビデオを保存」をえらんでね');
+      setSaveMessage(t('msg_save_hint'));
       setTimeout(() => setSaveMessage(null), 4000);
     };
 
@@ -783,7 +783,7 @@ function App() {
     //    共有シートが開くまで1〜3秒かかる。その間なにも出さないと
     //    「押しても反応しない」ように見える
     //   （2026-08-15、伊波さん「保存ボタンの反応が少し悪かった」）。
-    setSaveMessage('保存の準備をしています…');
+    setSaveMessage(t('msg_saving_prep'));
     setSaveBusy(true);
 
     let r: Awaited<ReturnType<typeof saveMedia>>;
@@ -801,7 +801,7 @@ function App() {
       showSaved();
     } else if (r.how === 'failed') {
       // **黙って消えるのが一番まずい。** 何が起きたかを出す
-      setSaveMessage('保存できませんでした（' + r.why.slice(0, 40) + '）');
+      setSaveMessage(t('err_save_failed') + r.why.slice(0, 40) + '）');
       setTimeout(() => setSaveMessage(null), 5000);
     } else {
       // cancelled。本人がやめただけなので何も言わないが、
@@ -1052,7 +1052,7 @@ function App() {
     const sheet = sheetRef.current ?? await buildPhotoSheet();
     if (!sheet) return;
     // 押した瞬間に何か出す。この先は端末へ書き出す処理で数秒かかる
-    setSaveMessage('しまっています…');
+    setSaveMessage(t('msg_storing'));
 
     // プリクラ帳へ
     if (where === 'both' || where === 'album') {
@@ -1075,7 +1075,7 @@ function App() {
         // 端末にも入れる約束だったなら、そちらは続ける
         if (where === 'album') return;
       } else if (!r.ok) {
-        setSaveMessage('プリクラ帳にしまえませんでした');
+        setSaveMessage(t('err_store_failed'));
         setTimeout(() => setSaveMessage(null), 4000);
         if (where === 'album') return;
       }
@@ -1467,8 +1467,8 @@ function App() {
           <div className="save-busy">
             <div className="save-busy-inner">
               <div className="save-busy-dots"><span /><span /><span /></div>
-              <div className="save-busy-text">しまっています…</div>
-              <div className="save-busy-note">ちょっとまってね</div>
+              <div className="save-busy-text">{t('msg_storing')}</div>
+              <div className="save-busy-note">{t('msg_wait')}</div>
             </div>
           </div>
         )}
@@ -1482,11 +1482,11 @@ function App() {
             クラスで渡すこと。** ここを CSS だけで解こうとして一度失敗した
             （2026-08-14）。ズーム欄と重なると、どちらも読めなくなる */}
         {shape === 'landscape' && portraitDevice ? (
-          <div className={`turn-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>（横フレームが選択されています。<br/>スマホを横にしてください。）</div>
+          <div className={`turn-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>{t('warn_land_frame1')}<br/>{t('warn_land_frame2')}</div>
         ) : startHint && !isRecording ? (
           /* 誘導は説明より強い。初めて撮影画面に来た人に、押す場所だけ示す
              （2026-08-12、伊波さん「説明見てわからないなら、誘導が１番でしょ？」） */
-          <div className={`turn-hint start-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>録画ボタンを押してね</div>
+          <div className={`turn-hint start-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>{t('msg_push_record')}</div>
         ) : null}
       </main>
 
@@ -1521,7 +1521,7 @@ function App() {
                 意味の通る絵に戻す */}
             {/* 設定ボタン（⚙️）は消して、設定（source）に戻るボタンに変更
                 （2026-08-12、伊波さん「撮影画面の設定ボタンは消して設定に戻るボタンを付ける」） */}
-            <button className="tool-btn-small" onClick={() => setScreen('setup')} title="設定に戻る" style={{ width: 'auto', padding: '0 12px', fontSize: '13px', fontWeight: 'bold' }}>戻る</button>
+            <button className="tool-btn-small" onClick={() => setScreen('setup')} title="設定に戻る" style={{ width: 'auto', padding: '0 12px', fontSize: '13px', fontWeight: 'bold' }}>{t('btn_back')}</button>
             <button className="tool-btn-small" onClick={() => setScreen('manner')} title="使い方">❓</button>
             {/* Discord から会社HPへ差し替えた（2026-08-15、伊波さん
                 「ディスコードよりインスタのほうがいい？」
@@ -1613,18 +1613,18 @@ function App() {
               className="cam-tune-toggle"
               onClick={() => setCamTuneOpen(o => !o)}
             >
-              <span>📷 カメラ・ズーム</span>
+              <span>{t('tab_cam_zoom')}</span>
               <span className="cam-tune-caret">{camTuneOpen ? '▼' : '▲'}</span>
             </button>
             <div className="cam-tune-row">
               <button
                 className={`cam-face-btn ${camFront ? 'on' : ''}`}
                 onClick={() => startCam(true)}
-              >🤳 内カメ</button>
+              >{t('btn_cam_in')}</button>
               <button
                 className={`cam-face-btn ${!camFront ? 'on' : ''}`}
                 onClick={() => startCam(false)}
-              >📷 外カメ</button>
+              >{t('btn_cam_out')}</button>
             </div>
             <div className="cam-tune-row zoom">
               <button className="zoom-btn" onClick={() => setCamZoom(z => Math.max(0.5, +(z - 0.1).toFixed(2)))}>−</button>
@@ -1722,7 +1722,7 @@ function App() {
               <button
                 className={getLang() === 'ja' ? 'on' : ''}
                 onClick={() => { setLang('ja'); location.reload(); }}
-              >日本語</button>
+              >{t('lang_ja')}</button>
               <button
                 className={getLang() === 'en' ? 'on' : ''}
                 onClick={() => { setLang('en'); location.reload(); }}
@@ -1752,7 +1752,7 @@ function App() {
               <ul>
                 <li>
                   <b>{t('guide_warn3_title')}</b>
-                  <details><summary>くわしく</summary>{t('guide_warn3_desc')}</details>
+                  <details><summary>{t('btn_detail')}</summary>{t('guide_warn3_desc')}</details>
                 </li>
                 <li><b>{t('guide_warn4_title')}</b></li>
               </ul>
@@ -1796,15 +1796,15 @@ function App() {
                 示せるようにするためのもので、飾りではない。
                 文言を変えるときは伊波さんに確認すること */}
             <div className="credits">
-              <div className="credits-head">このアプリについて</div>
+              <div className="credits-head">{t('about_app')}</div>
               <dl className="credits-list">
                 <div className="credits-row">
-                  <dt>企画・制作</dt>
+                  <dt>{t('about_planning')}</dt>
                   <dd>CUBICENGINEstudio</dd>
                 </div>
                 <div className="credits-row">
-                  <dt>テクニカルサポート</dt>
-                  <dd>なっとうサイダー</dd>
+                  <dt>{t('about_tech')}</dt>
+                  <dd>{t('about_natto')}</dd>
                 </div>
               </dl>
             </div>
@@ -1853,14 +1853,14 @@ function App() {
                 （2026-08-14、伊波さん「まず（なにを撮る？）ページ追加」） */}
             {setupStep === 'kind' && (
             <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
-              <h3 className="setup-section-title">なにを撮る？</h3>
+              <h3 className="setup-section-title">{t('title_what_to_shoot')}</h3>
               <div className="kind-picker">
                 <button
                   className={`kind-btn ${captureKind === 'photo' ? 'on' : ''}`}
                   onClick={() => pickKind('photo')}
                 >
                   <span className="kind-icon">📸</span>
-                  <span className="kind-title">写真を撮る</span>
+                  <span className="kind-title">{t('btn_take_photo')}</span>
                   <span className="kind-note">3枚つづけて撮ります{'\n'}撮ったあとに文字とスタンプで飾れます</span>
                 </button>
                 <button
@@ -1868,7 +1868,7 @@ function App() {
                   onClick={() => pickKind('video')}
                 >
                   <span className="kind-icon">🎬</span>
-                  <span className="kind-title">動画を撮る</span>
+                  <span className="kind-title">{t('btn_take_video')}</span>
                   <span className="kind-note">先に飾りを決めてから撮ります{'\n'}撮りながらスタンプを出せます</span>
                 </button>
               </div>
@@ -1881,7 +1881,7 @@ function App() {
                   隠すと「どこにあるの？」になる */}
               <button className="album-open-btn" onClick={openAlbum}>
                 <span className="album-open-emoji">📖</span>
-                <span className="album-open-label">プリクラ帳</span>
+                <span className="album-open-label">{t('tab_album')}</span>
                 <span className="album-open-count">
                   {albumHas > 0 ? `${albumHas}/${ALBUM_LIMIT}枚` : 'まだ空っぽ'}
                 </span>
@@ -1897,7 +1897,7 @@ function App() {
 
             {setupStep === 'mode' && (
             <div className="setup-section highlight-section" style={{ marginBottom: 12 }}>
-              <h3 className="setup-section-title">どのカメラで撮りますか？</h3>
+              <h3 className="setup-section-title">{t('title_which_cam')}</h3>
               {/* カメラ2つが主役。動画ファイルは「持っている人だけ」が使うものなので、
                   同じ列に並べず、下に説明を添えて置く（2026-08-13、伊波さん） */}
               {/* 「インカメ／アウトカメ」では通じない。何が写るかで書く
@@ -1908,8 +1908,8 @@ function App() {
                     SVG なら端末が変わっても同じ絵になる。中身は CamIcon.tsx */}
                 <button className={`source-btn ${camOn && camFront ? 'on' : ''}`} onClick={() => startCam(true)}>
                   <span className="source-icon"><FaceIcon on={camOn && camFront} /></span>
-                  <span className="source-text">自分を写す</span>
-                  <span className="source-sub">画面side（インカメラ）</span>
+                  <span className="source-text">{t('desc_shoot_self')}</span>
+                  <span className="source-sub">{t('desc_cam_in')}</span>
                 </button>
                 <button className={`source-btn ${camOn && !camFront ? 'on' : ''}`} onClick={() => startCam(false)}>
                   <span className="source-icon"><SceneIcon on={camOn && !camFront} /></span>
@@ -1917,7 +1917,7 @@ function App() {
                       呼び名のほうを主にする（2026-08-14、伊波さん
                       「外カメの前の表記は外カメで」） */}
                   <span className="source-text">外カメ</span>
-                  <span className="source-sub">まわりの景色を写す</span>
+                  <span className="source-sub">{t('desc_shoot_world')}</span>
                 </button>
               </div>
 
@@ -1939,8 +1939,8 @@ function App() {
               )}
               {captureKind === 'video' && videoSrc && (
                 <div className="shape-switch" style={{ marginTop: '12px' }}>
-                  <button className={!loopVideo ? 'on' : ''} onClick={() => setLoopVideo(false)}>ループしない</button>
-                  <button className={loopVideo ? 'on' : ''} onClick={() => setLoopVideo(true)}>ループする🔁</button>
+                  <button className={!loopVideo ? 'on' : ''} onClick={() => setLoopVideo(false)}>{t('btn_loop_no')}</button>
+                  <button className={loopVideo ? 'on' : ''} onClick={() => setLoopVideo(true)}>{t('btn_loop_yes')}</button>
                 </div>
               )}
               {/* 選べていないうちは先へ進ませない。押せないボタンを出すより、
@@ -1950,7 +1950,7 @@ function App() {
                   className="start-btn"
                   style={{ marginTop: 16 }}
                   onClick={() => setSetupStep('frame')}
-                >フレームを選ぶ</button>
+                >{t('title_choose_frame')}</button>
               )}
               <div style={{ textAlign: 'center', padding: '24px 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
                 <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -1995,7 +1995,7 @@ function App() {
               <button
                 className="start-btn frame-decide"
                 onClick={() => (captureKind === 'photo' ? setScreen('video') : setSetupStep('telop'))}
-              >フレーム決定</button>
+              >{t('btn_decide_frame')}</button>
 
               <div className="shape-switch shape-switch--mini">
                 <button className={shape === 'portrait' ? 'on' : ''} onClick={() => pickShape('portrait')}>{t('setting_shape_port')}</button>
@@ -2016,7 +2016,7 @@ function App() {
                   style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)' }}
                 >
                   <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
-                  <span style={{ color: '#a855f7', lineHeight: 1.3 }}>マイフレーム<br />追加</span>
+                  <span style={{ color: '#a855f7', lineHeight: 1.3 }}>{t('my_frame')}<br />{t('btn_add')}</span>
                 </button>
                 <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
                 
@@ -2031,7 +2031,7 @@ function App() {
                     <div 
                       onClick={async (e) => {
                         e.stopPropagation();
-                        if (confirm('このフレームを削除しますか？')) {
+                        if (confirm(t('confirm_del_frame'))) {
                           await deleteCustomFrame(cf.id);
                           setCustomFrames(prev => prev.filter(p => p.id !== cf.id));
                           if (frameId === cf.id) setFrameId(null);
@@ -2163,7 +2163,7 @@ function App() {
                   添える形にしてスクロールを無くす（2026-08-14、伊波さん
                   「動画のテキストスタンプのページもスクロールなしで」）。
                   説明は入力欄の透かしへ移した */}
-              <h3 className="setup-section-title">テキストスタンプの変更</h3>
+              <h3 className="setup-section-title">{t('title_edit_stamp')}</h3>
               <div className="telop-inputs">
                 {myTelops.map((text, i) => (
                   <div className="telop-row" key={i}>
@@ -2180,7 +2180,7 @@ function App() {
               </div>
 
               <div className="opt-row">
-                <span className="opt-label">場所</span>
+                <span className="opt-label">{t('title_position')}</span>
                 <div className="shape-switch">
                   <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
                   <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
@@ -2200,7 +2200,7 @@ function App() {
                   （2026-08-14、伊波さん「ボタンの位置の文言は
                   録画ボタンの位置に変更」）。札は2行で置く */}
               <div className="opt-row">
-                <span className="opt-label wide">録画ボタンの位置</span>
+                <span className="opt-label wide">{t('title_rec_btn_pos')}</span>
                 <div className="shape-switch">
                   <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
                   <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
@@ -2225,7 +2225,7 @@ function App() {
                 className="start-btn"
                 style={{ marginTop: 14, width: '100%' }}
                 onClick={() => setScreen('video')}
-              >この設定で撮る</button>
+              >{t('btn_shoot_with_setting')}</button>
             </div>
             )}
 
@@ -2255,7 +2255,7 @@ function App() {
               className="setup-close-btn"
               title="もどる"
               onClick={retakePhotos}
-            >撮り直す</button>
+            >{t('btn_reshoot')}</button>
           </div>
 
           <div className="setup-content">
@@ -2344,11 +2344,11 @@ function App() {
                 <button
                   className={`deco-tab ${photoStep === 'text' ? 'on' : ''}`}
                   onClick={() => setPhotoStep('text')}
-                >✏️ らくがき</button>
+                >{t('tab_doodle')}</button>
                 <button
                   className={`deco-tab ${photoStep === 'deco' ? 'on' : ''}`}
                   onClick={() => setPhotoStep('deco')}
-                >🎀 デコ</button>
+                >{t('tab_deco')}</button>
               </div>
 
               {photoStep === 'text' ? (
@@ -2405,7 +2405,7 @@ function App() {
                   style={{ width: '100%' }}
                   onClick={() => { addDeco('text', photoText); setPhotoText(''); }}
                   disabled={!photoText.trim()}
-                >この文字でスタンプを作る</button>
+                >{t('btn_make_stamp')}</button>
               </>
               ) : (
               <>
@@ -2428,7 +2428,7 @@ function App() {
               )}
 
               {/* 指の使い方はどちらのタブでも同じなので、タブの外に一度だけ */}
-              <p className="sheet-note gesture-hint">写真の飾りは、指1本で移動／2本でひねって傾け・大きさ</p>
+              <p className="sheet-note gesture-hint">{t('msg_deco_hint')}</p>
 
               {/* 保存と片付けはタブの外。どちらを開いていても押せる */}
               {/* 「飾りを消す」も「撮り直す」も外した。
@@ -2459,13 +2459,13 @@ function App() {
             {/* 「おつかれさま」だと、そこで終わりの挨拶になる。また遊びに
                 来てほしいので「また来てね」にした（2026-08-16、伊波さん
                 「最後のページはお疲れ様、じゃなく、また来てね」） */}
-            <div className="preview-head">また来てね！</div>
+            <div className="preview-head">{t('msg_come_again')}</div>
             <p className="sheet-note" style={{ textAlign: 'center', lineHeight: 1.8 }}>
               カメラは止めました。<br />
               このページはブラウザのタブを閉じて終わってください。
             </p>
             <div className="preview-btns">
-              <button className="sub-btn" onClick={() => setCantClose(false)}>もどる</button>
+              <button className="sub-btn" onClick={() => setCantClose(false)}>{t('btn_return')}</button>
             </div>
           </div>
         </div>
@@ -2478,7 +2478,7 @@ function App() {
       {madeVideo && (
         <div className="preview-screen">
           <div className="preview-inner" onClick={e => e.stopPropagation()}>
-            <div className="preview-head">撮れました！</div>
+            <div className="preview-head">{t('msg_photo_taken')}</div>
             <div className="preview-sheet">
               {/* 音も出す。撮れた声が入っているか、ここで確かめられる */}
               <video src={madeVideo.url} controls playsInline autoPlay loop />
@@ -2491,7 +2491,7 @@ function App() {
                   setMadeVideo(null);
                   setStartHint(true);
                 }}
-              >やりなおす</button>
+              >{t('btn_redo')}</button>
               <button
                 className="start-btn save-btn preview-save"
                 onClick={async () => {
@@ -2499,7 +2499,7 @@ function App() {
                   URL.revokeObjectURL(madeVideo.url);
                   setMadeVideo(null);
                 }}
-              >この動画を保存する</button>
+              >{t('btn_save_video')}</button>
             </div>
           </div>
         </div>
@@ -2511,7 +2511,7 @@ function App() {
       {previewUrl && (
         <div className="preview-screen" onClick={() => setPreviewUrl(null)}>
           <div className="preview-inner" onClick={e => e.stopPropagation()}>
-            <div className="preview-head">できあがり！</div>
+            <div className="preview-head">{t('msg_done')}</div>
             <div className="preview-sheet">
               <img src={previewUrl} alt="できあがり" />
             </div>
@@ -2519,11 +2519,11 @@ function App() {
               <button
                 className="sub-btn"
                 onClick={() => setPreviewUrl(null)}
-              >もどって直す</button>
+              >{t('btn_back_to_edit')}</button>
               <button
                 className="start-btn save-btn preview-save"
                 onClick={() => setAskWhere(true)}
-              >これで保存する</button>
+              >{t('btn_save_this')}</button>
             </div>
           </div>
         </div>
@@ -2536,36 +2536,36 @@ function App() {
       {askWhere && (
         <div className="where-screen" onClick={() => setAskWhere(false)}>
           <div className="where-inner" onClick={e => e.stopPropagation()}>
-            <div className="where-head">どこにしまう？</div>
+            <div className="where-head">{t('title_where_to_save')}</div>
             <button
               className="where-btn where-both"
               onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('both'); }}
             >
               <span className="where-emoji">📖📱</span>
-              <span className="where-label">プリクラ帳と端末</span>
-              <span className="where-note">どちらにも残す</span>
+              <span className="where-label">{t('opt_save_both')}</span>
+              <span className="where-note">{t('desc_save_both')}</span>
             </button>
             <button
               className="where-btn"
               onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('device'); }}
             >
               <span className="where-emoji">📱</span>
-              <span className="where-label">端末だけ</span>
-              <span className="where-note">スマホの写真に入る</span>
+              <span className="where-label">{t('opt_save_device')}</span>
+              <span className="where-note">{t('desc_save_device')}</span>
             </button>
             <button
               className="where-btn"
               onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('album'); }}
             >
               <span className="where-emoji">📖</span>
-              <span className="where-label">プリクラ帳だけ</span>
-              <span className="where-note">アプリの中に貯める</span>
+              <span className="where-label">{t('opt_save_album')}</span>
+              <span className="where-note">{t('desc_save_album')}</span>
             </button>
             <button
               className="where-btn where-cancel"
               onClick={() => setAskWhere(false)}
             >
-              <span className="where-label">保存しない</span>
+              <span className="where-label">{t('opt_save_none')}</span>
             </button>
           </div>
         </div>
@@ -2577,8 +2577,8 @@ function App() {
       {albumOpen && (
         <div className="album-screen">
           <div className="album-head">
-            <button className="album-close" onClick={() => setAlbumOpen(false)}>戻る</button>
-            <span className="album-title">プリクラ帳</span>
+            <button className="album-close" onClick={() => setAlbumOpen(false)}>{t('btn_back')}</button>
+            <span className="album-title">{t('tab_album')}</span>
             <span className="album-count">{albumList.length}/{ALBUM_LIMIT}</span>
           </div>
 
@@ -2589,7 +2589,7 @@ function App() {
           {albumList.length === 0 ? (
             <div className="album-empty">
               <span className="album-empty-emoji">📖</span>
-              <span className="album-empty-main">写真を撮って集めてね！</span>
+              <span className="album-empty-main">{t('msg_collect_photos')}</span>
               <span className="album-empty-sub">
                 お気に入りの1枚を、ここに貼っていこう<br />
                 {ALBUM_LIMIT}枚まで入るよ
@@ -2600,7 +2600,7 @@ function App() {
               <div className="album-tools">
                 {albumEditing ? (
                   <>
-                    <button className="album-tool" onClick={() => { setAlbumEditing(false); setAlbumPicked(new Set()); }}>やめる</button>
+                    <button className="album-tool" onClick={() => { setAlbumEditing(false); setAlbumPicked(new Set()); }}>{t('btn_cancel')}</button>
                     <button
                       className="album-tool album-del"
                       disabled={!albumPicked.size}
@@ -2608,7 +2608,7 @@ function App() {
                     >{albumPicked.size ? `${albumPicked.size}枚を消す` : '消すものを選んでね'}</button>
                   </>
                 ) : (
-                  <button className="album-tool" onClick={() => setAlbumEditing(true)}>選んで消す</button>
+                  <button className="album-tool" onClick={() => setAlbumEditing(true)}>{t('btn_choose_del')}</button>
                 )}
               </div>
 
@@ -2647,7 +2647,7 @@ function App() {
           <div className="album-view-inner" onClick={e => e.stopPropagation()}>
             <img src={albumView.full} alt="" />
             <div className="album-view-btns">
-              <button className="sub-btn" onClick={() => setAlbumView(null)}>とじる</button>
+              <button className="sub-btn" onClick={() => setAlbumView(null)}>{t('btn_close')}</button>
               <button
                 className="start-btn save-btn"
                 onClick={async () => {
@@ -2655,7 +2655,7 @@ function App() {
                   const res = await fetch(albumView.full!);
                   await save(await res.blob(), 'jpg');
                 }}
-              >端末に保存</button>
+              >{t('btn_save_to_device')}</button>
             </div>
           </div>
         </div>
