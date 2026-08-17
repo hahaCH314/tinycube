@@ -35,6 +35,13 @@ function inApp(): boolean {
   }
 }
 
+/** 直接保存が失敗した理由。共有シートに落ちたとき、なぜ落ちたかを
+ *  画面に出すために持つ（2026-08-17）。**黙って落ちると原因が追えない** */
+let lastMediaError: string | null = null;
+export function takeLastMediaError(): string | null {
+  const v = lastMediaError; lastMediaError = null; return v;
+}
+
 /** Blob を base64 の文字列にする。Filesystem がこの形しか受け取らないため */
 function toBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -76,11 +83,16 @@ export async function saveMedia(blob: Blob, name: string): Promise<SaveResult> {
       //    （2026-08-16、伊波さん「保存の画面がでる…遅い」）。
       //    1コマ譲るだけで、待たされている理由が見えるようになる
       await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+      // ⚠️ **Cache ではなく Data に書くこと**（2026-08-17）。
+      //    Cache は端末が勝手に消せる置き場。Media が読みに行ったときには
+      //    もう無い、ということが起こりうる。直接保存が失敗して共有シートへ
+      //    落ちる原因のひとつ（伊波さん「かなり時間が空いて、共有画面へ」）。
+      //    Data なら消されない。使い終わったら自分で消す（下の deleteFile）
       const data = await toBase64(blob);
       const written = await Filesystem.writeFile({
         path: name,
         data,
-        directory: Directory.Cache,   // 一時置き場。保存し終われば消えてよい
+        directory: Directory.Data,
       });
 
       // ⚠️ **まず「写真アプリへ直接」を試す**（2026-08-16、伊波さん
@@ -96,9 +108,18 @@ export async function saveMedia(blob: Blob, name: string): Promise<SaveResult> {
         } else {
           await Media.savePhoto({ path: written.uri });
         }
+        // 写真アプリに入ったので、一時ファイルは要らない。
+        // 残すと端末の容量を食い続ける（撮るたびに増える）
+        void Filesystem.deleteFile({ path: name, directory: Directory.Data })
+          .catch(() => { /* 消せなくても保存は済んでいる */ });
         return { how: 'downloaded' };   // 端末に入ったことが確実に分かる
       } catch (mediaErr: any) {
         const m = String(mediaErr?.message ?? mediaErr);
+        // ⚠️ **なぜ落ちたかを残すこと**（2026-08-17、伊波さん「かなり時間が
+        //    空いて、共有画面へ」）。直接保存が失敗すると黙って共有シートに
+        //    落ちるので、**原因が見えないまま「遅い」だけが残る**。
+        //    呼び出し側（App.tsx）が画面に出せるように理由を返す
+        lastMediaError = m.slice(0, 80);
         // 本人が権限を断ったなら、共有シートに落としても同じ結果になる。
         // それでも道を残す（他のアプリへ送るのは権限が要らない）
         if (!/cancel|abort|dismiss/i.test(m)) {

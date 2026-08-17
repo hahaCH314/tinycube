@@ -69,8 +69,10 @@ android {
         //          重なったので振り直しただけ。2026-08-16）
         //    （28 = 縦の3連が出ない／透かしが消えていたのを直した。2026-08-17）
         //    （29 = 縦の3連を「可愛い形のまま」全部見せる。2026-08-17）
-        versionCode 29
-        versionName "1.2.9"
+        //    （30 = 直接保存が共有シートに落ちる件。置き場を Data へ移し、
+        //          落ちた理由を画面に出すようにした。2026-08-18）
+        versionCode 30
+        versionName "1.3.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

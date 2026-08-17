@@ -11,7 +11,7 @@ import { t, getLang, setLang } from './i18n'
 // unlock.ts 側には残してある（気が変わったときに戻せるように）
 import { isUnlocked, tryUnlock, startBilling, onUnlockChange } from './unlock'
 import { isNativeApp, buy as buyInApp, restore as restoreInApp } from './billing'
-import { saveMedia } from './save'
+import { saveMedia, takeLastMediaError } from './save'
 import { FaceIcon, SceneIcon } from './CamIcon'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
@@ -823,7 +823,16 @@ function App() {
     }
 
     if (r.how === 'shared') {
-      showShared();          // 保存したかは本人しか知らないので言い切らない
+      // ⚠️ **なぜ共有シートに落ちたかを出す**（2026-08-17、伊波さん
+      //    「かなり時間が空いて、共有画面へ」）。直接保存が失敗すると
+      //    黙って落ちるので、原因が見えないまま「遅い」だけが残っていた
+      const why = takeLastMediaError();
+      if (why) {
+        setSaveMessage('写真アプリに直接しまえませんでした（' + why + '）');
+        setTimeout(() => setSaveMessage(null), 8000);
+      } else {
+        showShared();        // 保存したかは本人しか知らないので言い切らない
+      }
     } else if (r.how === 'downloaded') {
       showSaved();
     } else if (r.how === 'failed') {
