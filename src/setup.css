@@ -1731,18 +1731,63 @@ button:active,
 .where-cancel .where-label { font-weight: 600; font-size: 14px; }
 
 /* ---- 最初の画面にある入口 ---- */
+/* ⚠️ **入口はきらきらさせる**（2026-08-17、伊波さん）。
+   プリクラ帳は tinyCUBE の推しなので、「なにを撮る？」の画面で
+   ここだけ光っていてほしい。中身の作りは変えていない */
 .album-open-btn {
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 10px;
-  width: 100%; margin-top: 14px; padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(255,79,163,0.18), rgba(102,231,255,0.14));
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 14px; color: #fff; min-height: 56px;
+  width: 100%; margin-top: 14px; padding: 15px 16px;
+  background: linear-gradient(135deg,
+    rgba(255,79,163,0.34), rgba(157,92,255,0.28) 45%, rgba(102,231,255,0.30));
+  border: 2px solid rgba(255,255,255,0.34);
+  border-radius: 16px; color: #fff; min-height: 60px;
+  box-shadow:
+    0 0 18px rgba(255,79,163,0.35),
+    0 0 34px rgba(102,231,255,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+  animation: album-glow 2.6s ease-in-out infinite;
 }
-.album-open-emoji { font-size: 22px; }
-.album-open-label { font-weight: 800; font-size: 15px; }
+/* 息をするように光る。速いと落ち着かないのでゆっくり */
+@keyframes album-glow {
+  0%, 100% { box-shadow: 0 0 18px rgba(255,79,163,0.35),
+                         0 0 34px rgba(102,231,255,0.18),
+                         inset 0 1px 0 rgba(255,255,255,0.35); }
+  50%      { box-shadow: 0 0 26px rgba(255,79,163,0.55),
+                         0 0 48px rgba(102,231,255,0.30),
+                         inset 0 1px 0 rgba(255,255,255,0.45); }
+}
+/* きらめきが左から右へ流れる。**指の邪魔をしないよう pointer-events は切る** */
+.album-open-btn::after {
+  content: ''; position: absolute; inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg,
+    transparent 30%, rgba(255,255,255,0.42) 48%, transparent 66%);
+  transform: translateX(-120%);
+  animation: album-shine 3.4s ease-in-out infinite;
+}
+@keyframes album-shine {
+  0%, 62% { transform: translateX(-120%); }
+  100%    { transform: translateX(120%); }
+}
+/* ⚠️ 動きを控える設定の端末では止める。目が回る人がいる */
+@media (prefers-reduced-motion: reduce) {
+  .album-open-btn { animation: none; }
+  .album-open-btn::after { animation: none; opacity: 0; }
+}
+.album-open-emoji {
+  font-size: 24px;
+  filter: drop-shadow(0 0 6px rgba(255,214,102,0.9));
+}
+.album-open-label {
+  font-weight: 900; font-size: 16px; letter-spacing: 0.03em;
+  text-shadow: 0 0 10px rgba(255,255,255,0.45);
+}
 .album-open-count {
-  margin-left: auto; font-size: 12px;
-  color: rgba(255,255,255,0.65);
+  margin-left: auto; font-size: 12px; font-weight: 800;
+  padding: 3px 9px; border-radius: 999px;
+  color: #fff; background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.28);
 }
 
 /* ---- プリクラ帳そのもの ---- */

@@ -731,6 +731,13 @@ function App() {
         const wide = st.width > st.height;
         setSrcIsWide(wide);
         if (!shapePicked.current) setShape(wide ? 'landscape' : 'portrait');
+        // ⚠️ **実際に開いた解像度を画面に出す**（2026-08-17、伊波さん
+        //    「カメラの画像が荒過ぎ」）。1920x1080 を ideal で頼んでいるが、
+        //    端末が断れば黙って下がる。**何が選ばれたかを見ないと、荒さの
+        //    原因が「頼み方」なのか「端末の限界」なのか分からない。**
+        //    数秒だけ出して消す（ずっと出しっぱなしにはしない）
+        setCamInfo(`カメラ ${st.width}x${st.height} ${Math.round(st.frameRate ?? 0)}fps`);
+        setTimeout(() => setCamInfo(null), 6000);
       }
     } catch (e: any) {
       alert(t('cam_fail') + ' ' + (e?.message ?? ''));
