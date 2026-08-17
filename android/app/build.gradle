@@ -61,8 +61,10 @@ android {
         //    （22 = 写真アプリへ直接保存／プリクラ帳の隙間／ピンクの影。
         //          2026-08-16）
         //    （23 = 読む権限を外した。Play の審査で警告が出たため。2026-08-16）
-        versionCode 23
-        versionName "1.2.3"
+        //    （24 = 保存の権限を全部外した。19,037台が対象外になったため。
+        //          2026-08-16）
+        versionCode 24
+        versionName "1.2.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

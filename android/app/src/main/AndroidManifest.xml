@@ -48,17 +48,21 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
-    <!-- 写真アプリへ直接しまうために要る（2026-08-16、伊波さん「保存の
-         タイミングが遅い（自分のファイルに保存時）」で共有シートをやめた）。
-         ⚠️ **書き込みだけ。読む権限は宣言しないこと。**
-            READ_MEDIA_IMAGES / READ_MEDIA_VIDEO は「写真を読む」ための
-            もので、保存には要らない。付けると Play の審査で
-            「申告されていない権限」として警告が出る（実際に出た）。
-            tinyCUBE は撮って保存するだけで、人の写真を覗く必要はない。
-         ⚠️ Android 10 (API 29) 以降は保存にも権限が要らない。
-            maxSdkVersion="28" で、古い端末のときだけ求める -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+    <!-- ⚠️ **保存のための権限は1つも宣言しない**（2026-08-16）。
+         写真アプリへ直接しまう形（@capacitor-community/media）に変えたとき、
+         権限を足して二度つまずいた。
+
+           1回目 READ_MEDIA_IMAGES / READ_MEDIA_VIDEO を足した
+                 → Play「申告されていない権限を使用しています」
+                    これは「写真を読む」ための権限で、保存には要らない
+           2回目 WRITE_EXTERNAL_STORAGE（maxSdkVersion 28）だけ残した
+                 → Play「19,037台のデバイスがサポートされなくなりました」
+                    権限を宣言すると、対応しない端末が除外される
+
+         Android 10 (API 29) 以降は、自分のアプリから写真アプリへ
+         書き込むのに権限が要らない。minSdk は 24 なので 9 以下も入るが、
+         そこは Media が失敗したら共有シートに落ちる（save.ts）。
+         **遊べなくなるより、古い端末で一手増えるほうがまし。** -->
 
     <!-- カメラが無い端末（一部のタブレット）でも入れられるようにする。
          required="true" にすると、そういう端末が Play の対象から外れる -->
