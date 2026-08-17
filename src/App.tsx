@@ -693,8 +693,23 @@ function App() {
     try {
       // 先に古いものを止める。止めずに取り直すと、機種によっては断られる
       camStreamRef.current?.getTracks().forEach(t => t.stop());
+      // ⚠️ **画質と滑らかさを頼むこと。** 何も指定しないとブラウザが
+      //    控えめな解像度（640x480 など）を選び、フレームの絵に対して
+      //    映像だけ粗く見える（2026-08-16、伊波さん「カメラがカクカクして、
+      //    画像の悪すぎて」「多分周りのフレームに負ける」）。
+      //    ideal で頼むだけにして、無理な端末では下げてもらう
+      //    （exact だと満たせない端末で例外になり、カメラが開かない）
+      // ⚠️ **min を付けないこと。** `frameRate: { min: 24 }` を入れたら
+      //    カメラが1つも開かなくなった（video 要素すら作られない）。
+      //    min / exact は「満たせなければ失敗」なので、端末やカメラを
+      //    選ぶ。**ideal だけにして、無理なら下げてもらう**
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: front ? 'user' : 'environment' },
+        video: {
+          facingMode: front ? 'user' : 'environment',
+          width:  { ideal: 1920 },
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30 },
+        },
         audio: false,                        // 声は録画のときにマイクから混ぜる
       });
       camStreamRef.current = stream;

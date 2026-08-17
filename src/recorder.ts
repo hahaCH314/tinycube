@@ -217,10 +217,20 @@ export function startStage(opts: StageOptions): () => void {
         const scale = (fill
           ? Math.max(OUT_W / vw, OUT_H / vh)
           : Math.min(OUT_W / vw, OUT_H / vh)) * camZoom;
-        const w = vw * scale, h = vh * scale;
+        // ⚠️ **整数に丸めること。** 小数のまま描くと端が画素の途中に落ち、
+        //    半透明の1px線が下や右に残る（2026-08-16、伊波さん「下になんか
+        //    線みたいなのが入ってた」）。
+        //    ceil で1px大きく取るので、丸めたぶんの隙間も埋まる
+        const w = Math.ceil(vw * scale), h = Math.ceil(vh * scale);
+        const dx = Math.round((OUT_W - w) / 2), dy = Math.round((OUT_H - h) / 2);
         g.save();
+        // フレームの絵は明るく彩度が高いので、素の映像だけ沈んで見える
+        // （2026-08-16、伊波さん「多分周りのフレームに負ける（暗い？）」）。
+        // **少しだけ持ち上げる。** 強くかけると顔色が不自然になるので、
+        // 明るさ 1.08 / 彩度 1.12 まで
+        g.filter = 'brightness(1.08) saturate(1.12)';
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
-        g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
+        g.drawImage(video, dx, dy, w, h);
         g.restore();
       }
     }

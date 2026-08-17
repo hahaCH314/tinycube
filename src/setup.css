@@ -1785,27 +1785,30 @@ button:active,
      縦の写真と横の写真が混ざったとき、低いほうの下に大きな余白が残る
      （2026-08-16、伊波さん「写真と写真が離れすぎてる」）。
      columns なら、それぞれの写真が上へ詰まる */
-  columns: 3;
-  column-gap: 6px;
+  /* ⚠️ **高さを揃えるので grid に戻した。** columns（段組み）では
+     それぞれの高さがまちまちで、縦と横が混ざるとバラバラに見えた
+     （2026-08-16、伊波さん「私が思ってた揃え方と違う。横は横のままで
+     いいから縦と同じサイズで出してほしい」）*/
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
   padding: 4px 12px calc(env(safe-area-inset-bottom, 0px) + 20px);
-}
-.album-grid > * {
-  break-inside: avoid;      /* 写真が段をまたいで切れないように */
-  margin-bottom: 6px;
+  align-content: start;
 }
 .album-cell {
   position: relative; padding: 0; border-radius: 10px; overflow: hidden;
   background: rgba(255,255,255,0.05);
   border: 2px solid transparent;
-  /* ⚠️ **枠の形を決め打ちしないこと。** 以前は 3/5（3枚シート用）だったが、
-     v1.1.7 で1コマずつ入れるようにしてから、縦長の枠に横長の写真が入って
-     上下に大きな余白ができていた（2026-08-16、伊波さん「写真と写真が
-     離れすぎてるから、もっと隙間詰めて」）。
-     中の絵の形に任せる */
+  /* **枠は縦長で揃える。** 縦の写真がちょうど収まる形にして、横の写真は
+     その中に上下の余白を持って入る。枠の大きさが揃うので一覧が整う */
+  aspect-ratio: 9 / 16;
   line-height: 0;
 }
-/* 絵をそのままの形で出す。切らない・伸ばさない */
-.album-cell img { width: 100%; height: auto; display: block; }
+/* ⚠️ **cover ではなく contain。** cover だと横の写真の左右が切れる。
+   伊波さん「横は横のままでいいから」＝形は変えずに、枠だけ揃える */
+.album-cell img {
+  width: 100%; height: 100%;
+  object-fit: contain; display: block;
+}
 .album-cell.picked { border-color: #ff4fa3; }
 .album-check {
   position: absolute; top: 5px; right: 5px;

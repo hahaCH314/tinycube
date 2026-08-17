@@ -64,8 +64,9 @@ android {
         //    （24 = 保存の権限を全部外した。19,037台が対象外になったため。
         //          2026-08-16）
         //    （25 = できあがりで3連の上下が切れていたのを直した。2026-08-16）
-        versionCode 25
-        versionName "1.2.5"
+        //    （26 = カメラの画質・下端の線・プリクラ帳の揃え方。2026-08-16）
+        versionCode 26
+        versionName "1.2.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
