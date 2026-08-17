@@ -65,8 +65,10 @@ android {
         //          2026-08-16）
         //    （25 = できあがりで3連の上下が切れていたのを直した。2026-08-16）
         //    （26 = カメラの画質・下端の線・プリクラ帳の揃え方。2026-08-16）
-        versionCode 26
-        versionName "1.2.6"
+        //    （27 = 26 と中身は同じ。Play に 26 が上がっていて番号が
+        //          重なったので振り直しただけ。2026-08-16）
+        versionCode 27
+        versionName "1.2.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
