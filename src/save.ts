@@ -23,6 +23,8 @@
 
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+// 写真アプリへ直接しまう。共有シートを開かずに済むぶん速い（2026-08-16）
+import { Media } from '@capacitor-community/media';
 
 /** いま Capacitor の入れ物（アプリ）の中で動いているか */
 function inApp(): boolean {
@@ -78,15 +80,37 @@ export async function saveMedia(blob: Blob, name: string): Promise<SaveResult> {
       const written = await Filesystem.writeFile({
         path: name,
         data,
-        directory: Directory.Cache,   // 一時置き場。共有し終われば消えてよい
+        directory: Directory.Cache,   // 一時置き場。保存し終われば消えてよい
       });
 
-      await Share.share({
-        title: name,
-        url: written.uri,
-        dialogTitle: '保存先をえらんでね',
-      });
-      return { how: 'shared' };
+      // ⚠️ **まず「写真アプリへ直接」を試す**（2026-08-16、伊波さん
+      //    「保存のタイミングが遅い（自分のファイルに保存時）」）。
+      //    以前は Share.share() で共有シートを開き、そこから「画像を保存」を
+      //    選んでもらう形だった。シートが開くまで数秒かかるうえ、選ぶ手数も
+      //    要る。Media なら押した時点で写真アプリに入る。
+      //    ⚠️ **失敗したら共有シートへ落とすこと。** 端末や権限で使えない
+      //       ことがあり、そこで詰むと保存する手立てが無くなる
+      try {
+        if (name.endsWith('.mp4')) {
+          await Media.saveVideo({ path: written.uri });
+        } else {
+          await Media.savePhoto({ path: written.uri });
+        }
+        return { how: 'downloaded' };   // 端末に入ったことが確実に分かる
+      } catch (mediaErr: any) {
+        const m = String(mediaErr?.message ?? mediaErr);
+        // 本人が権限を断ったなら、共有シートに落としても同じ結果になる。
+        // それでも道を残す（他のアプリへ送るのは権限が要らない）
+        if (!/cancel|abort|dismiss/i.test(m)) {
+          await Share.share({
+            title: name,
+            url: written.uri,
+            dialogTitle: '保存先をえらんでね',
+          });
+          return { how: 'shared' };
+        }
+        return { how: 'cancelled' };
+      }
     } catch (e: any) {
       // 本人が閉じただけなら失敗ではない。
       // 文言は端末によって違うので、いくつか見る

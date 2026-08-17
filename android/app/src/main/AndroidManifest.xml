@@ -48,6 +48,18 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
+    <!-- 写真アプリへ直接しまうために要る（2026-08-16、伊波さん「保存の
+         タイミングが遅い（自分のファイルに保存時）」で共有シートをやめた）。
+         ⚠️ **Android のバージョンで名前が違う。**
+           〜12 (API 32)  WRITE_EXTERNAL_STORAGE
+           13〜(API 33+)  READ_MEDIA_IMAGES / READ_MEDIA_VIDEO
+         片方だけだと、その世代の端末で保存できなくなる。
+         maxSdkVersion を付けないと、新しい端末で不要な権限を求めてしまう -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
     <!-- カメラが無い端末（一部のタブレット）でも入れられるようにする。
          required="true" にすると、そういう端末が Play の対象から外れる -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
