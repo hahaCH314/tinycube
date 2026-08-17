@@ -1267,11 +1267,14 @@
   overflow: hidden;
 }
 .preview-sheet img {
-  /* **縦も横も枠の中に収める。** height:auto だと幅いっぱいに広がって
-     縦に伸び、画面からはみ出す。max-height を効かせるのが肝 */
-  max-width: 100%; max-height: 100%;
-  width: auto; height: auto;
-  object-fit: contain; display: block;
+  /* ⚠️ **絵の側で高さを決めないこと。** `max-height:100%` は親の高さが
+     決まっていないと効かず、幅いっぱいに広がって上下が切れる
+     （2026-08-16、伊波さん「3連映ってない」— 1枚目だけ大きく出ていた）。
+     **枠を100%で埋めて object-fit: contain に任せる**のが確実。
+     contain なので絵が切れることも、伸びることもない */
+  width: 100%; height: 100%;
+  object-fit: contain;
+  display: block;
   border-radius: 10px;
 }
 .preview-btns { display: flex; gap: 10px; flex: 0 0 auto; }
