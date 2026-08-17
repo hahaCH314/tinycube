@@ -1240,12 +1240,14 @@
            calc(env(safe-area-inset-bottom, 0px) + 12px);
 }
 .preview-inner {
-  width: 100%; max-width: 460px; max-height: 100%;
+  /* ⚠️ **高さを 100% で確定させること。** max-height だと中身が伸びない
+     ぶん高さが決まらず、下の .preview-sheet が 0 になる（2026-08-17 に
+     踏んだ）。ここが決まって初めて、用紙側の contain が効く */
+  width: 100%; max-width: 460px; height: 100%;
   display: flex; flex-direction: column; gap: 10px;
   /* ⚠️ **ここをスクロールさせないこと。** 一度 overflow-y:auto と
      sticky ボタンで手当てしたが、用紙が縦に伸びてボタンが絵に被さり
-     かえって見にくくなった。用紙側（.preview-sheet img）に max-height を
-     効かせて、はみ出させないのが正しい直し方 */
+     かえって見にくくなった */
   overflow: hidden;
 }
 .preview-head {
@@ -1259,22 +1261,24 @@
   flex: 1 1 auto; min-height: 0;
   border-radius: 12px;
   background: rgba(255,255,255,0.06);
-  /* ⚠️ **縦のシートは枠に入らないので、縦だけスクロールを許す。**
-     横（1128x1920・比1.7）は収まるが、縦は 1128x5856（比5.19）ある。
-     hidden にすると2枚目だけが見えて1枚目と3枚目が切れた
-     （2026-08-17、伊波さん「縦の３連が仕上がりに出ない」）。
-     横は overflow が出ないので、この指定でも見た目は変わらない。
-     ⚠️ **横スクロールはさせない。** 幅は常に収まるようにする */
-  display: flex; align-items: flex-start; justify-content: center;
-  overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
+  /* ⚠️ **flex ではなく position で中を置く。**
+     flex + max-height:100% で3回つまずいた（親の高さが決まらず効かない）。
+     枠を position:relative にして、中の img を inset:0 で敷けば、
+     img の高さは枠に等しくなる。あとは object-fit: contain が縮めてくれる */
+  position: relative;
+  overflow: hidden;
 }
 .preview-sheet img {
-  /* **幅に合わせて、高さは絵のなりに。** 縦のシート（比5.19）は枠より
-     高くなるので、親（.preview-sheet）を縦にスクロールして見てもらう。
-     ⚠️ height:100% + contain にすると、縦のとき枠の高さへ押し込められて
-        真ん中の1枚しか見えなくなる（2026-08-17 に踏んだ）*/
-  width: 100%; height: auto;
+  /* ⚠️ **枠に敷いて contain。全体を一目で見せる。**
+     保存される写真は 9:16 の3連（比5.19）。それが可愛い形なので
+     **写真そのものは絶対に変えない**（伊波さん「最初のかわいいぷり風に
+     戻す」「今のは可愛くない」）。ここで縮めるのは**見せ方だけ**。
+
+     ⚠️ `max-height:100%` は親の高さが決まっていないと効かない。
+        flex で3回つまずいたので、**position で敷く**形にした */
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
   display: block;
   border-radius: 10px;
 }

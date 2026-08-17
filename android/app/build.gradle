@@ -68,8 +68,9 @@ android {
         //    （27 = 26 と中身は同じ。Play に 26 が上がっていて番号が
         //          重なったので振り直しただけ。2026-08-16）
         //    （28 = 縦の3連が出ない／透かしが消えていたのを直した。2026-08-17）
-        versionCode 28
-        versionName "1.2.8"
+        //    （29 = 縦の3連を「可愛い形のまま」全部見せる。2026-08-17）
+        versionCode 29
+        versionName "1.2.9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
