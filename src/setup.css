@@ -1259,21 +1259,22 @@
   flex: 1 1 auto; min-height: 0;
   border-radius: 12px;
   background: rgba(255,255,255,0.06);
-  /* ⚠️ **中央に置いて、はみ出させないこと。** 以前は overflow-y:auto で
-     スクロールさせていたが、用紙が縦に長いぶん絵が画面から出て
-     「保存ボタンがはみ出して絵が分かりにくい」ことになった
-     （2026-08-16、テスターより。機種は Pixel 9a）*/
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
+  /* ⚠️ **縦のシートは枠に入らないので、縦だけスクロールを許す。**
+     横（1128x1920・比1.7）は収まるが、縦は 1128x5856（比5.19）ある。
+     hidden にすると2枚目だけが見えて1枚目と3枚目が切れた
+     （2026-08-17、伊波さん「縦の３連が仕上がりに出ない」）。
+     横は overflow が出ないので、この指定でも見た目は変わらない。
+     ⚠️ **横スクロールはさせない。** 幅は常に収まるようにする */
+  display: flex; align-items: flex-start; justify-content: center;
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 .preview-sheet img {
-  /* ⚠️ **絵の側で高さを決めないこと。** `max-height:100%` は親の高さが
-     決まっていないと効かず、幅いっぱいに広がって上下が切れる
-     （2026-08-16、伊波さん「3連映ってない」— 1枚目だけ大きく出ていた）。
-     **枠を100%で埋めて object-fit: contain に任せる**のが確実。
-     contain なので絵が切れることも、伸びることもない */
-  width: 100%; height: 100%;
-  object-fit: contain;
+  /* **幅に合わせて、高さは絵のなりに。** 縦のシート（比5.19）は枠より
+     高くなるので、親（.preview-sheet）を縦にスクロールして見てもらう。
+     ⚠️ height:100% + contain にすると、縦のとき枠の高さへ押し込められて
+        真ん中の1枚しか見えなくなる（2026-08-17 に踏んだ）*/
+  width: 100%; height: auto;
   display: block;
   border-radius: 10px;
 }

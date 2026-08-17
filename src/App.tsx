@@ -573,10 +573,15 @@ function App() {
     }, 100);
   };
 
-  // 透かしは無料版の印。解除したら消える。
-  // 画面に出している canvas をそのまま録るので、ここを変えれば動画も写真も変わる
+  // ⚠️ **透かしは常に入れる**（2026-08-17、伊波さん「無料にしても透かしは
+  //    入れる話だったはずだよ」）。
+  //    もとは「無料版の印」で、解除すると消える作りだった。8/15 に全部無料へ
+  //    切り替えたとき isUnlocked() が常に true を返すようになり、**副作用で
+  //    透かしまで消えていた。** 無料で配るからこそ、撮ったものが広まるときに
+  //    名前が残っているほうが宣伝になる。
+  //    画面に出している canvas をそのまま録るので、ここを変えれば動画も写真も変わる
   useEffect(() => {
-    liveRef.current.watermark = unlocked ? null : 'tinyCUBE';
+    liveRef.current.watermark = 'tinyCUBE';
   }, [unlocked]);
   // tinyCUBE はスマホで使うもの。PC で開いた人には、そう伝えてから通す。
   // 塞がずに「このまま使う」を用意しているのは、確かめたい人を止めないため
@@ -1005,13 +1010,28 @@ function App() {
     // 縦で撮ったものを 16:9 の横長コマへ押し込むと、顔の上下が切れて
     // 顔ハメが台無しになる。コマの形を写真に合わせれば、縦で撮っても
     // 横で撮っても「同じ大きさの3枚が縦に並ぶ」見え方は変わらない
-    const CELL_W = 1080;
     const first = cells[0];
-    const CELL_H = Math.round(CELL_W * first.height / first.width);
+    const ar = first.height / first.width;   // 1コマの縦横比
+    // ⚠️ **縦一列を保つ。プリクラのシートは縦に並ぶもの。**
+    //    ただし縦(9:16)のコマをそのまま3枚積むと 1128x5856（比5.19）になり、
+    //    画面では1枚しか見えない（2026-08-17、伊波さん「縦の３連が
+    //    仕上がりに出ない」「ここがうちの推しデショ」）。
+    //
+    //    一度2列にしてみたが、3枚だと右下が白く空いて格好がつかなかった。
+    //    伊波さんの選びは「縦に3枚、幅を狭くして収める」。
+    //
+    //    **写真の形は変えない**（縦を横コマへ押し込むと顔ハメの上下が切れる。
+    //    2026-08-14 に断った形）。用紙の中で1コマを小さくするだけ。
+    const ONE_COL_AR_MAX = 2.05;  // 用紙の縦横比の上限。2.4 では3枚目が少し切れた
+    const CELL_W = 1080;
+    const CELL_H = ar * 3 > ONE_COL_AR_MAX
+      // 3枚積んで上限を超えるなら、コマの高さを詰める（幅は保つ）
+      ? Math.round(CELL_W * ONE_COL_AR_MAX / 3)
+      : Math.round(CELL_W * ar);
     const GAP = 24;
     const PAD = 24;
     const sheet = document.createElement('canvas');
-    sheet.width = CELL_W + PAD * 2;
+    sheet.width  = PAD * 2 + CELL_W;
     sheet.height = PAD * 2 + CELL_H * cells.length + GAP * (cells.length - 1);
     const g = sheet.getContext('2d');
     if (!g) return null;
@@ -1019,8 +1039,7 @@ function App() {
     g.fillRect(0, 0, sheet.width, sheet.height);
     cells.forEach((cell, i) => {
       const dy = PAD + i * (CELL_H + GAP);
-      // 元の写真は縦長（1080x1920）なので、16:9 の枠には中央を切り出して収める。
-      // 縮めて黒帯を出すと、3枚とも帯だらけになる
+      // コマにぴったり収める。縮めて白帯を出すと、3枚とも帯だらけになる
       const scale = Math.max(CELL_W / cell.width, CELL_H / cell.height);
       const w = cell.width * scale, h = cell.height * scale;
       g.save();
@@ -1377,7 +1396,7 @@ function App() {
         frame: liveRef.current.frame,
         shape,
         srcAudio: useSrcAudio,
-        watermark: unlocked ? null : 'tinyCUBE',
+        watermark: 'tinyCUBE',   // 常に入れる（上の useEffect と同じ理由）
         // ここで保存はしない。撮れたものを見せてから決めてもらう
         onFinish: (blob, ext) => {
           setMadeVideo({ blob, ext, url: URL.createObjectURL(blob) });
