@@ -218,6 +218,22 @@ export const FRAMES: Frame[] = [
   { id: 'onnagata',         name: '女形（顔ハメ）',          file: './frames/onnagata.webp',         anchor: 'full', faceHole: { x: 28.8, y: 33.3, w: 45.6, h: 37.9 }, paid: true },
   { id: 'dog_face_p',       name: '犬 1（顔ハメ）',         file: './frames/dog_face_p.webp',       anchor: 'full', faceHole: { x: 25.6, y: 18.3, w: 48.1, h: 34.5 }, paid: true },
   { id: 'dog_face_p_2',     name: '犬 2（顔ハメ）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', faceHole: { x: 33.2, y: 13.9, w: 34.8, h: 26.4 }, paid: true },
+
+  // --- 2026-08-18 追加。**無料の枠**（伊波さん「これを無料枠に追加」）---
+  //     元絵は E:\syunp_data\Downloads\５００円  //     目印の色がバラバラ（黄・マゼンタ・緑・青）なので、色を見分けて抜いた
+  { id: 'yumekawa_pop',     name: 'ゆめかわポップ',        file: './frames/yumekawa_pop.webp',     anchor: 'full' },
+  { id: 'gothic',           name: 'ゴシック',            file: './frames/gothic.webp',           anchor: 'full' },
+  { id: 'cyber_angel',      name: 'サイバーエンジェル',      file: './frames/cyber_angel.webp',      anchor: 'full' },
+  { id: 'cyber_punk',       name: 'サイバーパンク',        file: './frames/cyber_punk.webp',       anchor: 'full' },
+  { id: 'retro',            name: 'レトロ',             file: './frames/retro.webp',            anchor: 'full' },
+  { id: 'wafu',             name: '和風',              file: './frames/wafu.webp',             anchor: 'full' },
+  { id: 'okami_face',       name: '女将（顔ハメ）',        file: './frames/okami_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.9, w: 26.9, h: 15.5 } },
+  { id: 'heisei_loli_face', name: '平成ロリ（顔ハメ）',      file: './frames/heisei_loli_face.webp', anchor: 'full', faceHole: { x: 38.0, y: 17.0, w: 23.8, h: 13.1 } },
+  { id: 'ryoushi_face',     name: '漁師（顔ハメ）',        file: './frames/ryoushi_face.webp',     anchor: 'full', faceHole: { x: 35.3, y: 17.4, w: 27.5, h: 15.1 } },
+  { id: 'kuroneko_face',    name: '黒猫（顔ハメ）',        file: './frames/kuroneko_face.webp',    anchor: 'full', faceHole: { x: 23.7, y: 17.6, w: 49.0, h: 25.9 } },
+  // 2人ぶんの穴。まとめて1つの範囲としてカメラを描くので、並んだ2人が収まる
+  { id: 'dog_spa_face',     name: '犬スパ（顔ハメ）',       file: './frames/dog_spa_face.webp',     anchor: 'full', faceHoles: [{ x: 11.8, y: 24.7, w: 40.0, h: 27.9 }, { x: 56.1, y: 26.7, w: 38.5, h: 27.9 }] },
+  { id: 'inaka_face',       name: '田舎暮らし（顔ハメ）',     file: './frames/inaka_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 25.9, w: 36.5, h: 25.0 }, { x: 55.3, y: 41.5, w: 30.3, h: 21.1 }] },
 ];
 
 /** その枠が、いまの書き出しの形にぴったり合うか。
