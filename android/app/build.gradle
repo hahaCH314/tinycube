@@ -82,8 +82,9 @@ android {
         //          2026-08-18）
         //    （36 = プリクラ帳をパステルに。横スクロールを直した。
         //          追加フレームは ¥300 の買い切りに。2026-08-18）
-        versionCode 36
-        versionName "1.3.6"
+        //    （37 = 53枚に鍵を戻した（¥300 の買い切りで解ける）。2026-08-18）
+        versionCode 37
+        versionName "1.3.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

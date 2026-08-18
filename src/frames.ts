@@ -29,13 +29,19 @@ export type Frame = {
    *  x, y は左上の座標、w, h は幅・高さ（いずれも %） */
   faceHole?: FaceHole;
   faceHoles?: FaceHole[];
-  /** ¥500 の追加フレーム（2026-08-17、伊波さん「５００円のフレーム追加に
-   *  する」）。true だと鍵がかかり、買うまで選べない。
+  /** ¥300 の買い切りで解ける枠。true だと鍵がかかり、買うまで選べない。
    *
-   *  ⚠️ **いま無料で配っている118枚には付けないこと。**
-   *     8/16 のリリースノートに「フレーム全部かいほうしました！」と書いて
-   *     配信済み。あとから鍵をかけると取り上げになる。
-   *     **これから描き下ろす分だけ** に付ける。
+   *  ■ 経緯（行ったり来たりしたので残す）
+   *    2026-08-15  全部無料にした（isUnlocked が常に true）
+   *    2026-08-17  新作だけ売る方針にして、53枚の paid を外した
+   *    2026-08-18  「後から足したフレームは３００円課金に戻したい」
+   *                「大丈夫、テスターは友達だから」→ **53枚を戻した**
+   *
+   *  ⚠️ **8/16 のリリースノートに「フレーム全部かいほうしました！」と
+   *     書いて配信済み。** 鍵を戻すことはテスターに必ず伝えること。
+   *
+   *  ⚠️ **足すときは行末の `},` の直前に置くこと。** faceHoles の配列の
+   *     中に入れてしまうと型エラーになる（2026-08-18 に踏んだ）。
    *
    *  鍵の判定は App.tsx の `locked()` → `!!f.paid && !unlocked`。
    *  解除は unlock.ts の isUnlocked()。 */
@@ -151,67 +157,67 @@ export const FRAMES: Frame[] = [
   // --- 推し色（2026-08-11 追加。有料の枠） ---
   // 同じ絵を 16:9 と 9:16 の両方で描き下ろしてある。
   // 一覧は形で絞られるので、名前は縦横で分けなくてよい
-  { id: 'oshi_red_w',     name: '推し・赤',       file: './frames/oshi_red_w.webp',     anchor: 'wide' },
-  { id: 'oshi_red_p',     name: '推し・赤',       file: './frames/oshi_red_p.webp',     anchor: 'full' },
-  { id: 'oshi_blue_w',    name: '推し・青',       file: './frames/oshi_blue_w.webp',    anchor: 'wide' },
-  { id: 'oshi_blue_p',    name: '推し・青',       file: './frames/oshi_blue_p.webp',    anchor: 'full' },
-  { id: 'oshi_green_w',   name: '推し・緑',       file: './frames/oshi_green_w.webp',   anchor: 'wide' },
-  { id: 'oshi_green_p',   name: '推し・緑',       file: './frames/oshi_green_p.webp',   anchor: 'full' },
-  { id: 'oshi_yellow_w',  name: '推し・黄',       file: './frames/oshi_yellow_w.webp',  anchor: 'wide' },
-  { id: 'oshi_yellow_p',  name: '推し・黄',       file: './frames/oshi_yellow_p.webp',  anchor: 'full' },
-  { id: 'oshi_pink_w',    name: '推し・ピンク',   file: './frames/oshi_pink_w.webp',    anchor: 'wide' },
-  { id: 'oshi_pink_p',    name: '推し・ピンク',   file: './frames/oshi_pink_p.webp',    anchor: 'full' },
-  { id: 'oshi_orange_w',  name: '推し・オレンジ', file: './frames/oshi_orange_w.webp',  anchor: 'wide' },
-  { id: 'oshi_orange_p',  name: '推し・オレンジ', file: './frames/oshi_orange_p.webp',  anchor: 'full' },
-  { id: 'oshi_purple_w',  name: '推し・紫',       file: './frames/oshi_purple_w.webp',  anchor: 'wide' },
-  { id: 'oshi_purple_p',  name: '推し・紫',       file: './frames/oshi_purple_p.webp',  anchor: 'full' },
-  { id: 'oshi_white_w',   name: '推し・白',       file: './frames/oshi_white_w.webp',   anchor: 'wide' },
-  { id: 'oshi_white_p',   name: '推し・白',       file: './frames/oshi_white_p.webp',   anchor: 'full' },
-  { id: 'oshi_black_w',   name: '推し・黒',       file: './frames/oshi_black_w.webp',   anchor: 'wide' },
-  { id: 'oshi_black_p',   name: '推し・黒',       file: './frames/oshi_black_p.webp',   anchor: 'full' },
-  { id: 'oshi_manga_w',   name: '推し・漫画',     file: './frames/oshi_manga_w.webp',   anchor: 'wide' },
-  { id: 'oshi_manga_p',   name: '推し・漫画',     file: './frames/oshi_manga_p.webp',   anchor: 'full' },
-  { id: 'oshi_rainbow',   name: '推し・虹',       file: './frames/oshi_rainbow.webp',   anchor: 'full' },
+  { id: 'oshi_red_w',     name: '推し・赤',       file: './frames/oshi_red_w.webp',     anchor: 'wide', paid: true },
+  { id: 'oshi_red_p',     name: '推し・赤',       file: './frames/oshi_red_p.webp',     anchor: 'full', paid: true },
+  { id: 'oshi_blue_w',    name: '推し・青',       file: './frames/oshi_blue_w.webp',    anchor: 'wide', paid: true },
+  { id: 'oshi_blue_p',    name: '推し・青',       file: './frames/oshi_blue_p.webp',    anchor: 'full', paid: true },
+  { id: 'oshi_green_w',   name: '推し・緑',       file: './frames/oshi_green_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_green_p',   name: '推し・緑',       file: './frames/oshi_green_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_yellow_w',  name: '推し・黄',       file: './frames/oshi_yellow_w.webp',  anchor: 'wide', paid: true },
+  { id: 'oshi_yellow_p',  name: '推し・黄',       file: './frames/oshi_yellow_p.webp',  anchor: 'full', paid: true },
+  { id: 'oshi_pink_w',    name: '推し・ピンク',   file: './frames/oshi_pink_w.webp',    anchor: 'wide', paid: true },
+  { id: 'oshi_pink_p',    name: '推し・ピンク',   file: './frames/oshi_pink_p.webp',    anchor: 'full', paid: true },
+  { id: 'oshi_orange_w',  name: '推し・オレンジ', file: './frames/oshi_orange_w.webp',  anchor: 'wide', paid: true },
+  { id: 'oshi_orange_p',  name: '推し・オレンジ', file: './frames/oshi_orange_p.webp',  anchor: 'full', paid: true },
+  { id: 'oshi_purple_w',  name: '推し・紫',       file: './frames/oshi_purple_w.webp',  anchor: 'wide', paid: true },
+  { id: 'oshi_purple_p',  name: '推し・紫',       file: './frames/oshi_purple_p.webp',  anchor: 'full', paid: true },
+  { id: 'oshi_white_w',   name: '推し・白',       file: './frames/oshi_white_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_white_p',   name: '推し・白',       file: './frames/oshi_white_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_black_w',   name: '推し・黒',       file: './frames/oshi_black_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_black_p',   name: '推し・黒',       file: './frames/oshi_black_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_manga_w',   name: '推し・漫画',     file: './frames/oshi_manga_w.webp',   anchor: 'wide', paid: true },
+  { id: 'oshi_manga_p',   name: '推し・漫画',     file: './frames/oshi_manga_p.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_rainbow',   name: '推し・虹',       file: './frames/oshi_rainbow.webp',   anchor: 'full', paid: true },
 
   // --- きらきら（2026-08-11 追加。有料の枠） ---
-  { id: 'otaku_01',       name: 'ゆめかわ',       file: './frames/otaku_01.webp',       anchor: 'wide' },
-  { id: 'otaku_02',       name: 'よぞら',         file: './frames/otaku_02.webp',       anchor: 'wide' },
-  { id: 'otaku_03',       name: 'きらきら',       file: './frames/otaku_03.webp',       anchor: 'wide' },
-  { id: 'otaku_04',       name: 'ぬいぐるみ',     file: './frames/otaku_04.webp',       anchor: 'wide' },
-  { id: 'otaku_05',       name: 'ペンライト',     file: './frames/otaku_05.webp',       anchor: 'wide' },
-  { id: 'otaku_06',       name: 'グッズ',         file: './frames/otaku_06.webp',       anchor: 'wide' },
+  { id: 'otaku_01',       name: 'ゆめかわ',       file: './frames/otaku_01.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_02',       name: 'よぞら',         file: './frames/otaku_02.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_03',       name: 'きらきら',       file: './frames/otaku_03.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_04',       name: 'ぬいぐるみ',     file: './frames/otaku_04.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_05',       name: 'ペンライト',     file: './frames/otaku_05.webp',       anchor: 'wide', paid: true },
+  { id: 'otaku_06',       name: 'グッズ',         file: './frames/otaku_06.webp',       anchor: 'wide', paid: true },
 
   // --- キューブ枠（2026-08-11 追加。有料の枠） ---
-  { id: 'band_w',           name: 'バンド',              file: './frames/band_w.webp',           anchor: 'wide' },
-  { id: 'band_p',           name: 'バンド',              file: './frames/band_p.webp',           anchor: 'full' },
-  { id: 'city_w',           name: 'シティ',              file: './frames/city_w.webp',           anchor: 'wide' },
-  { id: 'city_p',           name: 'シティ',              file: './frames/city_p.webp',           anchor: 'full' },
-  { id: 'tv_w',             name: 'テレビ',              file: './frames/tv_w.webp',             anchor: 'wide' },
-  { id: 'tv_p',             name: 'テレビ',              file: './frames/tv_p.webp',             anchor: 'full' },
-  { id: 'hibiscus_w',       name: 'ハイビスカス',           file: './frames/hibiscus_w.webp',       anchor: 'wide' },
-  { id: 'hibiscus_p',       name: 'ハイビスカス',           file: './frames/hibiscus_p.webp',       anchor: 'full' },
-  { id: 'sea_w',            name: '海',                file: './frames/sea_w.webp',            anchor: 'wide' },
-  { id: 'sea_p',            name: '海',                file: './frames/sea_p.webp',            anchor: 'full' },
-  { id: 'cat',              name: '猫',                file: './frames/cat.webp',              anchor: 'wide' },
-  { id: 'dog',              name: '犬',                file: './frames/dog.webp',              anchor: 'full' },
-  { id: 'oshi_kira',        name: '推し・キラ',            file: './frames/oshi_kira.webp',        anchor: 'full' },
-  { id: 'penlight',         name: 'ペンライト',            file: './frames/penlight.webp',         anchor: 'full' },
-  { id: 'oshi_champagne',   name: '推し・シャンパン',         file: './frames/oshi_champagne.webp',   anchor: 'full' },
-  { id: 'oshi_ribbon_red',  name: '推し・赤リボン',          file: './frames/oshi_ribbon_red.webp',  anchor: 'full' },
+  { id: 'band_w',           name: 'バンド',              file: './frames/band_w.webp',           anchor: 'wide', paid: true },
+  { id: 'band_p',           name: 'バンド',              file: './frames/band_p.webp',           anchor: 'full', paid: true },
+  { id: 'city_w',           name: 'シティ',              file: './frames/city_w.webp',           anchor: 'wide', paid: true },
+  { id: 'city_p',           name: 'シティ',              file: './frames/city_p.webp',           anchor: 'full', paid: true },
+  { id: 'tv_w',             name: 'テレビ',              file: './frames/tv_w.webp',             anchor: 'wide', paid: true },
+  { id: 'tv_p',             name: 'テレビ',              file: './frames/tv_p.webp',             anchor: 'full', paid: true },
+  { id: 'hibiscus_w',       name: 'ハイビスカス',           file: './frames/hibiscus_w.webp',       anchor: 'wide', paid: true },
+  { id: 'hibiscus_p',       name: 'ハイビスカス',           file: './frames/hibiscus_p.webp',       anchor: 'full', paid: true },
+  { id: 'sea_w',            name: '海',                file: './frames/sea_w.webp',            anchor: 'wide', paid: true },
+  { id: 'sea_p',            name: '海',                file: './frames/sea_p.webp',            anchor: 'full', paid: true },
+  { id: 'cat',              name: '猫',                file: './frames/cat.webp',              anchor: 'wide', paid: true },
+  { id: 'dog',              name: '犬',                file: './frames/dog.webp',              anchor: 'full', paid: true },
+  { id: 'oshi_kira',        name: '推し・キラ',            file: './frames/oshi_kira.webp',        anchor: 'full', paid: true },
+  { id: 'penlight',         name: 'ペンライト',            file: './frames/penlight.webp',         anchor: 'full', paid: true },
+  { id: 'oshi_champagne',   name: '推し・シャンパン',         file: './frames/oshi_champagne.webp',   anchor: 'full', paid: true },
+  { id: 'oshi_ribbon_red',  name: '推し・赤リボン',          file: './frames/oshi_ribbon_red.webp',  anchor: 'full', paid: true },
 
 
 
   // --- 顔ハメ（2026-08-11 追加。有料の枠）。穴から映像が見える ---
-  { id: 'goya',             name: 'ゴーヤ（顔ハメ）',         file: './frames/goya.webp',             anchor: 'wide', faceHoles: [{ x: 23.0, y: 27.5, w: 21.4, h: 47.1 }, { x: 56.2, y: 28.0, w: 20.6, h: 46.6 }] },
-  { id: 'japan_face',       name: '日本（顔ハメ）',          file: './frames/japan_face.webp',       anchor: 'wide', faceHoles: [{ x: 26.9, y: 26.9, w: 17.5, h: 34.4 }, { x: 53.8, y: 29.0, w: 17.9, h: 36.3 }] },
-  { id: 'kabuki_face',      name: '歌舞伎（顔ハメ）',         file: './frames/kabuki_face.webp',      anchor: 'wide', faceHoles: [{ x: 20.9, y: 25.4, w: 18.4, h: 46.1 }, { x: 62.1, y: 28.7, w: 17.8, h: 45.3 }] },
-  { id: 'bath_face',        name: 'お風呂（顔ハメ）',         file: './frames/bath_face.webp',        anchor: 'wide', faceHoles: [{ x: 31.8, y: 32.7, w: 12.7, h: 22.7 }, { x: 55.1, y: 30.6, w: 13.3, h: 23.4 }] },
-  { id: 'dog_face_w',       name: '犬（顔ハメ）',           file: './frames/dog_face_w.webp',       anchor: 'wide', faceHoles: [{ x: 29.6, y: 24.1, w: 14.3, h: 29.6 }, { x: 54.1, y: 25.3, w: 14.2, h: 30.7 }] },
-  { id: 'lemon_face',       name: 'レモン（顔ハメ）',         file: './frames/lemon_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.6, w: 32.2, h: 21.4 } },
-  { id: 'otaku_face',       name: 'ヲタ（顔ハメ）',          file: './frames/otaku_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 27.3, w: 26.9, h: 20.1 }, { x: 53.9, y: 31.1, w: 25.6, h: 19.4 }] },
-  { id: 'onnagata',         name: '女形（顔ハメ）',          file: './frames/onnagata.webp',         anchor: 'full', faceHole: { x: 28.8, y: 33.3, w: 45.6, h: 37.9 } },
-  { id: 'dog_face_p',       name: '犬 1（顔ハメ）',         file: './frames/dog_face_p.webp',       anchor: 'full', faceHole: { x: 25.6, y: 18.3, w: 48.1, h: 34.5 } },
-  { id: 'dog_face_p_2',     name: '犬 2（顔ハメ）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', faceHole: { x: 33.2, y: 13.9, w: 34.8, h: 26.4 } },
+  { id: 'goya',             name: 'ゴーヤ（顔ハメ）',         file: './frames/goya.webp',             anchor: 'wide', faceHoles: [{ x: 23.0, y: 27.5, w: 21.4, h: 47.1 }, { x: 56.2, y: 28.0, w: 20.6, h: 46.6 }], paid: true },
+  { id: 'japan_face',       name: '日本（顔ハメ）',          file: './frames/japan_face.webp',       anchor: 'wide', faceHoles: [{ x: 26.9, y: 26.9, w: 17.5, h: 34.4 }, { x: 53.8, y: 29.0, w: 17.9, h: 36.3 }], paid: true },
+  { id: 'kabuki_face',      name: '歌舞伎（顔ハメ）',         file: './frames/kabuki_face.webp',      anchor: 'wide', faceHoles: [{ x: 20.9, y: 25.4, w: 18.4, h: 46.1 }, { x: 62.1, y: 28.7, w: 17.8, h: 45.3 }], paid: true },
+  { id: 'bath_face',        name: 'お風呂（顔ハメ）',         file: './frames/bath_face.webp',        anchor: 'wide', faceHoles: [{ x: 31.8, y: 32.7, w: 12.7, h: 22.7 }, { x: 55.1, y: 30.6, w: 13.3, h: 23.4 }], paid: true },
+  { id: 'dog_face_w',       name: '犬（顔ハメ）',           file: './frames/dog_face_w.webp',       anchor: 'wide', faceHoles: [{ x: 29.6, y: 24.1, w: 14.3, h: 29.6 }, { x: 54.1, y: 25.3, w: 14.2, h: 30.7 }], paid: true },
+  { id: 'lemon_face',       name: 'レモン（顔ハメ）',         file: './frames/lemon_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.6, w: 32.2, h: 21.4 }, paid: true },
+  { id: 'otaku_face',       name: 'ヲタ（顔ハメ）',          file: './frames/otaku_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 27.3, w: 26.9, h: 20.1 }, { x: 53.9, y: 31.1, w: 25.6, h: 19.4 }], paid: true },
+  { id: 'onnagata',         name: '女形（顔ハメ）',          file: './frames/onnagata.webp',         anchor: 'full', faceHole: { x: 28.8, y: 33.3, w: 45.6, h: 37.9 }, paid: true },
+  { id: 'dog_face_p',       name: '犬 1（顔ハメ）',         file: './frames/dog_face_p.webp',       anchor: 'full', faceHole: { x: 25.6, y: 18.3, w: 48.1, h: 34.5 }, paid: true },
+  { id: 'dog_face_p_2',     name: '犬 2（顔ハメ）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', faceHole: { x: 33.2, y: 13.9, w: 34.8, h: 26.4 }, paid: true },
 ];
 
 /** その枠が、いまの書き出しの形にぴったり合うか。
