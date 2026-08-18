@@ -1138,8 +1138,14 @@ function App() {
 
     // 端末へ
     const blob = await new Promise<Blob | null>(res => sheet.toBlob(res, 'image/jpeg', 0.92));
-    if (blob) await save(blob, 'jpg');
+    // ⚠️ **保存の終わりを待たずに戻すこと**（2026-08-18、伊波さん
+    //    「すぐcamera選択（スタート）には戻らない（戻るけど遅い）」）。
+    //    端末への書き出しは数秒かかる。待ってから戻すと、そのあいだ
+    //    できあがりの画面で固まって見える。
+    //    **先に戻して、保存は裏で続ける。** 終わったら真ん中に知らせが出る
+    //    （.save-toast）ので、済んだことは分かる
     backToStart();
+    if (blob) void save(blob, 'jpg');
   };
 
   /**
@@ -1520,7 +1526,6 @@ function App() {
           </div>
         )}
         {camInfo && <div className="cam-info">{camInfo}</div>}
-        {saveMessage && <div className="cam-info" style={{ background: 'rgba(255, 50, 150, 0.9)', fontWeight: 'bold' }}>{saveMessage}</div>}
         {countdown !== null && <div className="countdown">{countdown}</div>}
         {/* 何枚目を撮っているか。3枚撮ったことが数で分かるようにする */}
         {burstNo !== null && <div className="burst-no">{burstNo} / 3</div>}
@@ -2707,6 +2712,13 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* ⚠️ **保存の知らせは、いちばん外側に置くこと**（2026-08-18、
+          伊波さん「保存したのかどうかわかんない」）。
+          撮影画面の中に置いていたので、**保存して戻ったら消えていた**。
+          保存は裏で続くので、戻ったあとに出せないと意味がない。
+          真ん中に大きく出す。指は下へ通す（CSS で pointer-events: none） */}
+      {saveMessage && <div className="save-toast">{saveMessage}</div>}
 
     </div>
   )

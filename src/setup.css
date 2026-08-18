@@ -1944,3 +1944,27 @@ button:active,
   pointer-events: none;   /* 指は下のカメラへ通す */
   max-width: calc(100% - 20px);
 }
+
+/* 保存できたことを、画面の真ん中で伝える（2026-08-18、伊波さん
+   「保存したのかどうかわかんない」）。左上の小さな帯では見逃す。
+   ⚠️ **指は下へ通すこと。** 出ているあいだ操作を止めない */
+.save-toast {
+  position: fixed; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 420; pointer-events: none;
+  max-width: 82%;
+  padding: 18px 26px; border-radius: 18px;
+  text-align: center; line-height: 1.6;
+  font-size: 1.05rem; font-weight: 900; color: #fff;
+  background: linear-gradient(135deg, rgba(255,79,163,0.96), rgba(157,92,255,0.96));
+  border: 2px solid rgba(255,255,255,0.5);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.45), 0 0 26px rgba(255,79,163,0.5);
+  animation: save-toast-in 0.22s ease-out;
+}
+@keyframes save-toast-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.86); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .save-toast { animation: none; }
+}

@@ -75,8 +75,10 @@ android {
         //          直接しまえるようになった。2026-08-18）
         //    （32 = カメラをもう少し明るく／開いた解像度を画面に出す。
         //          2026-08-18）
-        versionCode 32
-        versionName "1.3.2"
+        //    （33 = 保存の知らせを真ん中に大きく／保存を待たずに戻る。
+        //          2026-08-18）
+        versionCode 33
+        versionName "1.3.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
