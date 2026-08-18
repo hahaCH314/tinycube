@@ -80,8 +80,10 @@ android {
         //    （34 = プリクラ帳の写真が1枚に見えるのを直した。2026-08-18）
         //    （35 = プリクラ帳の重なりを直し、横の写真を縦に置くようにした。
         //          2026-08-18）
-        versionCode 35
-        versionName "1.3.5"
+        //    （36 = プリクラ帳をパステルに。横スクロールを直した。
+        //          追加フレームは ¥300 の買い切りに。2026-08-18）
+        versionCode 36
+        versionName "1.3.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

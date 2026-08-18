@@ -1793,65 +1793,67 @@ button:active,
 /* ---- プリクラ帳そのもの ---- */
 .album-screen {
   position: fixed; inset: 0; z-index: 290;
-  background: #0d1022;
+  /* ⚠️ **プリクラ帳だけパステル**（2026-08-18、伊波さん「なんかページを
+     色変える？パステル色に」）。撮る画面は暗いネオンだが、帳は
+     「集めたものを眺める場所」なので、明るくやわらかいほうが合う。
+     昔のプリクラ帳（ピンクのファイル）の感じ */
+  background:
+    radial-gradient(1100px 620px at 12% -8%,  rgba(255,214,235,0.95), transparent 62%),
+    radial-gradient(980px  560px at 92% 6%,   rgba(214,240,255,0.92), transparent 60%),
+    radial-gradient(900px  700px at 50% 108%, rgba(240,225,255,0.92), transparent 62%),
+    #fdf3f8;
   display: flex; flex-direction: column;
 }
 .album-head {
   display: flex; align-items: center; gap: 10px;
   padding: calc(env(safe-area-inset-top, 0px) + 12px) 14px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  /* ⚠️ **背景がパステルなので、文字と線は濃い色にすること。**
+     白い文字のままだと読めない（2026-08-18） */
+  border-bottom: 1px solid rgba(140, 90, 130, 0.22);
   flex: 0 0 auto;
 }
 .album-close {
   min-width: 64px; height: 40px; padding: 0 14px;
-  border-radius: 20px; font-size: 14px; font-weight: 700;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18); color: #fff;
+  border-radius: 20px; font-size: 14px; font-weight: 800;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(160,110,150,0.35); color: #6b3a5e;
+  box-shadow: 0 2px 6px rgba(120,70,110,0.14);
 }
 .album-title {
-  font-weight: 900; font-size: 1.05rem; color: #66e7ff;
-  /* ピンクの影は外した（2026-08-16）。.setup-title と揃える */
+  font-weight: 900; font-size: 1.05rem; color: #d1568f;
 }
-.album-count { margin-left: auto; font-size: 12px; color: rgba(255,255,255,0.6); }
+.album-count { margin-left: auto; font-size: 12px; font-weight: 700; color: #8d6a86; }
 
 .album-tools {
   display: flex; gap: 8px; padding: 10px 14px; flex: 0 0 auto;
 }
 .album-tool {
   height: 38px; padding: 0 14px; border-radius: 19px;
-  font-size: 13px; font-weight: 700;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18); color: #fff;
+  font-size: 13px; font-weight: 800;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(160,110,150,0.35); color: #6b3a5e;
+  box-shadow: 0 2px 6px rgba(120,70,110,0.14);
 }
 .album-del {
   margin-left: auto;
-  background: rgba(255,79,99,0.22); border-color: rgba(255,79,99,0.55);
+  background: rgba(255,120,150,0.9); border-color: rgba(220,80,120,0.6);
+  color: #fff;
 }
 .album-del:disabled { opacity: 0.45; }
 
 .album-grid {
   flex: 1 1 auto; min-height: 0; overflow-y: auto;
-  /* ⚠️ **grid ではなく段組みにすること。** grid だと行の高さが揃うので、
-     縦の写真と横の写真が混ざったとき、低いほうの下に大きな余白が残る
-     （2026-08-16、伊波さん「写真と写真が離れすぎてる」）。
-     columns なら、それぞれの写真が上へ詰まる */
-  /* ⚠️ **高さを揃えるので grid に戻した。** columns（段組み）では
-     それぞれの高さがまちまちで、縦と横が混ざるとバラバラに見えた
-     （2026-08-16、伊波さん「私が思ってた揃え方と違う。横は横のままで
-     いいから縦と同じサイズで出してほしい」）*/
-  /* ⚠️ **段組みにすること。** grid だと行の高さが揃うので、縦の写真と
-     横の写真が混ざったとき低いほうの下に余白が残る。
-     columns なら、それぞれが上へ詰まる（2026-08-18、伊波さん
-     「縦フレームと同じ並べかたで並べればいいじゃん」）。
+  /* ⚠️ **columns は使わないこと。** 高さの決まった箱の中で段組みにすると、
+     入りきらないぶんが**右へ伸びて横スクロールになる**
+     （2026-08-18、伊波さん「横だし」）。
+     grid なら縦にだけ伸びる。横の写真は .is-wide で縦に回してあるので、
+     高さは揃う（段組みにする理由だった「高さがまちまち」はもう起きない）。
      ⚠️ 隙間は詰めすぎないこと。6px だと似た色の写真が並んだとき
         境目が消えて1枚に見える */
-  columns: 3;
-  column-gap: 12px;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   padding: 8px 12px calc(env(safe-area-inset-bottom, 0px) + 20px);
-}
-.album-grid > * {
-  break-inside: avoid;      /* 写真が段をまたいで切れないように */
-  margin-bottom: 12px;
+  align-content: start;
 }
 .album-cell {
   position: relative; padding: 0; border-radius: 10px; overflow: hidden;
@@ -1904,7 +1906,7 @@ button:active,
 .album-check {
   position: absolute; top: 5px; right: 5px;
   width: 22px; height: 22px; border-radius: 50%;
-  background: rgba(0,0,0,0.55); border: 2px solid #fff;
+  background: rgba(255,255,255,0.92); border: 2px solid #d1568f;
   color: #ff4fa3; font-size: 13px; font-weight: 900;
   display: flex; align-items: center; justify-content: center;
 }
@@ -1918,12 +1920,12 @@ button:active,
 }
 .album-empty-emoji { font-size: 46px; opacity: 0.9; }
 .album-empty-main {
-  font-size: 17px; font-weight: 900; color: #66e7ff;
+  font-size: 17px; font-weight: 900; color: #d1568f;
   /* ピンクの影は外した（2026-08-16、伊波さん「文字の陰にあるピンクは消去」）*/
 }
 .album-empty-sub {
   font-size: 12px; line-height: 2;
-  color: rgba(255,255,255,0.55);
+  color: rgba(110, 80, 105, 0.75);
 }
 
 /* ---- 1枚を大きく見る ---- */
