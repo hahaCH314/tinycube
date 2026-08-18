@@ -1840,17 +1840,27 @@ button:active,
      （2026-08-16、伊波さん「私が思ってた揃え方と違う。横は横のままで
      いいから縦と同じサイズで出してほしい」）*/
   display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  padding: 4px 12px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  /* ⚠️ **隙間を詰めすぎないこと。** 6px だと写真の縁が接して、
+     似た色が並んだときに**1枚に見えて切れ目が分からない**
+     （2026-08-18、伊波さん「プリクラ帳の写真が重なって並んで見えなくなってる」）。
+     一度「離れすぎ」と言われて詰めたが、行きすぎだった */
+  gap: 12px;
+  padding: 8px 12px calc(env(safe-area-inset-bottom, 0px) + 20px);
   align-content: start;
 }
 .album-cell {
   position: relative; padding: 0; border-radius: 10px; overflow: hidden;
   background: rgba(255,255,255,0.05);
-  border: 2px solid transparent;
-  /* **枠は縦長で揃える。** 縦の写真がちょうど収まる形にして、横の写真は
-     その中に上下の余白を持って入る。枠の大きさが揃うので一覧が整う */
-  aspect-ratio: 9 / 16;
+  /* ⚠️ **1枚ずつに白いフチを付けること。** 隙間だけだと、似た色の写真が
+     並んだとき境目が消えて「重なって見える」
+     （2026-08-18、伊波さん、実機の写真つき）。
+     プリクラのシールも1枚ずつ白フチがあるので、そちらのほうが本物らしい */
+  border: 3px solid rgba(255,255,255,0.92);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+  /* ⚠️ **枠は 3:4 くらいにする。** 9/16 だと縦長すぎて、横の写真が
+     上下に大きな余白を持ち、写真そのものが小さくて見えなくなる。
+     3:4 なら縦の写真もそこそこ大きく、横の写真も潰れない */
+  aspect-ratio: 3 / 4;
   line-height: 0;
 }
 /* ⚠️ **cover ではなく contain。** cover だと横の写真の左右が切れる。
