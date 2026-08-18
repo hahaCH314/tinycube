@@ -9,7 +9,7 @@ const run = async (lang) => {
   page.on('pageerror', e => errs.push(`[${lang}] ${e.message.slice(0,60)}`));
   if (lang==='en') await page.addInitScript(() => localStorage.setItem('tinycube.lang','en'));
   // 英語のボタン名が分からないときのため、両方の名前で探せるようにする
-  await page.goto('http://localhost:5020/', { waitUntil:'domcontentloaded' });
+  await page.goto('http://localhost:5170/', { waitUntil:'domcontentloaded' });
   await page.waitForTimeout(1500);
   const tap = async (t, ms=1200) => { const e=page.locator('button',{hasText:t}).filter({visible:true}).first();
     if(!(await e.count())) return false; await e.click({force:true}).catch(()=>{}); await page.waitForTimeout(ms); return true; };

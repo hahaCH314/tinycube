@@ -228,7 +228,13 @@ export function startStage(opts: StageOptions): () => void {
         // （2026-08-16、伊波さん「多分周りのフレームに負ける（暗い？）」）。
         // **少しだけ持ち上げる。** 強くかけると顔色が不自然になるので、
         // 明るさ 1.08 / 彩度 1.12 まで
-        g.filter = 'brightness(1.08) saturate(1.12)';
+        // ⚠️ **1.08 では足りなかった**（2026-08-18、伊波さん「cameraまだ
+        //    暗いかな」）。フレームの絵は明るく彩度が高いので、素の映像は
+        //    かなり沈んで見える。
+        //    brightness だけ上げると白っぽくなるので、**contrast を少し下げて
+        //    暗いところを持ち上げ**、そのぶん明るさと彩度を足す。
+        //    やりすぎると顔が白飛びするので、肌が残るここまで
+        g.filter = 'brightness(1.18) contrast(0.94) saturate(1.18)';
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
         g.drawImage(video, dx, dy, w, h);
         g.restore();

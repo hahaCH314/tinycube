@@ -1929,3 +1929,18 @@ button:active,
   /* ピンクの影は外した（2026-08-16）*/
 }
 .save-busy-note { color: #cbd5e1; font-size: 0.85rem; margin-top: 6px; }
+
+/* ⚠️ **App.css は読み込まれていない。** ここに書かないと効かない。
+   .cam-info は App.css にしか無かったので、解像度やお知らせが
+   スタイル無しで出ていた（2026-08-18、伊波さん「cameraまだ暗いかな」の
+   調査中に判明）。何度も踏んでいる罠 */
+.cam-info {
+  position: absolute; top: 10px; left: 10px; z-index: 40;
+  padding: 5px 11px; border-radius: 999px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
+  color: #9beeff;
+  background: rgba(7, 11, 24, 0.78);
+  border: 1px solid rgba(102, 231, 255, 0.42);
+  pointer-events: none;   /* 指は下のカメラへ通す */
+  max-width: calc(100% - 20px);
+}

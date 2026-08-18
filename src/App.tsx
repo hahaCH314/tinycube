@@ -765,8 +765,10 @@ function App() {
     v.srcObject = camStreamRef.current;
     v.muted = true;                          // 自分の声が返ってきて回るのを防ぐ
     v.play().catch(e => setCamInfo(t('err_play_rejected') + (e?.name ?? '')));
-    // しばらくして絵が来ていなければ、その中身を画面に出す
-    setCamInfo(null);
+    // しばらくして絵が来ていなければ、その中身を画面に出す。
+    // ⚠️ **ここで消さないこと。** カメラを繋いだ直後に走るので、
+    //    開いた解像度の表示（openCamera で入れたもの）を消してしまう。
+    //    困りごとが起きたときは下の check が上書きする（2026-08-18）
     const check = setTimeout(() => {
       const t = camStreamRef.current?.getVideoTracks()[0];
       if (!v.videoWidth || v.paused) {
