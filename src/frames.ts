@@ -264,17 +264,24 @@ const FRONT_ORDER: string[] = [
   'oshi_black_w', 'oshi_black_p',
 ];
 
-/** 一覧に出す順に並べ替える。FRONT_ORDER に無いものは元の順のまま後ろへ */
+/** 一覧に出す順に並べ替える。FRONT_ORDER に無いものは元の順のまま後ろへ。
+ *
+ *  ⚠️ **鍵つき（paid）は、無料のものより後ろに置くこと**
+ *     （2026-08-18、伊波さん「鍵付きフレームは後ろへ」）。
+ *     先に鍵が並ぶと「使えないものばかり」に見えて、遊ぶ前に萎える。
+ *     無料の118枚を先に見せて、その先に「もっとある」を置く。 */
 export function inDisplayOrder(list: Frame[]): Frame[] {
   const rank = new Map(FRONT_ORDER.map((id, i) => [id, i]));
   const front: Frame[] = [];
   const rest: Frame[] = [];
+  const locked: Frame[] = [];
   for (const f of list) {
-    if (rank.has(f.id)) front.push(f);
+    if (f.paid) locked.push(f);          // 鍵つきは何があっても最後
+    else if (rank.has(f.id)) front.push(f);
     else rest.push(f);
   }
   front.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
-  return [...front, ...rest];
+  return [...front, ...rest, ...locked];
 }
 
 /** 読み込みが終わるまで待つ。録画中に間に合わないと、枠だけ抜けた動画が出てしまう */
