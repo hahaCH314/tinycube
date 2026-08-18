@@ -1839,35 +1839,66 @@ button:active,
      それぞれの高さがまちまちで、縦と横が混ざるとバラバラに見えた
      （2026-08-16、伊波さん「私が思ってた揃え方と違う。横は横のままで
      いいから縦と同じサイズで出してほしい」）*/
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  /* ⚠️ **隙間を詰めすぎないこと。** 6px だと写真の縁が接して、
-     似た色が並んだときに**1枚に見えて切れ目が分からない**
-     （2026-08-18、伊波さん「プリクラ帳の写真が重なって並んで見えなくなってる」）。
-     一度「離れすぎ」と言われて詰めたが、行きすぎだった */
-  gap: 12px;
+  /* ⚠️ **段組みにすること。** grid だと行の高さが揃うので、縦の写真と
+     横の写真が混ざったとき低いほうの下に余白が残る。
+     columns なら、それぞれが上へ詰まる（2026-08-18、伊波さん
+     「縦フレームと同じ並べかたで並べればいいじゃん」）。
+     ⚠️ 隙間は詰めすぎないこと。6px だと似た色の写真が並んだとき
+        境目が消えて1枚に見える */
+  columns: 3;
+  column-gap: 12px;
   padding: 8px 12px calc(env(safe-area-inset-bottom, 0px) + 20px);
-  align-content: start;
+}
+.album-grid > * {
+  break-inside: avoid;      /* 写真が段をまたいで切れないように */
+  margin-bottom: 12px;
 }
 .album-cell {
   position: relative; padding: 0; border-radius: 10px; overflow: hidden;
   background: rgba(255,255,255,0.05);
-  /* ⚠️ **1枚ずつに白いフチを付けること。** 隙間だけだと、似た色の写真が
-     並んだとき境目が消えて「重なって見える」
-     （2026-08-18、伊波さん、実機の写真つき）。
-     プリクラのシールも1枚ずつ白フチがあるので、そちらのほうが本物らしい */
+  /* ⚠️ **box-sizing: border-box を必ず付けること。**
+     これが無いと border の 3px が枠の外側に足され、aspect-ratio で
+     決めた大きさより実際が大きくなって**隣の写真に食い込む**
+     （2026-08-18、伊波さん「画像が重なってるから」）。
+     grid は計算どおりに場所を空けるので、はみ出したぶんが重なる */
+  box-sizing: border-box;
+  /* 1枚ずつに白いフチ。プリクラのシールも1枚ずつ白フチがある */
   border: 3px solid rgba(255,255,255,0.92);
   box-shadow: 0 2px 8px rgba(0,0,0,0.45);
-  /* ⚠️ **枠は 3:4 くらいにする。** 9/16 だと縦長すぎて、横の写真が
-     上下に大きな余白を持ち、写真そのものが小さくて見えなくなる。
-     3:4 なら縦の写真もそこそこ大きく、横の写真も潰れない */
-  aspect-ratio: 3 / 4;
+  /* ⚠️ **枠の形を決めないこと。** できあがりのシートと同じで、
+     **写真の形のまま**並べる（2026-08-18、伊波さん「縦フレームと同じ
+     並べかたで並べればいいじゃん」）。
+     形を決め打ちすると、合わない写真に余白が出て小さく見える */
   line-height: 0;
 }
-/* ⚠️ **cover ではなく contain。** cover だと横の写真の左右が切れる。
-   伊波さん「横は横のままでいいから」＝形は変えずに、枠だけ揃える */
+/* 写真の形のまま、幅いっぱいに。余白は出ない */
 .album-cell img {
-  width: 100%; height: 100%;
-  object-fit: contain; display: block;
+  width: 100%; height: auto;
+  display: block;
+}
+
+/* ⚠️ **横で撮ったものは90度回して縦に置く**（2026-08-18、伊波さん
+   「横は縦るんだよ」）。プリクラ帳では全部が縦に並ぶほうが揃う。
+
+   回すと絵は枠からはみ出すので、**枠の高さを先に決めて**、中で
+   絶対位置に置いてから回す。9/16 は 16:9 を回したときの形。
+   `.is-wide` は App.tsx が絵を読んでから付ける（naturalWidth で判定） */
+.album-cell.is-wide {
+  /* ⚠️ **width も指定すること。** 段組み（columns）の中で position:absolute
+     の子だけになると、枠の幅が決まらず 6x11px まで潰れる（2026-08-18 に踏んだ）*/
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+}
+.album-cell.is-wide img {
+  position: absolute;
+  top: 50%; left: 50%;
+  /* 回したあとに「絵の幅」が枠の高さと合うようにする。
+     枠は 9:16 なので、高さ = 幅 × 16/9 */
+  width: calc(100% * 16 / 9);
+  height: auto;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center;
 }
 .album-cell.picked { border-color: #ff4fa3; }
 .album-check {
@@ -1965,6 +1996,13 @@ button:active,
   max-width: 82%;
   padding: 18px 26px; border-radius: 18px;
   text-align: center; line-height: 1.6;
+  /* ⚠️ **変なところで折り返さないこと**（2026-08-18、伊波さん「保存のとこの
+     お知らせは改行が気になる」）。日本語は既定だとどこでも切れるので、
+     「保存し／ました！」のような割れ方をする。
+     文節で折る＋約物のぶら下がりを止める */
+  word-break: keep-all;
+  overflow-wrap: anywhere;   /* それでも入らない長い語だけは折る */
+  line-break: strict;
   font-size: 1.05rem; font-weight: 900; color: #fff;
   background: linear-gradient(135deg, rgba(255,79,163,0.96), rgba(157,92,255,0.96));
   border: 2px solid rgba(255,255,255,0.5);

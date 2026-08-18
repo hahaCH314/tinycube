@@ -78,8 +78,10 @@ android {
         //    （33 = 保存の知らせを真ん中に大きく／保存を待たずに戻る。
         //          2026-08-18）
         //    （34 = プリクラ帳の写真が1枚に見えるのを直した。2026-08-18）
-        versionCode 34
-        versionName "1.3.4"
+        //    （35 = プリクラ帳の重なりを直し、横の写真を縦に置くようにした。
+        //          2026-08-18）
+        versionCode 35
+        versionName "1.3.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

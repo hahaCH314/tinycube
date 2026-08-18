@@ -2681,7 +2681,19 @@ function App() {
                       }
                     }}
                   >
-                    <img src={it.thumb} alt="" />
+                    {/* ⚠️ **横で撮ったものは90度回して縦に置く**（2026-08-18、
+                        伊波さん「横は縦るんだよ」）。プリクラ帳の見た目が
+                        揃う。読み込んでから形を見て印を付ける */}
+                    <img
+                      src={it.thumb}
+                      alt=""
+                      onLoad={e => {
+                        const im = e.currentTarget;
+                        if (im.naturalWidth > im.naturalHeight) {
+                          im.closest('.album-cell')?.classList.add('is-wide');
+                        }
+                      }}
+                    />
                     {albumEditing && (
                       <span className="album-check">{albumPicked.has(it.id) ? '✓' : ''}</span>
                     )}
