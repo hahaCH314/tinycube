@@ -37,6 +37,10 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        // ⚠️ **registerPlugin は super.onCreate より前に呼ぶこと。**
+        //    あとから呼んでも WebView に届かず、JS から見えないまま
+        //    「プラグインがありません」で失敗する
+        registerPlugin(GalleryPlugin.class);
         super.onCreate(savedInstanceState);
         askForCameraAndMic();
     }

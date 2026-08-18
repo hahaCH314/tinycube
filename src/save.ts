@@ -23,8 +23,13 @@
 
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-// 写真アプリへ直接しまう。共有シートを開かずに済むぶん速い（2026-08-16）
-import { Media } from '@capacitor-community/media';
+// 写真アプリへ直接しまう自前の係（android/.../GalleryPlugin.java）。
+// ⚠️ @capacitor-community/media はやめた。READ_MEDIA_IMAGES を要求し、
+//    それを宣言すると Play が「19,037台が対象外」と警告するため（2026-08-18）
+import { registerPlugin } from '@capacitor/core';
+const Gallery = registerPlugin<{
+  save(o: { data: string; name: string; isVideo: boolean }): Promise<{ uri: string }>;
+}>('Gallery');
 
 /** いま Capacitor の入れ物（アプリ）の中で動いているか */
 function inApp(): boolean {
@@ -83,35 +88,25 @@ export async function saveMedia(blob: Blob, name: string): Promise<SaveResult> {
       //    （2026-08-16、伊波さん「保存の画面がでる…遅い」）。
       //    1コマ譲るだけで、待たされている理由が見えるようになる
       await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
-      // ⚠️ **Cache ではなく Data に書くこと**（2026-08-17）。
-      //    Cache は端末が勝手に消せる置き場。Media が読みに行ったときには
-      //    もう無い、ということが起こりうる。直接保存が失敗して共有シートへ
-      //    落ちる原因のひとつ（伊波さん「かなり時間が空いて、共有画面へ」）。
-      //    Data なら消されない。使い終わったら自分で消す（下の deleteFile）
       const data = await toBase64(blob);
-      const written = await Filesystem.writeFile({
-        path: name,
-        data,
-        directory: Directory.Data,
-      });
 
-      // ⚠️ **まず「写真アプリへ直接」を試す**（2026-08-16、伊波さん
-      //    「保存のタイミングが遅い（自分のファイルに保存時）」）。
-      //    以前は Share.share() で共有シートを開き、そこから「画像を保存」を
-      //    選んでもらう形だった。シートが開くまで数秒かかるうえ、選ぶ手数も
-      //    要る。Media なら押した時点で写真アプリに入る。
-      //    ⚠️ **失敗したら共有シートへ落とすこと。** 端末や権限で使えない
-      //       ことがあり、そこで詰むと保存する手立てが無くなる
+      // ⚠️ **自前の Gallery で、押したその場で写真アプリへしまう**（2026-08-18）。
+      //    @capacitor-community/media は READ_MEDIA_IMAGES を要求する。
+      //    それは「他人の写真も読む」ための権限で保存には要らないのに、
+      //    宣言すると Play が「19,037台が対象外」と警告した。
+      //    権限を外すとプラグインが動かず共有シートに落ちる、という板挟みに
+      //    なっていた（伊波さん「やっぱり共有画面、しかもめっちゃ遅い」）。
+      //
+      //    Android 10 以降は MediaStore に自分で書けば**権限が要らない**。
+      //    GalleryPlugin.java がそれをやる。
+      //
+      //    ⚠️ **一時ファイルを作らないこと。** 前は Filesystem に書いてから
+      //       その場所を渡していたが、書く→読む→また書くで三度手間だった。
+      //       base64 をそのまま渡せば一度で済む（「めっちゃ遅い」の一因）。
+      //    ⚠️ **失敗したら共有シートへ落とすこと。** Android 9 以下など、
+      //       ここで詰むと保存する手立てが無くなる
       try {
-        if (name.endsWith('.mp4')) {
-          await Media.saveVideo({ path: written.uri });
-        } else {
-          await Media.savePhoto({ path: written.uri });
-        }
-        // 写真アプリに入ったので、一時ファイルは要らない。
-        // 残すと端末の容量を食い続ける（撮るたびに増える）
-        void Filesystem.deleteFile({ path: name, directory: Directory.Data })
-          .catch(() => { /* 消せなくても保存は済んでいる */ });
+        await Gallery.save({ data, name, isVideo: name.endsWith('.mp4') });
         return { how: 'downloaded' };   // 端末に入ったことが確実に分かる
       } catch (mediaErr: any) {
         const m = String(mediaErr?.message ?? mediaErr);
@@ -123,6 +118,11 @@ export async function saveMedia(blob: Blob, name: string): Promise<SaveResult> {
         // 本人が権限を断ったなら、共有シートに落としても同じ結果になる。
         // それでも道を残す（他のアプリへ送るのは権限が要らない）
         if (!/cancel|abort|dismiss/i.test(m)) {
+          // ここで初めて一時ファイルを作る。共有シートは「ファイルの場所」を
+          // 求めるため。**うまくいく道では作らない**（そのぶん速い）
+          const written = await Filesystem.writeFile({
+            path: name, data, directory: Directory.Cache,
+          });
           await Share.share({
             title: name,
             url: written.uri,
