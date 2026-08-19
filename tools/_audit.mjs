@@ -9,7 +9,7 @@ const run = async (lang) => {
   page.on('pageerror', e => errs.push(`[${lang}] ${e.message.slice(0,60)}`));
   if (lang==='en') await page.addInitScript(() => localStorage.setItem('tinycube.lang','en'));
   // 英語のボタン名が分からないときのため、両方の名前で探せるようにする
-  await page.goto('http://localhost:5170/', { waitUntil:'domcontentloaded' });
+  await page.goto('http://localhost:5440/', { waitUntil:'domcontentloaded' });
   await page.waitForTimeout(1500);
   const tap = async (t, ms=1200) => { const e=page.locator('button',{hasText:t}).filter({visible:true}).first();
     if(!(await e.count())) return false; await e.click({force:true}).catch(()=>{}); await page.waitForTimeout(ms); return true; };
@@ -24,7 +24,9 @@ const run = async (lang) => {
   const fr = await page.evaluate(()=>({n:document.querySelectorAll('.frame-tile').length,
     鍵:[...document.querySelectorAll('.frame-tile')].filter(e=>/🔒/.test(e.textContent)).length,
     見本:[...document.querySelectorAll('.frame-tile img')].filter(i=>/thumb/.test(i.src)).length}));
-  ok(`フレーム${fr.n}枚・鍵${fr.鍵}・見本${fr.見本}`, fr.n>50 && fr.鍵===0 && fr.見本>0);
+  // ⚠️ 鍵つきは 2026-08-18 から**あって正しい**（¥300 で解ける53枚）。
+  //    0 を期待すると、意図した状態を NG と誤って報告する
+  ok(`フレーム${fr.n}枚・鍵${fr.鍵}・見本${fr.見本}`, fr.n>50 && fr.見本>0);
   // 指の横取り
   // ⚠️ **手前の画面だけを見ること。** 裏に残っている撮影画面のボタンまで
   //    数えると、覆われているだけのものを「押せない」と誤検知する
