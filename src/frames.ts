@@ -265,7 +265,12 @@ const FRONT_ORDER: string[] = [
   //    「新しく追加した顔はめ、フレームはうえのほうへ表示」）。
   //    130枚あるので、後ろに入れると誰にも見つけてもらえない。
   //    2026-08-18 追加のぶん（無料枠12枚）
+  //    ⚠️ **顔ハメではない枠を先に。** 顔ハメは人を選ぶ（誰かの顔が要る）
+  //       ので、まず「そのまま撮れる枠」を並べる（2026-08-19、伊波さん
+  //       「さっきのフレームは、顔はめじゃないから上の列に」）
   'yumekawa_pop', 'gothic', 'cyber_angel', 'cyber_punk', 'retro', 'wafu',
+  'frame_10',
+  // ここから顔ハメ
   'okami_face', 'heisei_loli_face', 'ryoushi_face', 'kuroneko_face',
   'dog_spa_face', 'inaka_face',
 
