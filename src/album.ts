@@ -110,13 +110,17 @@ export async function add(full: string, count: number): Promise<AddResult> {
     if (now >= ALBUM_LIMIT) return { ok: false, why: 'full' };
 
     const thumb = await makeThumb(full);
-    // しまうときに向きを決める。あとで測り直さない
-    const wide = await new Promise<boolean>(res => {
+    // しまうときに向きを決める。あとで測り直さない。
+    // ⚠️ **onload ではなく decode() を使うこと**（2026-08-19）。
+    //    onload は**すでに読めている絵では発火しないことがある**。
+    //    そこで詰まると、この await が返らずに保存そのものが止まる
+    let wide = false;
+    try {
       const i = new Image();
-      i.onload = () => res(i.naturalWidth > i.naturalHeight);
-      i.onerror = () => res(false);
       i.src = thumb;
-    });
+      await i.decode();
+      wide = i.naturalWidth > i.naturalHeight;
+    } catch { /* 読めなければ回さない */ }
     const db = await open();
     try {
       const tx = db.transaction(STORE, 'readwrite');

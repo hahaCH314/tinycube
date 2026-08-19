@@ -95,8 +95,9 @@ android {
         //    （45 = プリクラ帳で横の写真が回らなかったのを直した。2026-08-19）
         //    （46 = 向きをデータに持たせた。読み込みのタイミングに
         //          左右されなくなった。2026-08-19）
-        versionCode 46
-        versionName "1.4.6"
+        //    （47 = 古い写真も回るようにした（onload → decode）。2026-08-19）
+        versionCode 47
+        versionName "1.4.7"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

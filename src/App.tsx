@@ -1174,12 +1174,20 @@ function App() {
     //    そうなっていた）。開いたときに一度だけ測って、次からは持っている
     const need = list.filter(it => it.wide === undefined);
     if (need.length) {
-      await Promise.all(need.map(it => new Promise<void>(res => {
-        const i = new Image();
-        i.onload = () => { it.wide = i.naturalWidth > i.naturalHeight; res(); };
-        i.onerror = () => { it.wide = false; res(); };
-        i.src = it.thumb;
-      })));
+      // ⚠️ **onload ではなく decode() を使うこと**（2026-08-19）。
+      //    onload は**すでに読めている絵では発火しないことがある**。
+      //    それで古い41枚が横のまま並んでいた（伊波さん「できてない！！！」）。
+      //    decode() は読み終わっていれば即座に返るので、取りこぼさない
+      await Promise.all(need.map(async it => {
+        try {
+          const i = new Image();
+          i.src = it.thumb;
+          await i.decode();
+          it.wide = i.naturalWidth > i.naturalHeight;
+        } catch {
+          it.wide = false;   // 読めない絵は回さない
+        }
+      }));
       void album.fillWide(need.map(it => ({ id: it.id, wide: !!it.wide })));
     }
     setAlbumList(list);
