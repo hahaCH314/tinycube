@@ -261,6 +261,14 @@ export function fitsShape(frame: Frame, shape: OutShape): boolean {
 
 /** 先頭に出したいもの。この順に並ぶ */
 const FRONT_ORDER: string[] = [
+  // ⚠️ **新しく足したものは、いちばん上に置く**（2026-08-19、伊波さん
+  //    「新しく追加した顔はめ、フレームはうえのほうへ表示」）。
+  //    130枚あるので、後ろに入れると誰にも見つけてもらえない。
+  //    2026-08-18 追加のぶん（無料枠12枚）
+  'yumekawa_pop', 'gothic', 'cyber_angel', 'cyber_punk', 'retro', 'wafu',
+  'okami_face', 'heisei_loli_face', 'ryoushi_face', 'kuroneko_face',
+  'dog_spa_face', 'inaka_face',
+
   // 目を引くもの。開いた瞬間に見えるところ
   'tc_fun', 'tc_fun2', 'tc_otaku', 'tc_animal', 'tc_mushroom',
 
