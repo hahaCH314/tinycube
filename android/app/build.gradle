@@ -92,8 +92,9 @@ android {
         //    （43 = カメラが真っ暗になったのを直した。ファンシー9 の中央も
         //          抜いた。2026-08-19）
         //    （44 = 顔ハメでない枠を先に並べた。2026-08-19）
-        versionCode 44
-        versionName "1.4.4"
+        //    （45 = プリクラ帳で横の写真が回らなかったのを直した。2026-08-19）
+        versionCode 45
+        versionName "1.4.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

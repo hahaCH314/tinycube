@@ -2682,16 +2682,26 @@ function App() {
                     }}
                   >
                     {/* ⚠️ **横で撮ったものは90度回して縦に置く**（2026-08-18、
-                        伊波さん「横は縦るんだよ」）。プリクラ帳の見た目が
-                        揃う。読み込んでから形を見て印を付ける */}
+                        伊波さん「横は縦るんだよ」）。
+                        ⚠️ **onLoad で判定しないこと**（2026-08-19、伊波さん
+                           「プリクラ帳はこわれたまま」）。
+                           絵がキャッシュから即座に出ると onLoad は**発火しない**。
+                           一覧を開き直すと大半がキャッシュ済みなので、印が
+                           付かず回転しなくなる。
+                           **ref で、付いた時点の naturalWidth を見る。**
+                           まだ読めていなければ onLoad で拾い直す */}
                     <img
                       src={it.thumb}
                       alt=""
-                      onLoad={e => {
-                        const im = e.currentTarget;
-                        if (im.naturalWidth > im.naturalHeight) {
-                          im.closest('.album-cell')?.classList.add('is-wide');
-                        }
+                      ref={el => {
+                        if (!el) return;
+                        const mark = () => {
+                          if (el.naturalWidth > el.naturalHeight) {
+                            el.closest('.album-cell')?.classList.add('is-wide');
+                          }
+                        };
+                        if (el.complete && el.naturalWidth) mark();
+                        else el.addEventListener('load', mark, { once: true });
                       }}
                     />
                     {albumEditing && (
