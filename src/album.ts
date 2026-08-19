@@ -41,6 +41,13 @@ export type AlbumItem = {
   full?: string;
   /** 何枚組か。3枚シートなら 3 */
   count: number;
+  /** 横長の写真か（2026-08-19）。
+   *  ⚠️ **しまうときに決めて持っておくこと。** 一覧で絵を読んでから
+   *     naturalWidth で判定していたが、**キャッシュだと onLoad が来ない**ので
+   *     2回目以降に印が付かず、横のまま並んでいた
+   *     （伊波さん「プリクラ帳はこわれたまま」「直ってない」）。
+   *     ここに持てば、読み込みのタイミングに左右されない */
+  wide?: boolean;
 };
 
 function open(): Promise<IDBDatabase> {
@@ -103,6 +110,13 @@ export async function add(full: string, count: number): Promise<AddResult> {
     if (now >= ALBUM_LIMIT) return { ok: false, why: 'full' };
 
     const thumb = await makeThumb(full);
+    // しまうときに向きを決める。あとで測り直さない
+    const wide = await new Promise<boolean>(res => {
+      const i = new Image();
+      i.onload = () => res(i.naturalWidth > i.naturalHeight);
+      i.onerror = () => res(false);
+      i.src = thumb;
+    });
     const db = await open();
     try {
       const tx = db.transaction(STORE, 'readwrite');
@@ -116,7 +130,7 @@ export async function add(full: string, count: number): Promise<AddResult> {
         q.onerror = () => res(false);
       });
       if (exists) id += 1;
-      st.put({ id, thumb, full, count } as AlbumItem);
+      st.put({ id, thumb, full, count, wide } as AlbumItem);
       await done(tx);
       return { ok: true, count: now + 1 };
     } finally {
@@ -198,4 +212,27 @@ export async function countItems(): Promise<number> {
   } finally {
     db.close();
   }
+}
+
+/** 古い写真に「横長かどうか」を書き足す（2026-08-19）。
+ *  wide を持たせる前にしまったものを、一覧を開いたときに埋めるため。
+ *  ⚠️ 失敗しても画面は動く（その回だけ測り直しになるだけ）*/
+export async function fillWide(rows: { id: number; wide: boolean }[]): Promise<void> {
+  if (!rows.length) return;
+  try {
+    const db = await open();
+    await new Promise<void>((res, rej) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const st = tx.objectStore(STORE);
+      for (const r of rows) {
+        const get = st.get(r.id);
+        get.onsuccess = () => {
+          const v = get.result as AlbumItem | undefined;
+          if (v) { v.wide = r.wide; st.put(v); }
+        };
+      }
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  } catch { /* 埋められなくても、次に開いたときにまた測るだけ */ }
 }

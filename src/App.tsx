@@ -1167,7 +1167,22 @@ function App() {
 
   /** プリクラ帳を開く。一覧は見本だけなので軽い */
   const openAlbum = async () => {
-    setAlbumList(await album.list());
+    const list = await album.list();
+    // ⚠️ **wide が無い古いものを、ここで測って埋める**（2026-08-19）。
+    //    wide は 8/19 から持つようにしたので、それ以前にしまった写真には
+    //    入っていない。無いまま出すと横のまま並ぶ（伊波さんの実機で41枚が
+    //    そうなっていた）。開いたときに一度だけ測って、次からは持っている
+    const need = list.filter(it => it.wide === undefined);
+    if (need.length) {
+      await Promise.all(need.map(it => new Promise<void>(res => {
+        const i = new Image();
+        i.onload = () => { it.wide = i.naturalWidth > i.naturalHeight; res(); };
+        i.onerror = () => { it.wide = false; res(); };
+        i.src = it.thumb;
+      })));
+      void album.fillWide(need.map(it => ({ id: it.id, wide: !!it.wide })));
+    }
+    setAlbumList(list);
     setAlbumPicked(new Set());
     setAlbumEditing(false);
     setAlbumOpen(true);
@@ -2668,7 +2683,12 @@ function App() {
                 {albumList.map(it => (
                   <button
                     key={it.id}
-                    className={`album-cell ${albumPicked.has(it.id) ? 'picked' : ''}`}
+                    // ⚠️ **向きは、しまうときに決めた it.wide を使う**（2026-08-19）。
+                    //    一覧で絵を読んでから測る形は、**キャッシュだと
+                    //    onLoad が来ない**ので2回目以降に効かなかった
+                    //    （伊波さん「プリクラ帳はこわれたまま」「直ってない」）。
+                    //    it.wide が無い古いものは、下の useEffect が測って埋める
+                    className={`album-cell ${albumPicked.has(it.id) ? 'picked' : ''} ${it.wide ? 'is-wide' : ''}`}
                     onClick={async () => {
                       if (albumEditing) {
                         // 選ぶ・選び直す
@@ -2681,29 +2701,7 @@ function App() {
                       }
                     }}
                   >
-                    {/* ⚠️ **横で撮ったものは90度回して縦に置く**（2026-08-18、
-                        伊波さん「横は縦るんだよ」）。
-                        ⚠️ **onLoad で判定しないこと**（2026-08-19、伊波さん
-                           「プリクラ帳はこわれたまま」）。
-                           絵がキャッシュから即座に出ると onLoad は**発火しない**。
-                           一覧を開き直すと大半がキャッシュ済みなので、印が
-                           付かず回転しなくなる。
-                           **ref で、付いた時点の naturalWidth を見る。**
-                           まだ読めていなければ onLoad で拾い直す */}
-                    <img
-                      src={it.thumb}
-                      alt=""
-                      ref={el => {
-                        if (!el) return;
-                        const mark = () => {
-                          if (el.naturalWidth > el.naturalHeight) {
-                            el.closest('.album-cell')?.classList.add('is-wide');
-                          }
-                        };
-                        if (el.complete && el.naturalWidth) mark();
-                        else el.addEventListener('load', mark, { once: true });
-                      }}
-                    />
+                    <img src={it.thumb} alt="" />
                     {albumEditing && (
                       <span className="album-check">{albumPicked.has(it.id) ? '✓' : ''}</span>
                     )}
