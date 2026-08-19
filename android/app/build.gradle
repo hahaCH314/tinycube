@@ -86,8 +86,10 @@ android {
         //    （38 = 鍵つきフレームを一覧の後ろへ回した。2026-08-18）
         //    （39 = 無料フレームを12枚足した（118→130枚）。2026-08-18）
         //    （40 = プリクラ帳をブルー・紫寄りのパステルに。2026-08-19）
-        versionCode 40
-        versionName "1.4.0"
+        //    （41 = カメラの重さを減らした（canvas の filter をやめた）。
+        //          保存の知らせの改行も直した。2026-08-19）
+        versionCode 41
+        versionName "1.4.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

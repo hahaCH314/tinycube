@@ -224,19 +224,24 @@ export function startStage(opts: StageOptions): () => void {
         const w = Math.ceil(vw * scale), h = Math.ceil(vh * scale);
         const dx = Math.round((OUT_W - w) / 2), dy = Math.round((OUT_H - h) / 2);
         g.save();
-        // フレームの絵は明るく彩度が高いので、素の映像だけ沈んで見える
-        // （2026-08-16、伊波さん「多分周りのフレームに負ける（暗い？）」）。
-        // **少しだけ持ち上げる。** 強くかけると顔色が不自然になるので、
-        // 明るさ 1.08 / 彩度 1.12 まで
-        // ⚠️ **1.08 では足りなかった**（2026-08-18、伊波さん「cameraまだ
-        //    暗いかな」）。フレームの絵は明るく彩度が高いので、素の映像は
-        //    かなり沈んで見える。
-        //    brightness だけ上げると白っぽくなるので、**contrast を少し下げて
-        //    暗いところを持ち上げ**、そのぶん明るさと彩度を足す。
-        //    やりすぎると顔が白飛びするので、肌が残るここまで
-        g.filter = 'brightness(1.18) contrast(0.94) saturate(1.18)';
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
         g.drawImage(video, dx, dy, w, h);
+        // ⚠️ **canvas の filter を使わないこと**（2026-08-19、伊波さん
+        //    「cameraカクカクしてたよ」）。
+        //    `g.filter = 'brightness(...)'` は 1920x1080 の全画素に毎コマ
+        //    かかるので、端末によっては目に見えて重くなる。
+        //
+        //    代わりに、**明るい色を薄く重ねる**。画素ごとの計算ではなく
+        //    ただの塗りなので、はるかに軽い。
+        //      screen  … 暗いところだけを持ち上げる（白飛びしにくい）
+        //      overlay … 少しだけ色を濃くして、彩度が落ちたぶんを補う
+        //    見た目は filter とほぼ同じで、負荷だけ下がる
+        g.globalCompositeOperation = 'screen';
+        g.fillStyle = 'rgba(150, 150, 170, 0.13)';
+        g.fillRect(dx, dy, w, h);
+        g.globalCompositeOperation = 'overlay';
+        g.fillStyle = 'rgba(255, 230, 245, 0.10)';
+        g.fillRect(dx, dy, w, h);
         g.restore();
       }
     }
