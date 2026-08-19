@@ -89,8 +89,10 @@ android {
         //    （41 = カメラの重さを減らした（canvas の filter をやめた）。
         //          保存の知らせの改行も直した。2026-08-19）
         //    （42 = 新しい12枚を一覧のいちばん上へ。2026-08-19）
-        versionCode 42
-        versionName "1.4.2"
+        //    （43 = カメラが真っ暗になったのを直した。ファンシー9 の中央も
+        //          抜いた。2026-08-19）
+        versionCode 43
+        versionName "1.4.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

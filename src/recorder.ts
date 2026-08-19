@@ -223,25 +223,21 @@ export function startStage(opts: StageOptions): () => void {
         //    ceil で1px大きく取るので、丸めたぶんの隙間も埋まる
         const w = Math.ceil(vw * scale), h = Math.ceil(vh * scale);
         const dx = Math.round((OUT_W - w) / 2), dy = Math.round((OUT_H - h) / 2);
+        // ⚠️ **明るさの補正はここでやらないこと**（2026-08-19、伊波さん
+        //    「カメラ真っ暗だよ？」）。
+        //
+        //    経緯:
+        //      v1.3.2  g.filter で brightness/contrast/saturate をかけた
+        //              → 1920x1080 の全画素に毎コマかかって重い（カクついた）
+        //      v1.4.1  代わりに screen / overlay で色を重ねた
+        //              → **画面が真っ暗になった**。globalCompositeOperation は
+        //                 このあとのフレーム描画にも効いてしまう
+        //
+        //    どちらも駄目だったので、**素のまま描く**。
+        //    暗さが気になるなら、映像を触るのではなくカメラ側で明るく撮る。
         g.save();
         if (mirror) { g.translate(OUT_W, 0); g.scale(-1, 1); }
         g.drawImage(video, dx, dy, w, h);
-        // ⚠️ **canvas の filter を使わないこと**（2026-08-19、伊波さん
-        //    「cameraカクカクしてたよ」）。
-        //    `g.filter = 'brightness(...)'` は 1920x1080 の全画素に毎コマ
-        //    かかるので、端末によっては目に見えて重くなる。
-        //
-        //    代わりに、**明るい色を薄く重ねる**。画素ごとの計算ではなく
-        //    ただの塗りなので、はるかに軽い。
-        //      screen  … 暗いところだけを持ち上げる（白飛びしにくい）
-        //      overlay … 少しだけ色を濃くして、彩度が落ちたぶんを補う
-        //    見た目は filter とほぼ同じで、負荷だけ下がる
-        g.globalCompositeOperation = 'screen';
-        g.fillStyle = 'rgba(150, 150, 170, 0.13)';
-        g.fillRect(dx, dy, w, h);
-        g.globalCompositeOperation = 'overlay';
-        g.fillStyle = 'rgba(255, 230, 245, 0.10)';
-        g.fillRect(dx, dy, w, h);
         g.restore();
       }
     }
