@@ -5,14 +5,14 @@ Google Play 版の `docs/play-release-checklist.md` と同じ形で、伊波さ�
 
 ---
 
-## ⏭ 次にやること：Xcode で署名を設定して Archive
+## ⏭ 次にやること：課金商品の審査用スクリーンショット
 
-**iOS プラットフォームのダウンロードは完了済み**（2026-08-21、伊波さんが自分の
-ターミナルで実行）。シミュレータでの起動確認まで通っている。
+**App Store Connect へのアップロードは 2026-08-21 に成功済み。**
+残っているのは、課金商品 `tinycube_unlock_all` が `MISSING_METADATA` から
+抜けるための「購入画面が写った写真」1枚だけ。
 
-⚠️ **`xcodebuild -downloadPlatform iOS`（8.5GB）は伊波さん自身のターミナルで走らせること。**
-シオン（Claude）の裏で走らせると会話の切れ目で毎回止まる。2026-08-21 に2回試して
-52% と 67.6% で `Download was cancelled` になった。入れ直しが必要になったら思い出すこと。
+⚠️ **これはシオンが撮れない。** シミュレータをタップできないため、
+購入画面まで進む操作は伊波さんにお願いすることになる。
 
 ## 0. いまどこまで済んでいるか（2026-08-21 時点）
 
@@ -31,10 +31,17 @@ Google Play 版の `docs/play-release-checklist.md` と同じ形で、伊波さ�
 - [x] **課金プラグインが StoreKit に繋がることを確認**（`InAppPurchase load [tinycube_unlock_all]` が飛んでいる）
 - [x] **カメラが動くことを確認**（`getUserMedia` 成功。`capacitor://localhost` はポート無しなので secure context が成立）
 - [x] **保存が写真アプリに直接入ることを確認**（`GalleryPlugin.swift` が本物の写真IDを返した）
-- [ ] **Xcode で署名（チーム）を設定** ← いまここ
-- [ ] App Store Connect にアプリを登録
-- [ ] 課金商品 `tinycube_unlock_all` を登録
-- [ ] TestFlight で実機確認
+- [x] **Xcode に Apple ID をログイン**（チーム D8497HKMK7 / iha kanako）
+- [x] **アプリIDを登録**（In-App Purchase も既定で有効だった）
+- [x] **配布用証明書を作成**（Apple Distribution / 2027-08-21まで）
+- [x] **App Store 用プロファイルを作成**（実機不要）
+- [x] **Archive 成功 → App.ipa 39MB**
+- [x] **検証・アップロード成功**（VERIFY / UPLOAD SUCCEEDED, no errors）
+- [x] **App Store Connect にアプリを登録**（tinyCUBE　プリクラカメラ / App ID 6803792204）
+- [x] **課金商品 `tinycube_unlock_all` を登録**（¥300・非消耗型・日本語説明つき）
+- [ ] **課金商品の審査用スクリーンショット** ← いまここ
+- [ ] ストア掲載情報（スクショ・説明文・プライバシーポリシー・年齢レーティング）
+- [ ] TestFlight で実機確認（カメラ・課金）
 - [ ] 審査へ提出
 
 ---
@@ -249,3 +256,82 @@ xcrun simctl launch --console-pty <シミュレータのID> com.cubicenginestudi
 ```sh
 xcrun simctl privacy <シミュレータのID> grant photos-add com.cubicenginestudio.tinycube
 ```
+
+
+---
+
+## ⚠️ 実機が1台も無いと自動署名は詰む（2026-08-21）
+
+いちばん時間を取られたところ。**iPhone を持っていない人がハマる罠。**
+
+### 何が起きるか
+
+Archive しようとすると必ずここで止まる：
+
+```
+error: Communication with Apple failed: Your team has no devices from which
+       to generate a provisioning profile.
+error: No profiles for 'com.cubicenginestudio.tinycube' were found:
+       Xcode couldn't find any iOS App Development provisioning profiles
+```
+
+自動署名は Archive のときに **開発用（Development）のプロファイル**を作ろうとする。
+それは実機が1台以上登録されていないと作れない。以下は**全部だめだった**：
+
+- `-destination` の指定を変える
+- `-configuration Release` を明示する
+- `-destination` を外す
+- App Store Connect の API キーを渡す
+
+### 回り込み方
+
+**配布用（App Store）のプロファイルは実機が要らない。** 手動署名でそちらを指す。
+
+```
+CODE_SIGN_STYLE                = Manual
+CODE_SIGN_IDENTITY             = Apple Distribution
+PROVISIONING_PROFILE_SPECIFIER = tinyCUBE App Store
+```
+
+Release だけ手動にすること。Debug を自動のまま残せば、シミュレータでの
+動作確認はこれまでどおり動く。
+
+### API キーで Apple に直接話しかける
+
+証明書もプロファイルも、画面を触らずに作れる。`tools/` には入れていないので
+必要になったらこの手順で。
+
+```sh
+# 1. 秘密鍵と CSR を作る
+openssl req -new -newkey rsa:2048 -nodes -keyout dist.key -out dist.csr \
+  -subj "/emailAddress=syunpoo419@gmail.com/CN=CUBICENGINEstudio/C=JP"
+
+# 2. POST /v1/certificates   （certificateType: DISTRIBUTION, csrContent: CSRの中身）
+# 3. 返ってきた certificateContent を base64 デコードして .cer に
+# 4. .cer と dist.key を .p12 にまとめて security import
+# 5. POST /v1/profiles       （profileType: IOS_APP_STORE）
+# 6. profileContent を base64 デコードして
+#    ~/Library/MobileDevice/Provisioning Profiles/<UUID>.mobileprovision へ
+```
+
+JWT(ES256) は Node の `createSign` に `dsaEncoding: 'ieee-p1363'` を渡せば作れる。
+
+### アップロード
+
+```sh
+xcrun altool --upload-app -f App.ipa -t ios \
+  --apiKey H36ZG2WZ94 --apiIssuer 8c2f2e58-ffce-4312-9038-a6552f2e6d37
+```
+
+⚠️ **アプリの「枠」を App Store Connect で先に作っておくこと。**
+無いと `Cannot determine the Apple ID from Bundle ID` で弾かれる。
+そして**アプリの作成は API ではできない**（`apps` は CREATE 不可）。
+ここだけは画面操作が要る。
+
+⚠️ **課金商品は v2 の窓口で作ること。** `/v1/inAppPurchases` は CREATE 不可で、
+`/v2/inAppPurchases` なら通る。
+
+### Safari の画面が英語でつらいとき
+
+**メニューバーの「表示」→「翻訳」→「日本語に翻訳」** でページごと日本語になる。
+Apple のサイトは全部これでいける。
