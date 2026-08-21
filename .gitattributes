@@ -1,0 +1,14 @@
+# リポジトリ内のテキストは常に LF で保存する（Mac / Windows 混在対策）
+* text=auto eol=lf
+
+# 画像・配布物・署名鍵はバイナリ。改行変換をかけない
+*.png  binary
+*.webp binary
+*.jpg  binary
+*.jar  binary
+*.aab  binary
+*.jks  binary
+
+# Gradle ラッパー：Unix側は LF、Windows の .bat は CRLF でないと動かない
+gradlew      text eol=lf
+*.bat        text eol=crlf
