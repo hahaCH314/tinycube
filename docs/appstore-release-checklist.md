@@ -1,0 +1,251 @@
+# App Store に出すまでの手順（2026-08-21）
+
+Google Play 版の `docs/play-release-checklist.md` と同じ形で、伊波さんが自分で
+進められるように書いた。**上から順に**。
+
+---
+
+## ⏭ 次にやること：Xcode で署名を設定して Archive
+
+**iOS プラットフォームのダウンロードは完了済み**（2026-08-21、伊波さんが自分の
+ターミナルで実行）。シミュレータでの起動確認まで通っている。
+
+⚠️ **`xcodebuild -downloadPlatform iOS`（8.5GB）は伊波さん自身のターミナルで走らせること。**
+シオン（Claude）の裏で走らせると会話の切れ目で毎回止まる。2026-08-21 に2回試して
+52% と 67.6% で `Download was cancelled` になった。入れ直しが必要になったら思い出すこと。
+
+## 0. いまどこまで済んでいるか（2026-08-21 時点）
+
+- [x] Apple Developer Program 登録（伊波さん・登録済み）
+- [x] Mac に Node v24.19.0 導入（`~/.local/node`。管理者パスワード不要な入れ方）
+- [x] `npm ci` → **Web ビルドが Mac で通ることを確認**
+- [x] `@capacitor/ios` 導入・`npx cap add ios` 成功
+- [x] **課金プラグインが SPM で組み込まれた**（CocoaPods は要らなかった。下の「覚えておくこと」参照）
+- [x] `Info.plist` にカメラ・マイク・写真保存の説明文を追加
+- [x] **保存の iOS 版を実装**（`ios/App/App/GalleryPlugin.swift`）
+- [x] アプリアイコンを tinyCUBE のものに差し替え（1024×1024・透過なし）
+- [x] バージョンを Android とそろえた（`MARKETING_VERSION = 1.4.7`）
+- [x] iOS プラットフォーム（8.5GB）のダウンロード
+- [x] **ビルドが通ることを確認**（シミュレータ向け、exit 0）
+- [x] **シミュレータで起動して「はじめに」画面が出ることを確認**
+- [x] **課金プラグインが StoreKit に繋がることを確認**（`InAppPurchase load [tinycube_unlock_all]` が飛んでいる）
+- [x] **カメラが動くことを確認**（`getUserMedia` 成功。`capacitor://localhost` はポート無しなので secure context が成立）
+- [x] **保存が写真アプリに直接入ることを確認**（`GalleryPlugin.swift` が本物の写真IDを返した）
+- [ ] **Xcode で署名（チーム）を設定** ← いまここ
+- [ ] App Store Connect にアプリを登録
+- [ ] 課金商品 `tinycube_unlock_all` を登録
+- [ ] TestFlight で実機確認
+- [ ] 審査へ提出
+
+---
+
+## 1. ビルドが通るか確かめる
+
+ダウンロードが終わったら：
+
+```sh
+cd ~/Downloads/cmcube/916cube
+npm run build
+npx cap sync ios
+open ios/App/App.xcodeproj
+```
+
+Xcode が開いたら、左上の実行先で iPhone のシミュレータを選んで ▶ を押す。
+
+⚠️ **シミュレータにはカメラが無い。** カメラの画面は真っ黒か、
+「カメラが使えません」になるのが正常。カメラの確認は TestFlight で行う
+（Xcode 16 以降なら `SimulatorCamera` で Mac のカメラを挿す手もある）。
+
+---
+
+## 2. 署名（チーム）を設定する
+
+Xcode で **App プロジェクト → Signing & Capabilities**：
+
+| 項目 | 値 |
+|---|---|
+| Automatically manage signing | ✅ チェックを入れる |
+| Team | CUBICENGINEstudio（Apple Developer のチーム） |
+| Bundle Identifier | `com.cubicenginestudio.tinycube` ← Android と同じでよい |
+
+同じ画面の **＋ Capability** から **In-App Purchase** を足す。
+**これが無いと課金が動かない。**
+
+---
+
+## 3. App Store Connect にアプリを登録
+
+https://appstoreconnect.apple.com → マイApp → ＋
+
+| 項目 | 値 |
+|---|---|
+| プラットフォーム | iOS |
+| 名前 | tinyCUBE |
+| プライマリ言語 | 日本語 |
+| バンドルID | `com.cubicenginestudio.tinycube` |
+| SKU | `tinycube`（何でもよい。あとから変えられない） |
+
+---
+
+## 4. 課金商品を登録する
+
+「App内課金」→「＋」→ **非消耗型**
+
+| 項目 | 値 |
+|---|---|
+| **製品ID** | `tinycube_unlock_all` ← **一字一句このとおり。Android と同じ** |
+| 参照名 | ぜんぶ使えるようにする |
+| 価格 | ¥300（Play と同じ） |
+
+⚠️ Play のときと同じで、**商品を作る前にビルドを1本アップロードしておく**必要がある
+場合がある。弾かれたら先に 5 をやること。
+
+⚠️ **審査には「購入の復元」ボタンが要る**（ガイドライン 3.1.1）。
+これは既に `src/App.tsx` に実装済み（`unlock-restore` のボタン）。消さないこと。
+
+---
+
+## 5. ビルドをアップロードする
+
+Xcode で実行先を **Any iOS Device** にして、
+**Product → Archive** → Organizer が開く → **Distribute App** →
+**App Store Connect** → Upload。
+
+⚠️ `CURRENT_PROJECT_VERSION`（ビルド番号）は**アップロードのたびに1つ増やす**こと。
+同じ番号だと Apple が受け取らない。Android の `versionCode` と同じ考え方。
+
+---
+
+## 6. TestFlight で実機を確認する
+
+**iPhone を持っていないので、ここは人に頼む。**
+
+App Store Connect → TestFlight → 内部テスター（または外部テスター）に
+iPhone を持っている人を追加する。確かめてもらうこと：
+
+- [ ] **カメラが映るか**（一番大事。ここだけは実機でしか分からない）
+- [ ] マイクの音が動画に入るか
+- [ ] **保存が写真アプリに直接入るか**（共有シートが出たら `GalleryPlugin.swift` が失敗している）
+- [ ] ¥300 が買えるか・買い直しにならないか
+- [ ] 「購入を復元」が効くか
+
+---
+
+## 7. 審査へ出す
+
+必要なもの：
+
+- [ ] スクリーンショット（6.7インチ iPhone は必須）
+- [ ] 説明文・キーワード
+- [ ] **プライバシーポリシーのURL**（ヒマワリさんが日英併記版を用意済み）
+- [ ] **Appのプライバシー** → tinyCUBE は外に何も送らないので
+      **「データを収集しない」** を選ぶだけ
+- [ ] 年齢レーティング
+- [ ] **審査用メモ（Notes for Reviewer）** ← ヒマワリさん推奨の文面：
+
+  > 本アプリは完全ローカル完結型のカメラ＆動画編集アプリであり、
+  > 120枚以上の独自測定フレームとオフライン録画機能を備えたネイティブ体験を
+  > 提供しています。撮影したデータは一切外部送信されません。
+
+---
+
+## 覚えておくこと
+
+### CocoaPods は要らない（2026-08-21 に判明）
+
+事前調査では「`cordova-plugin-purchase` が SPM 非対応 → CocoaPods が必要 →
+でも macOS の Ruby 2.6 では CocoaPods が入らない」と詰みかけていた。
+
+実際に試したら、**Capacitor 8.5.0 が Cordova プラグイン用の `Package.swift` を
+自動生成して、SPM のまま組み込んでくれた**。CocoaPods を入れる必要は無い。
+
+### 保存が iOS だけ別実装になっている理由
+
+`src/save.ts` は `registerPlugin('Gallery')` で Android と iOS の両方を同じ名前で呼ぶ。
+中身は別々：
+
+| | 実装 |
+|---|---|
+| Android | `android/app/src/main/java/.../GalleryPlugin.java`（MediaStore） |
+| iOS | `ios/App/App/GalleryPlugin.swift`（PHPhotoLibrary） |
+
+**引数と返り値をそろえること**（`{data, name, isVideo}` → `{uri}`）。
+片方だけ変えると、もう片方が黙って共有シートに落ちる。
+
+### iOS ではアルバムを作らない
+
+Android 版は写真アプリに "tinyCUBE" フォルダを作るが、**iOS では作らない**。
+アルバムを作るには読み取り権限（`NSPhotoLibraryUsageDescription`）が要り、
+それは「他人の写真も全部読む」権限だから。保存だけなら `.addOnly` で足りる。
+Android で権限を足して二度つまずいた教訓を iOS でも守っている。
+
+### アイコンは透過があると弾かれる
+
+App Store は**アルファチャンネルのあるアイコンを受け取らない**。
+`public/favicon.svg` は角丸（`rx="120"`）なので、そのまま焼くと角が透ける。
+iOS 用は `rx="0"` にして四角く焼き、アルファを落としてある
+（丸くするのは iOS 側がやる）。焼き直すときは `tools/icons.mjs` の
+`maskable` と同じ扱いにすること。
+
+
+---
+
+## ⚠️ iOS で二度はまらないための覚え書き（2026-08-21）
+
+自前プラグイン（`GalleryPlugin.swift`）を動かすまでに、**黙って失敗する罠を2つ**踏んだ。
+どちらもエラーが出ず、保存だけが `"Gallery" plugin is not implemented on ios` で落ちる。
+
+### 罠1：画面を作っているのは storyboard ではない
+
+`ios/App/App/SceneDelegate.swift` が
+
+```swift
+window?.rootViewController = MainViewController()
+```
+
+とコードで直接作っている。`Main.storyboard` の Custom Class を直しても**効かない**。
+両方 `MainViewController` に向けること。
+
+### 罠2：`registerPluginType` は既定では何もしない
+
+Capacitor の実装がこうなっている：
+
+```swift
+public func registerPluginType(_ pluginType: CAPPlugin.Type) {
+    if autoRegisterPlugins { return }   // ← 既定は true なのでここで帰る
+    ...
+}
+```
+
+**`registerPluginInstance(GalleryPlugin())` を使うこと。**
+こちらには門番が無く、`JSExport.exportJS` まで走るので WebView 側にも見えるようになる。
+
+### なぜ `packageClassList` に足してはいけないか
+
+`ios/App/App/capacitor.config.json` の `packageClassList` に `GalleryPlugin` を
+書き足せば動くが、**このファイルは `npx cap sync` が作り直すので消える**。
+アプリの中に置いた自前プラグインは `MainViewController.capacitorDidLoad()` から
+登録するのが正しい。
+
+### 動作確認のやり方（プラグインが本当に生えているか）
+
+ビルド成果物の `App.app/public/index.html` に調べる用の script を差し込んで
+（**リポジトリの `index.html` は触らない**）、こう出れば通っている：
+
+```
+⚡️  [log] - PROBE headers=[...,Share,Gallery]      ← Gallery が居る
+⚡️  To Native ->  Gallery save 64402574             ← ネイティブに届いた
+⚡️  [log] - PROBE gallery=OK {"uri":"EDDBF7E1-.../L0/001"}   ← 写真が入った
+```
+
+ログの見方：
+
+```sh
+xcrun simctl launch --console-pty <シミュレータのID> com.cubicenginestudio.tinycube
+```
+
+写真の許可はコマンドでも与えられる（ダイアログを押さずに済む）：
+
+```sh
+xcrun simctl privacy <シミュレータのID> grant photos-add com.cubicenginestudio.tinycube
+```
