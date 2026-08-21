@@ -1,28 +1,23 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import fs from 'fs'
 
 // 枠の絵を貯めておく係（sw.js）の名札は、ビルドのあとに tools/stamp-sw.mjs が
 // 埋める（package.json の build を見ること）。ここでは何もしない。
 // public/ の素通しコピーは vite のどのフックよりあとに走るので、
 // プラグインで dist/sw.js を書き換えても上書きされて消える。
 
-try {
-  const shibuyaCss = fs.readFileSync('e:/cmcube/916cube/docs/tinycube-skin-shibuya.css', 'utf8');
-  const oldAppCss = fs.readFileSync('e:/cmcube/916cube/src/App.css', 'utf8');
-  if (!oldAppCss.includes('渋谷デコラティブストリートカルチャー')) {
-    const lines = oldAppCss.split('\n');
-    const startIndex = lines.findIndex(line => line.includes('.setup-screen') || line.includes('.hand-setting'));
-    if (startIndex !== -1) {
-      const setupCss = lines.slice(startIndex).join('\n');
-      const combined = shibuyaCss + '\n\n/* SETUP SCREEN STYLES PRESERVED */\n' + setupCss;
-      fs.writeFileSync('e:/cmcube/916cube/src/App.css', combined);
-      console.log('App.css updated successfully by vite.config.ts!');
-    }
-  }
-} catch (e) {
-  console.error(e);
-}
+// ⚠️ **ここでソースを書き換えないこと。**
+// 以前は渋谷スキンの CSS を src/App.css へ流し込む一度きりの作業が
+// 置きっぱなしになっていた（2026-08-21 に削除）。困りごとが2つあった。
+//
+//   1. `e:/cmcube/...` という Windows の絶対パスが直書きで、Mac では
+//      ビルドのたびにエラーを吐いていた
+//   2. try/catch で黙るとはいえ、条件が揃えば **src/App.css を
+//      毎ビルド書き潰す**。設定ファイルがソースを書き換えるのは危ない
+//
+// 渋谷スキンは既に src/App.css に取り込み済み（「渋谷デコラティブ
+// ストリートカルチャー」の行がある）。元の CSS は docs/tinycube-skin-shibuya.css
+// に残してあるので、やり直したくなったら手で流し込むこと。
 
 // サンドイッチ枠の取り込みは、ここから毎回は走らせない。
 // 走らせるたびに同じ17枚を別の id で足してしまい、一覧が二重になっていた
