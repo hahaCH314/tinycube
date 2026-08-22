@@ -98,8 +98,25 @@ export async function initBilling(owned: () => void): Promise<void> {
 
     await s.initialize([platform]);
     ready = true;
-    // 機種変えのあとでも取り戻せるよう、起動時に持ち物を確かめる
-    await s.restorePurchases();
+
+    // ⚠️ **iPhone では、ここで restorePurchases() を呼ばないこと。**
+    //
+    // 以前は機種変えに備えて起動のたびに呼んでいた。Android では
+    // 利用者が常に Google にサインイン済みなので何も起きない。
+    // **ところが iOS では、この1行が「Apple Account にサインイン」の
+    // ダイアログを毎回強制的に出す**（2026-08-21、伊波さんが実機で発見。
+    // 「これ毎回サインインなの？」）。アプリを開くたびに出るので、
+    // 壊れているようにしか見えない。
+    //
+    // Apple の作法としても、**購入の復元は利用者がボタンを押したときだけ**
+    // 実行するもの。勝手に走らせると審査でも指摘される。
+    // 「買ったのに使えないとき」のボタンは既に画面にあるので、それで足りる。
+    //
+    // iOS は initialize() の時点でアプリのレシートを読むため、買ってある人は
+    // 明示的に復元しなくても approved/verified が飛んでくる。
+    if (!isApple()) {
+      await s.restorePurchases();
+    }
   } catch {
     // 課金が使えなくてもアプリは動く（無料のまま使える）
   }
