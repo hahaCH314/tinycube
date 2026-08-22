@@ -335,3 +335,34 @@ xcrun altool --upload-app -f App.ipa -t ios \
 
 **メニューバーの「表示」→「翻訳」→「日本語に翻訳」** でページごと日本語になる。
 Apple のサイトは全部これでいける。
+
+---
+
+## Info.plist のコメントは残らない（2026-08-21）
+
+`npx cap sync ios` が Info.plist を整形し直すとき、**XML のコメントは消える**。
+注意書きをファイルの中に書いても next sync で失われるので、ここに残す。
+
+### 消せない3つの権限説明
+
+```
+NSCameraUsageDescription          カメラ
+NSMicrophoneUsageDescription      マイク
+NSPhotoLibraryAddUsageDescription 写真への追加
+```
+
+**この3つが無いと、iOS はアプリを起動した瞬間に落とす。** Android の
+AndroidManifest.xml と違って、iOS は「なぜ要るのか」の説明文そのものを求める。
+空でも駄目で、文章が入っていないと App Store の審査でも弾かれる。
+文面は利用者にそのまま表示されるので、何に使うかを具体的に書くこと。
+
+`cap sync` で消えていないか、たまに確認すること：
+
+```sh
+plutil -extract NSCameraUsageDescription raw ios/App/App/Info.plist
+```
+
+### cap sync が足してくれるもの
+
+`ITSAppUsesNonExemptEncryption = false` は sync が自動で入れる。
+提出時の「暗号化の輸出申告」を省けるので、消さないこと。
