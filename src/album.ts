@@ -161,7 +161,15 @@ export async function list(): Promise<AlbumItem[]> {
     });
     return all
       .sort((a, b) => b.id - a.id)
-      .map(({ id, thumb, count }) => ({ id, thumb, count }));
+      // ⚠️ **wide を落とさないこと。**
+      //    以前は { id, thumb, count } しか返しておらず、せっかく add() が
+      //    測って持たせた wide が毎回捨てられていた。すると App.tsx の
+      //    openAlbum が「全部まだ測っていない」と判断して、写真の枚数だけ
+      //    decode() をかける。iOS でそれが1枚でも返ってこないと Promise.all が
+      //    終わらず、**プリクラ帳が永久に開かなくなる**
+      //    （2026-08-21、伊波さんの実機で発覚。「プリ帳開けない、
+      //      １番最初にテストは開けてた」＝空のときだけ開けていた）。
+      .map(({ id, thumb, count, wide }) => ({ id, thumb, count, wide }));
   } finally {
     db.close();
   }

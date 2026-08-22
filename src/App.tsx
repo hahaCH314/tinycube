@@ -1168,32 +1168,50 @@ function App() {
   /** プリクラ帳を開く。一覧は見本だけなので軽い */
   const openAlbum = async () => {
     const list = await album.list();
-    // ⚠️ **wide が無い古いものを、ここで測って埋める**（2026-08-19）。
-    //    wide は 8/19 から持つようにしたので、それ以前にしまった写真には
-    //    入っていない。無いまま出すと横のまま並ぶ（伊波さんの実機で41枚が
-    //    そうなっていた）。開いたときに一度だけ測って、次からは持っている
-    const need = list.filter(it => it.wide === undefined);
-    if (need.length) {
-      // ⚠️ **onload ではなく decode() を使うこと**（2026-08-19）。
-      //    onload は**すでに読めている絵では発火しないことがある**。
-      //    それで古い41枚が横のまま並んでいた（伊波さん「できてない！！！」）。
-      //    decode() は読み終わっていれば即座に返るので、取りこぼさない
-      await Promise.all(need.map(async it => {
-        try {
-          const i = new Image();
-          i.src = it.thumb;
-          await i.decode();
-          it.wide = i.naturalWidth > i.naturalHeight;
-        } catch {
-          it.wide = false;   // 読めない絵は回さない
-        }
-      }));
-      void album.fillWide(need.map(it => ({ id: it.id, wide: !!it.wide })));
-    }
+
+    // ⚠️ **先に開くこと。** 測り終わるのを待ってから開く作りにしていたら、
+    //    iOS で decode() が返ってこず**プリクラ帳が永久に開かなくなった**
+    //    （2026-08-21、伊波さんの実機。「プリ帳開けない、１番最初にテストは
+    //     開けてた」＝空のときだけ開けていた）。
+    //    向きの直しは開いたあとで追いつけばよい。**開けないほうが致命的**。
     setAlbumList(list);
     setAlbumPicked(new Set());
     setAlbumEditing(false);
     setAlbumOpen(true);
+
+    // ⚠️ **wide が無い古いものを、ここで測って埋める**（2026-08-19）。
+    //    wide は 8/19 から持つようにしたので、それ以前にしまった写真には
+    //    入っていない。無いまま出すと横のまま並ぶ（伊波さんの実機で41枚が
+    //    そうなっていた）。開いたときに一度だけ測って、次からは持っている。
+    //    いま保存するものは album.add() が測って持たせているので、ここに
+    //    来るのは 8/19 より前のものだけ
+    const need = list.filter(it => it.wide === undefined);
+    if (!need.length) return;
+
+    await Promise.all(need.map(async it => {
+      try {
+        // ⚠️ **onload ではなく decode() を使うこと**（2026-08-19）。
+        //    onload は**すでに読めている絵では発火しないことがある**。
+        //    それで古い41枚が横のまま並んでいた（伊波さん「できてない！！！」）。
+        //    decode() は読み終わっていれば即座に返るので、取りこぼさない。
+        //
+        // ⚠️ **ただし返ってこないことがある。** iOS の WKWebView で
+        //    data URL を decode() すると、稀に成功も失敗もしないまま止まる。
+        //    待ち続けると後続が全部止まるので、3秒で見切りをつける
+        const i = new Image();
+        i.src = it.thumb;
+        await Promise.race([
+          i.decode(),
+          new Promise((_, ng) => setTimeout(() => ng(new Error('decode が返らない')), 3000)),
+        ]);
+        it.wide = i.naturalWidth > i.naturalHeight;
+      } catch {
+        it.wide = false;   // 読めない絵は回さない
+      }
+    }));
+
+    setAlbumList([...list]);   // 測った結果を画面に反映する
+    void album.fillWide(need.map(it => ({ id: it.id, wide: !!it.wide })));
   };
 
   /** 選んだものを消す */
