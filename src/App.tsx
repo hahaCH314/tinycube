@@ -1472,6 +1472,22 @@ function App() {
   // 押している間だけ window で追いかける（指が絵の外へ出ても離さない）
   const [dragId, setDragId] = useState<number | null>(null);
   const bigShotRef = useRef<HTMLDivElement>(null);
+  // 飾りを載せる台（＝写真そのもの）の幅。飾りの大きさをここから決める。
+  //
+  // ⚠️ **cqw（コンテナクエリ）は使えない。** 台に container-type を付けると、
+  //    その要素は中身から幅を決められなくなり（サイズ封じ込め）、**写真が
+  //    まるごと消える**（2026-08-23、伊波さん「落書きできる写真が消えた」）。
+  //    台は写真に合わせて縮む必要があるので両立しない。だから実寸を測って
+  //    px で渡す。
+  const [stageW, setStageW] = useState(0);
+  useEffect(() => {
+    const el = bigShotRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setStageW(el.getBoundingClientRect().width));
+    ro.observe(el);
+    setStageW(el.getBoundingClientRect().width);
+    return () => ro.disconnect();
+  }, [photoStep, activeShot, shots]);
   // ゴミ箱。飾りを指で運んできて、この上で離すと捨てる
   // （2026-08-14、伊波さん「飾りもテキストもゴミ箱みたいなとこで捨てる」
   // 「飾りを消すじゃなく、指で操作」）。
@@ -2640,7 +2656,9 @@ function App() {
                     top: `${d.y}%`,
                     // 中央へ寄せてから回す。回してから寄せると位置がずれる
                     transform: `translate(-50%, -50%) rotate(${d.angle}deg)`,
-                    fontSize: `${d.size}cqw`,
+                    // 台（写真）の実寸から出す。cqw が使えない理由は
+                    // stageW の宣言のところに書いてある
+                    fontSize: `${(stageW * d.size / 100).toFixed(2)}px`,
                     // 文字と、色付きの記号スタンプ（音符）は色を持つ。
                     // 絵文字のスタンプは色を当てても効かないので触らない
                     color: d.kind === 'text' || !/\p{Extended_Pictographic}/u.test(d.value)
