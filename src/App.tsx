@@ -73,7 +73,10 @@ const RAIL_ICONS: Record<string, string> = {
   dread: '🌇',               // ずーん   … 日が沈む
   slash: '✨',               // しゃきん … 刃が閃く
   fanfare: '💿',             // ジャーン … レコードの一発
-  flash: '🪩',               // フラッシュ … ミラーボールが弾ける
+  // ⚠️ 🪩 だったが 💥 に変えた（2026-08-23）。ミラーボールを撮る前に
+  //    選ぶ形へ移したので、フラッシュが 🪩 だと取り違える。
+  //    ラベル側（eff_flash）はもともと 💥 なので、そちらに合わせた
+  flash: '💥',               // フラッシュ … ぱっと弾ける
   glitch: '📺',              // グリッチ … ブラウン管の乱れ
   emotional: '🌴',           // エモい   … 南国の夕暮れの空気
 };
@@ -342,7 +345,10 @@ function App() {
       else localStorage.removeItem('tinycube.ambient');
     } catch { /* 保存できなくても動く */ }
   };
-  // 前に選んだものは開き直しても効かせる。描く側は effects.ts が持っている
+  // 前に選んだものは開き直しても効かせる。描く側は effects.ts が持っている。
+  // ⚠️ **起動のときだけでよい。** ambientOn を見張ると、選び直すたびに
+  //    ここも走って pickAmbient と二重に渡すことになる
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setAmbient(ambientOn); }, []);
 
   const [telopRandom, setTelopRandom] = useState(() => {
@@ -406,6 +412,7 @@ function App() {
   };
   // 前に選んだ色味は、開き直しても効かせる。
   // **描く側は effects.ts が持っているので、起動時に一度渡し直す**
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setTone(tone); }, []);
     // 入れ替えたら画面を描き直すための番号
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
@@ -1149,7 +1156,18 @@ function App() {
   // 保存の前に「できあがり」を見せたい（2026-08-14、伊波さん
   // 「保存する前にできあがり！！！見れるように」）ので、
   // 同じ用紙をプレビューにも使う
-  const buildPhotoSheet = async (): Promise<HTMLCanvasElement | null> => {
+  /**
+   * @param maxCellAR 1コマの「高さ÷幅」の上限。**インスタ用のときだけ渡す**。
+   *   縦長で撮ると1コマが 1080x1920（比 1.78）になり、3枚積むと用紙が
+   *   比 5.19 になる。インスタの上限 4:5 に丸ごと収めると 24% まで縮み、
+   *   白の海に小さく浮かんでしまう。
+   *   1コマの縦を詰めれば、横長で撮ったとき（比 1.70 → 72%）と同じ
+   *   見え方になる。伊波さんが LINE カメラでやっていたのがこれ
+   *   （2026-08-23「要は縦がキュッとなってるだけかな」）。
+   *   ⚠️ **通常の保存では渡さないこと。** 詰めた用紙は「可愛くない」と
+   *      言われている（2026-08-17）。インスタ用だけの措置
+   */
+  const buildPhotoSheet = async (maxCellAR?: number): Promise<HTMLCanvasElement | null> => {
     const rendered = await Promise.all([0, 1, 2].map(i => renderShot(i)));
     const cells = rendered.filter((c): c is HTMLCanvasElement => !!c);
     if (cells.length === 0) return null;
@@ -1173,7 +1191,9 @@ function App() {
     //    そこは **.preview-sheet を縦スクロールさせて見せる**（setup.css）。
     //    形を崩すより、スクロールしてもらうほうがいい。
     const CELL_W = 1080;
-    const CELL_H = Math.round(CELL_W * ar);
+    // maxCellAR が来たときだけ縦を詰める（インスタ用）。
+    // 詰めても中身は「コマにぴったり収める」ので、まん中が残って上下が切れる
+    const CELL_H = Math.round(CELL_W * (maxCellAR ? Math.min(ar, maxCellAR) : ar));
     const GAP = 24;
     const PAD = 24;
     const sheet = document.createElement('canvas');
@@ -1317,9 +1337,12 @@ function App() {
       }
     }
 
-    // 端末へ。**インスタ用のときだけ 4:5 の白い紙に置き直す**（2026-08-23）。
-    // 出来上がりそのものには手を入れないので、いつもの保存は今までどおり
-    const out = where === 'insta' ? toInstaSheet(sheet) : sheet;
+    // 端末へ。**インスタ用のときだけ作り直す**（2026-08-23）。
+    // 1コマの縦を 16:9 まで詰めてから 4:5 の白い紙に置く。
+    // いつもの保存は sheet をそのまま使うので、今までどおり
+    const out = where === 'insta'
+      ? toInstaSheet(await buildPhotoSheet(9 / 16) ?? sheet)
+      : sheet;
     const blob = await new Promise<Blob | null>(res => out.toBlob(res, 'image/jpeg', 0.92));
     // ⚠️ **保存の終わりを待たずに戻すこと**（2026-08-18、伊波さん
     //    「すぐcamera選択（スタート）には戻らない（戻るけど遅い）」）。
