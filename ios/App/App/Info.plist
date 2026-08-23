@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>写真と動画の撮影、および顔ハメフレームをその場で重ねるために使います。撮ったものが外部へ送られることはありません。</string>
+	<string>写真と動画の撮影、および顔フレームをその場で重ねるために使います。撮ったものが外部へ送られることはありません。</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>動画を録るときの音声を収録するために使います。録音したものが外部へ送られることはありません。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
