@@ -15,33 +15,23 @@ import { saveMedia, takeLastMediaError } from './save'
 import { FaceIcon, SceneIcon } from './CamIcon'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
-/**
- * 飾りを焼くときの補正（2026-08-16）。
+/*
+ * 飾りの大きさの補正について（2026-08-23 に不要になった）
  *
- * 画面では fontSize:`${d.size}cqw` で出しており、そこに行の高さや
- * 絵文字まわりの余白が乗る。canvas の fillText は字面そのものの大きさで
- * 描くので、**同じ数字でも canvas のほうが小さく出る**。
+ * 以前は DECO_SCALE_STAMP 1.68 / DECO_SCALE_TEXT 1.2 という係数を掛けて、
+ * 画面と保存の食い違いを埋めていた。**その係数はもう無い。**
  *
- * 💖 を1つ置いて「高さ ÷ 幅」で比べた実測：
+ * 食い違いの正体は「行の高さ」でも「絵文字の余白」でもなく、
+ * **cqw の基準が写真ではなく .shot-big（写真より広い箱）だったこと**。
+ * 縦の写真では箱 340px に対し写真 173px まで縮むので、画面の飾りだけが
+ * 1.97 倍に見えていた。必要な倍率は写真の形で 1.00〜1.97 と変わるため、
+ * **固定の係数では原理的に合わない**。字ごとに合わないのも、直したはずが
+ * 逆に振れるのも、これが理由だった。
  *
- *     画面 16.80%  ／  補正なしの保存 10.00%
- *
- * 16.80 ÷ 10.00 = 1.68。この差を埋めて、画面で見たとおりに焼く。
- * 画面側の指定（cqw）を変えるとスタンプの操作感まで変わるので、
- * **保存側を画面に合わせている**。
- *
- * ⚠️ **文字とスタンプで係数を分けた**（2026-08-23、伊波さん
- *    「実際に出来上がりともズレ」→「（保存のほうが）大きい」）。
- *
- *    1.68 は **💖 を1つ置いて測った値**で、絵文字は字の上下の余白が
- *    大きい。同じ係数を文字に当てると**掛けすぎて、保存だけ大きくなる**。
- *    絵文字ほど余白が無いぶん、文字は小さい係数でよい。
- *
- * ⚠️ **文字用の 1.2 はまだ実測していない。** 実機で「あ」を1つ置いて
- *    保存し、画面と見比べて詰めること（測り方は上と同じ、高さ÷幅）。
+ * いまは飾りを .shot-stage（写真ぴったりの台）に載せてある。画面も保存も
+ * 「写真の幅に対する％」で揃ったので、補正なしで一致する。
+ * 詳しくは setup.css の .shot-stage を読むこと。
  */
-const DECO_SCALE_STAMP = 1.68
-const DECO_SCALE_TEXT = 1.2
 
 // ---- 開いたときのお願い（2026-08-12、伊波さんの原文） -------------------
 //
@@ -1107,8 +1097,14 @@ function App() {
           //      画面 16.80% ／ 保存 10.00% → 1.68倍ぶん足りていなかった
           //    ⚠️ **文字とスタンプで係数が違う**（2026-08-23）。1.68 は
           //       絵文字で測った値で、文字に当てると掛けすぎになる
-          const size = c.width * d.size / 100
-            * (d.kind === 'text' ? DECO_SCALE_TEXT : DECO_SCALE_STAMP);
+          // ⚠️ **係数を掛けないこと。** 画面側の cqw も、この canvas も、
+          //    どちらも「写真の幅に対する％」になったので、そのまま一致する
+          //    （setup.css の .shot-stage を読むこと）。
+          //    以前は .shot-big（写真より広い箱）が cqw の基準だったため
+          //    ずれており、DECO_SCALE_TEXT 1.2 / _STAMP 1.68 で埋めていた。
+          //    ただし必要な倍率は写真の形で 1.00〜1.97 と変わるので、
+          //    固定値では原理的に合わなかった。基準をそろえて根本から外した。
+          const size = c.width * d.size / 100;
           g.save();
           g.textAlign = 'center';
           g.textBaseline = 'middle';
@@ -2626,7 +2622,14 @@ function App() {
 
           <div className="setup-content">
             {/* 大きい1枚。ここに乗せたものが写真に焼かれる */}
-            <div className="shot-big" ref={bigShotRef}>
+            <div className="shot-big">
+              {/* ⚠️ **飾りは .shot-stage の中に置くこと。**
+                  .shot-big は画面いっぱいに広がるが、写真は max-height で縮む。
+                  飾りを .shot-big 基準にすると、縦の写真で大きさも位置も
+                  出来上がりとずれる（setup.css の .shot-stage を読むこと）。
+                  bigShotRef もこの台を指す。指の位置を割合に直すとき、
+                  基準が写真そのものでないとずれるため */}
+              <div className="shot-stage" ref={bigShotRef}>
               <img src={shots[activeShot]} alt={`${activeShot + 1}枚目`} />
               {decos.filter(d => d.shot === activeShot).map(d => (
                 <div
@@ -2658,6 +2661,7 @@ function App() {
                   {d.value}
                 </div>
               ))}
+              </div>
 
             </div>
 

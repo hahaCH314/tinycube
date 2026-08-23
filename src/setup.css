@@ -846,7 +846,7 @@
   width: 100%; margin: 0 auto 10px;
   flex: 0 0 auto;
   border-radius: 12px; overflow: hidden;
-  background: #000; container-type: inline-size;
+  background: #000;
   touch-action: none;              /* 指で飾りを動かすので、ここでは画面を送らせない */
   border: 1px solid rgba(255,255,255,0.16);
   /* 縦長の写真だと画面からはみ出す。下の操作パネルが見えなくなるので、
@@ -861,17 +861,43 @@
    下の操作は全部見えていないと使えないので、譲るのは写真のほう
    （2026-08-14、伊波さん「なるべく（フレーム選択以外）スクロール無しで」）*/
 .photo-screen .shot-big,
-.photo-screen .shot-big > img { max-height: 34dvh; }
+.photo-screen .shot-big img { max-height: 34dvh; }
 @media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
-  .photo-screen .shot-big > img { max-height: 28dvh; }
+  .photo-screen .shot-big img { max-height: 28dvh; }
 }
 /* 写真の形（縦・横）はそのまま。箱の中に収まるまで縮める。
    縦で撮ったときは高さで、横で撮ったときは幅で頭打ちになる */
-.shot-big > img {
+.shot-big img {
   max-width: 100%; max-height: 46dvh;
   width: auto; height: auto; display: block;
   object-fit: contain;
+}
+
+/* 写真ぴったりの台。**飾りはこの中に置く。**
+ *
+ * ⚠️ **container-type はここに置くこと。.shot-big ではない。**
+ *
+ * もとは .shot-big が cqw の基準だった。ところが .shot-big は width:100% で
+ * 画面いっぱいに広がるのに、中の写真は max-height で縮む。**縦の写真では
+ * 箱のほうが写真よりずっと広い**（実測：箱 340px に対し写真 173px）。
+ *
+ * すると飾りは
+ *   画面 … 箱の幅を基準に大きさと位置を決める
+ *   保存 … 写真の幅を基準に決める
+ * となり、**大きさも位置も食い違う**（2026-08-21、伊波さん
+ * 「文字絵文字の大きさ変えられない。実際に出来上がりともズレ」）。
+ *
+ * これを係数（DECO_SCALE）で埋めようとしていたが、必要な倍率は写真の形で
+ * 1.00〜1.97 と変わるので、固定値では原理的に合わない。**台を写真ぴったりに
+ * すれば、補正そのものが要らなくなる。**
+ */
+.shot-stage {
+  position: relative;
+  display: block;
+  container-type: inline-size;
+  line-height: 0;          /* img の下にできる隙間を消す */
+  max-width: 100%; max-height: 100%;
 }
 
 /* 乗せた飾り。位置は割合で持っているので、画面の大きさが変わってもずれない */
@@ -1067,7 +1093,7 @@
 /* 背の低い端末では、写真をもう一段譲る */
 @media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
-  .photo-screen .shot-big > img { max-height: 22dvh; }
+  .photo-screen .shot-big img { max-height: 22dvh; }
   .photo-screen .shot-thumb { width: 9%; }
   .photo-screen .setup-section { padding: 10px; }
   .photo-screen .start-btn { min-height: 42px; }
@@ -1107,10 +1133,10 @@
 /* タブ1行ぶん（約50px）増えたので、そのぶん写真を譲る。
    下の操作が全部見えていることのほうが大事 */
 .photo-screen .shot-big,
-.photo-screen .shot-big > img { max-height: 27dvh; }
+.photo-screen .shot-big img { max-height: 27dvh; }
 @media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
-  .photo-screen .shot-big > img { max-height: 19dvh; }
+  .photo-screen .shot-big img { max-height: 19dvh; }
   .photo-screen .deco-tab { padding: 8px 6px; font-size: 0.8rem; }
   .photo-screen .deco-tabs { margin-bottom: 8px; }
 }
@@ -1119,7 +1145,7 @@
    写真をもう一段譲り、押す場所以外の余白を削る */
 @media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
-  .photo-screen .shot-big > img { max-height: 15dvh; }
+  .photo-screen .shot-big img { max-height: 15dvh; }
   .photo-screen .shot-thumb { height: 38px; }
   .photo-screen .shot-strip { margin-bottom: 2px; }
   .photo-screen .gesture-hint { margin-top: 2px; }
@@ -1135,7 +1161,7 @@
    （2026-08-14、実機サイズで見て判断）。24dvh を下限にする */
 @media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .shot-big,
-  .photo-screen .shot-big > img { max-height: 24dvh; }
+  .photo-screen .shot-big img { max-height: 24dvh; }
 }
 
 /* 記号のスタンプ（音符）。絵文字ではないので、大きさと太さを自分で整える。
@@ -1219,12 +1245,12 @@
 
 /* 浮いたぶんを写真へ。ここが主役なので、余裕はすべて写真に渡す */
 .photo-screen .shot-big,
-.photo-screen .shot-big > img { max-height: 35dvh; }
+.photo-screen .shot-big img { max-height: 35dvh; }
 @media (max-height: 700px) and (orientation: portrait) {
   .photo-screen .opt-row .color-dot { width: 21px; height: 21px; }
   .photo-screen .deco-tab { padding: 6px 4px; font-size: 0.74rem; }
   .photo-screen .shot-big,
-  .photo-screen .shot-big > img { max-height: 26dvh; }
+  .photo-screen .shot-big img { max-height: 26dvh; }
 }
 
 /* ---- できあがりの見本（2026-08-14、伊波さん「保存する前に
