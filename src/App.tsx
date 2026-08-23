@@ -1536,6 +1536,22 @@ function App() {
     if (dragId === null) return;
     const ptrs = ptrsRef.current;
 
+    // ⚠️ **2本目の指は、どこに置いても受け付けること。**
+    //
+    //    startDrag は飾りそのものに付いた onPointerDown なので、**2本目も
+    //    同じ飾りの上に乗らないと登録されなかった**。ところが文字は
+    //    大きさ7で置いており、1本目の指でほぼ埋まる。**2本目を乗せる隙間が
+    //    無いので、ピンチが成立しようがなかった**（2026-08-21、伊波さん
+    //    「文字絵文字の大きさ変えられない」）。
+    //
+    //    8/23 に「最初から小さく置く」で回避したが、根っこはここ。掴んだ
+    //    あとは台のどこに指を置いても2本目として数えるようにする。
+    //    台には touch-action: none が効いている（setup.css）ので、
+    //    ブラウザ側の拡大に取られる心配はない。
+    const down = (e: PointerEvent) => {
+      if (!ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    };
+
     const move = (e: PointerEvent) => {
       if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
       const box = bigShotRef.current?.getBoundingClientRect();
@@ -1592,10 +1608,12 @@ function App() {
         setDragId(null);
       }
     };
+    window.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', up);
     return () => {
+      window.removeEventListener('pointerdown', down);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);

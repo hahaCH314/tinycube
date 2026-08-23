@@ -1,5 +1,6 @@
 import { chromium } from 'playwright-core';
-const b = await chromium.launch({ executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',
+import { requireChrome } from './_chrome.mjs';
+const b = await chromium.launch({ executablePath: await requireChrome(),
   args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream'] });
 const ctx = await b.newContext({ viewport:{width:411,height:875}, deviceScaleFactor:2,
   isMobile:true, hasTouch:true, permissions:['camera','microphone'] });

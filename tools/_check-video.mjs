@@ -7,7 +7,8 @@
 // ⚠️ 見ているのは **出ているか／押せるか／落ちないか** まで。
 //    色の濃さや文字の間隔が「いい感じか」は実機で見るしかない。
 import { chromium } from 'playwright-core';
-const b = await chromium.launch({ executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',
+import { requireChrome } from './_chrome.mjs';
+const b = await chromium.launch({ executablePath: await requireChrome(),
   args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream'] });
 const errs=[];
 const ctx = await b.newContext({ viewport:{width:411,height:875}, deviceScaleFactor:2,
