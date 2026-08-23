@@ -70,6 +70,16 @@ type I18nDict = {
   setting_teloppos: string;
   telop_center: string;
   telop_random: string;
+  title_telop_mode: string;
+  telop_tap: string;
+  telop_auto_random: string;
+  telop_auto_order: string;
+  title_ambient: string;
+  title_tone: string;
+  tone_none: string;
+  tone_warm: string;
+  tone_cool: string;
+  tone_vivid: string;
   setting_telopcolor: string;
   telop_white: string;
   telop_black: string;
@@ -228,6 +238,8 @@ type I18nDict = {
   desc_save_device: string;
   opt_save_album: string;
   desc_save_album: string;
+  opt_save_insta: string;
+  desc_save_insta: string;
   opt_save_none: string;
   msg_collect_photos: string;
   btn_cancel: string;
@@ -286,6 +298,16 @@ const dictJa: I18nDict = {
   setting_teloppos: '文字の出る場所',
   telop_center: '◎ まん中',
   telop_random: '🎲 ばらける',
+  title_telop_mode: '出し方',
+  telop_tap: '👆 じぶんで',
+  telop_auto_random: '🎲 おまかせ',
+  telop_auto_order: '🔢 じゅんばん',
+  title_ambient: '動き',
+  title_tone: '色み',
+  tone_none: 'なし',
+  tone_warm: '🌇 あたたかい',
+  tone_cool: '🧊 つめたい',
+  tone_vivid: '🌈 こい',
   setting_telopcolor: '文字の色',
   telop_white: '⬜ 白文字',
   telop_black: '⬛ 黒文字',
@@ -447,6 +469,8 @@ SNSへの投稿等及び、二次使用は
   desc_save_device: 'スマホの写真に入る',
   opt_save_album: 'プリクラ帳だけ',
   desc_save_album: 'アプリの中に貯める',
+  opt_save_insta: 'インスタ用',
+  desc_save_insta: '白いフチをつけて、切られない形にする',
   opt_save_none: '保存しない',
   msg_collect_photos: '写真を撮って集めてね！',
   btn_cancel: 'やめる',
@@ -503,6 +527,16 @@ Also, sponsors welcome :)`,
   setting_teloppos: 'Caption position',
   telop_center: '◎ Centre',
   telop_random: '🎲 Scattered',
+  title_telop_mode: 'How',
+  telop_tap: '👆 By tap',
+  telop_auto_random: '🎲 Shuffle',
+  telop_auto_order: '🔢 In order',
+  title_ambient: 'Motion',
+  title_tone: 'Tone',
+  tone_none: 'None',
+  tone_warm: '🌇 Warm',
+  tone_cool: '🧊 Cool',
+  tone_vivid: '🌈 Vivid',
   setting_telopcolor: 'Caption colour',
   telop_white: '⬜ White',
   telop_black: '⬛ Black',
@@ -664,6 +698,8 @@ Thank you.`,
   desc_save_device: 'Save to phone photos',
   opt_save_album: 'Album only',
   desc_save_album: 'Store in app',
+  opt_save_insta: 'For Instagram',
+  desc_save_insta: 'Adds a white border so it will not be cropped',
   opt_save_none: "Don't save",
   msg_collect_photos: 'Take photos and collect them!',
   btn_cancel: 'Cancel',

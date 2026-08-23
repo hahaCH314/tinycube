@@ -111,12 +111,22 @@ type Mote = {
   /** 手前の大きな玉か、奥の小さな玉か。小さいほうは輪郭を少し出す */
   big: boolean;
 };
-let ambient: 'emotional' | null = null;
+/**
+ * かけっぱなしにする飾り。
+ *
+ * ⚠️ **'mirrorball' を足した**（2026-08-23、伊波さん「ミラーボールは先に」）。
+ *    もとは押すと 2.2 秒だけ回る一発ものだったが、自撮りでは押しに行った指が
+ *    レンズに被る（「自撮りにすると指でカメラが隠れる」）。撮る前に選んで
+ *    ずっと回してしまえば、撮影中に触らなくて済む。
+ *    **一発のほう（fireEffect('mirrorball')）も残してある。** どちらからでも出せる
+ */
+type AmbientId = 'emotional' | 'mirrorball';
+let ambient: AmbientId | null = null;
 let motes: Mote[] = [];
 let lastTick = 0;
 let startedAt = 0;
 
-export function setAmbient(kind: 'emotional' | null) {
+export function setAmbient(kind: AmbientId | null) {
   ambient = kind;
   startedAt = performance.now();
   if (!kind) motes = [];
@@ -125,11 +135,77 @@ export function getAmbient() {
   return ambient;
 }
 
+/**
+ * 色味の加工（2026-08-23、伊波さん「エフェクトも初めから選んで撮影中は
+ * 出しておこう」「総音色身を変えるがいいね」）。
+ *
+ * ■ なぜ要るか
+ *
+ * 動画の自撮りは、片手で持って自分を映しながら画面を触ることになる。
+ * **撮っている最中にボタンを押すと、指がレンズに被る**（伊波さん
+ * 「自撮りにすると指でカメラが隠れる」）。だから撮る前に選んでおいて、
+ * 撮影中はかけっぱなしにする。フラッシュのような一瞬のものは、
+ * かけっぱなしにできないので色味に置き換えた。
+ *
+ * ■ どうやっているか
+ *
+ * 映像の上に色を1枚重ねるだけ。**画素を1つずつ触らない**。
+ * getImageData で走査すると 1080p で1コマ 30ms 近くかかり、
+ * 描画ループが持たない（カクつきは「重い」ではなく「壊れた」に見える）。
+ * 重ねるだけなら GPU が持っていくので、ほぼただ。
+ */
+export type ToneId = 'warm' | 'cool' | 'vivid';
+
+/** 色味ごとの重ねかた。合成の仕方と色と濃さ */
+const TONE: Record<ToneId, { mode: GlobalCompositeOperation; color: string; alpha: number }> = {
+  // 夕方のような橙。肌があたたかく見える
+  warm:  { mode: 'overlay',    color: '#ff9a3c', alpha: 0.30 },
+  // 朝のような青。涼しく、すこし硬く見える
+  cool:  { mode: 'overlay',    color: '#3ca8ff', alpha: 0.30 },
+  // 色が濃くなる。彩度を上げる代わりに、彩度の高いところを持ち上げる
+  vivid: { mode: 'saturation', color: 'hsl(0, 90%, 50%)', alpha: 0.55 },
+};
+
+let tone: ToneId | null = null;
+
+export function setTone(kind: ToneId | null) {
+  tone = kind;
+}
+export function getTone() {
+  return tone;
+}
+
+/**
+ * 色味を1枚重ねる。**映像を描いた直後・他の効果より前**に呼ぶこと。
+ * 順番を逆にすると、文字やミラーボールにまで色がかかる。
+ */
+export function drawTone(g: CanvasRenderingContext2D, W: number, H: number) {
+  if (!tone) return;
+  const t = TONE[tone];
+  g.save();
+  g.globalCompositeOperation = t.mode;
+  g.globalAlpha = t.alpha;
+  g.fillStyle = t.color;
+  g.fillRect(0, 0, W, H);
+  g.restore();
+}
+
 function drawAmbient(g: CanvasRenderingContext2D, W: number, H: number) {
   const now = performance.now();
   const dt = lastTick ? Math.min(now - lastTick, 100) : 16;
   lastTick = now;
   if (!ambient) return;
+
+  // ずっと回るミラーボール（2026-08-23）。
+  // 一発のほうは t が 0→1 で進んで消えるが、こちらは終わらせない。
+  // 2.2 秒でひと回りするのは同じなので、余りを取って t を作り続ける。
+  // ⚠️ **出入りの薄れを効かせないこと。** 一発のほうは終わりに向けて
+  //    消えていくが、かけっぱなしで薄くなると点滅して見える
+  if (ambient === 'mirrorball') {
+    const t = ((now - startedAt) % 2200) / 2200;
+    drawMirrorball(g, W, H, t, true);
+    return;
+  }
 
   const unit = Math.min(W, H);
 
@@ -395,10 +471,14 @@ function veilFor(g: CanvasRenderingContext2D, W: number, H: number): CanvasGradi
   return grad;
 }
 
-function drawMirrorball(g: CanvasRenderingContext2D, W: number, H: number, t: number) {
+/**
+ * @param loop かけっぱなしのときは true。出入りで薄れさせない
+ *             （2026-08-23。薄れると点滅して見える）
+ */
+function drawMirrorball(g: CanvasRenderingContext2D, W: number, H: number, t: number, loop = false) {
   const unit = Math.min(W, H);
   // 出るのは速く、消えるのはゆっくり。ふっと現れてすっと引く
-  const fade = t < 0.12 ? t / 0.12 : t > 0.72 ? (1 - t) / 0.28 : 1;
+  const fade = loop ? 1 : t < 0.12 ? t / 0.12 : t > 0.72 ? (1 - t) / 0.28 : 1;
   const spin = t * Math.PI * 2.4;               // 2.2秒で1回転ちょっと
 
   g.save();

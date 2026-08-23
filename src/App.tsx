@@ -5,7 +5,7 @@ import { startRecording, startStage, type RecordHandle, type OutShape } from './
 import { FRAMES, loadFrame, fitsShape, inDisplayOrder, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import * as album from './album'
 import { ALBUM_LIMIT, type AlbumItem } from './album'
-import { fireEffect, fireTelop, setAmbient, type EffectId } from './effects'
+import { fireEffect, fireTelop, setAmbient, setTone, type EffectId, type ToneId } from './effects'
 import { t, getLang, setLang } from './i18n'
 // savedKey / relock は 2026-08-15 に全部無料にしたとき使わなくなった。
 // unlock.ts 側には残してある（気が変わったときに戻せるように）
@@ -322,13 +322,28 @@ function App() {
     try { return localStorage.getItem('tinycube.telopDark') === '1'; } catch { return false; }
   });
   // 出る場所。いつも真ん中か、ばらけさせるか
-  // ずっと出しておく演出。いまは「エモーショナル」だけ
-  const [ambientOn, setAmbientOn] = useState(false);
-  const toggleAmbient = () => {
-    const next = !ambientOn;
-    setAmbientOn(next);
-    setAmbient(next ? 'emotional' : null);
+  /**
+   * ずっと出しておく飾り（2026-08-23、伊波さん「エフェクトも初めから選んで
+   * 撮影中は出しておこう」「ミラーボールは先に」）。
+   *
+   * もとは「エモーショナル」だけを撮影中に押して入り切りしていた。
+   * ミラーボールも**撮る前に選んでかけっぱなし**にできるようにした。
+   * 自撮りは押しに行った指がレンズに被るので、触らずに済ませたい
+   */
+  type AmbientKind = 'emotional' | 'mirrorball';
+  const [ambientOn, setAmbientOn] = useState<AmbientKind | null>(() => {
+    try { return (localStorage.getItem('tinycube.ambient') as AmbientKind) || null; } catch { return null; }
+  });
+  const pickAmbient = (kind: AmbientKind | null) => {
+    setAmbientOn(kind);
+    setAmbient(kind);
+    try {
+      if (kind) localStorage.setItem('tinycube.ambient', kind);
+      else localStorage.removeItem('tinycube.ambient');
+    } catch { /* 保存できなくても動く */ }
   };
+  // 前に選んだものは開き直しても効かせる。描く側は effects.ts が持っている
+  useEffect(() => { setAmbient(ambientOn); }, []);
 
   const [telopRandom, setTelopRandom] = useState(() => {
     try { return localStorage.getItem('tinycube.telopRandom') === '1'; } catch { return false; }
@@ -341,7 +356,58 @@ function App() {
   const pickTelopColor = (dark: boolean) => {
     setTelopDark(dark);
     try { localStorage.setItem('tinycube.telopDark', dark ? '1' : '0'); } catch { /* 保存できなくても動く */ }
-  };    // 入れ替えたら画面を描き直すための番号
+  };
+
+  /**
+   * 文字の出し方（2026-08-23、伊波さん「文字の出現も自動で出す方がやりやすい」）。
+   *
+   * ■ なぜ要るか
+   *
+   * 動画の自撮りは、片手で持って自分を映しながら画面を触ることになる。
+   * **押しに行った指がレンズに被る**（伊波さん「自撮りにすると指でカメラが
+   * 隠れる」）。撮る前に決めておけば、撮影中は何も触らなくて済む。
+   *
+   *   'tap'    … 今までどおり、右の柱を押して出す
+   *   'random' … 用意した5つから、でたらめに選んで出す
+   *   'order'  … 用意した5つを、上から順に出す
+   *
+   * ⚠️ **出る間隔もでたらめにすること**（伊波さん「秒数もランダムで、
+   *    連打もあっていいね」）。等間隔だと機械が出しているように見える。
+   *    重なってもよい。適当に押していたときの気持ちよさがそれだった
+   */
+  type TelopMode = 'tap' | 'random' | 'order';
+  const [telopMode, setTelopMode] = useState<TelopMode>(() => {
+    try { return (localStorage.getItem('tinycube.telopMode') as TelopMode) || 'tap'; } catch { return 'tap'; }
+  });
+  const pickTelopMode = (mode: TelopMode) => {
+    setTelopMode(mode);
+    try { localStorage.setItem('tinycube.telopMode', mode); } catch { /* 保存できなくても動く */ }
+  };
+  /** 'order' のときに次に出すもの。録画のたびに先頭へ戻す */
+  const telopTurn = useRef(0);
+
+  /**
+   * 色味（2026-08-23、伊波さん「エフェクトも初めから選んで撮影中は出しておこう」
+   * 「フラッシュだけ、ちょっと加工系にかえて」「総音色身を変えるがいいね」）。
+   *
+   * フラッシュは一瞬光るものなので、かけっぱなしにできない。
+   * 代わりに色味を3つ置いた。撮る前に選んで、撮影中はずっとかかる
+   */
+  const [tone, setToneState] = useState<ToneId | null>(() => {
+    try { return (localStorage.getItem('tinycube.tone') as ToneId) || null; } catch { return null; }
+  });
+  const pickTone = (kind: ToneId | null) => {
+    setToneState(kind);
+    setTone(kind);
+    try {
+      if (kind) localStorage.setItem('tinycube.tone', kind);
+      else localStorage.removeItem('tinycube.tone');
+    } catch { /* 保存できなくても動く */ }
+  };
+  // 前に選んだ色味は、開き直しても効かせる。
+  // **描く側は effects.ts が持っているので、起動時に一度渡し直す**
+  useEffect(() => { setTone(tone); }, []);
+    // 入れ替えたら画面を描き直すための番号
   // PC版と同じ分け方。事前準備（動画・書き出しの形・枠）は設定の中、
   // 下のパネルは録画中に指で押すものだけにする
   // 'agree' はアプリを開くたびに必ず最初に出る（伊波さん「アプリ開いた時」）。
@@ -400,6 +466,16 @@ function App() {
   // state を直接見ると、指を置いた時点の古い値を掴んだままになる
   const decosRef = useRef<Deco[]>([]);
   useEffect(() => { decosRef.current = decos; }, [decos]);
+
+  // 文字の自動出しから読むもの。**ref で持つこと。**
+  // 直接 state を見ると、値が変わるたびにタイマーが張り直されて
+  // 間隔がそこで途切れる（出たり出なかったりする）
+  const telopsRef = useRef<string[]>([]);
+  useEffect(() => { telopsRef.current = telops; }, [telops]);
+  const telopDarkRef = useRef(false);
+  useEffect(() => { telopDarkRef.current = telopDark; }, [telopDark]);
+  const telopRandomRef = useRef(false);
+  useEffect(() => { telopRandomRef.current = telopRandom; }, [telopRandom]);
   // 写真のテキスト。動画側の「出現の仕方」は静止画では意味がないので持たず、
   // 代わりに色を選べるようにした（2026-08-14、伊波さん「出現の仕方の代りに
   // 色変更増やす。手描きフォントにするほうが当時のプリクラ再現率上がる」）
@@ -663,6 +739,49 @@ function App() {
       onTrouble: msg => setCamInfo(msg || null),
     });
   }, []);
+
+  /**
+   * 文字を自動で飛ばす（2026-08-23）。
+   *
+   * ⚠️ **setInterval を使わないこと。** 間隔がでたらめなので、
+   *    次の1回を出したあとに次の待ち時間を決める形にする。
+   * ⚠️ **一時停止のあいだは出さない。** 録画が止まっているのに
+   *    文字だけ出続けると、あとで見たときに何も無いところで字が動く。
+   * ⚠️ **止めるときは必ず片付ける。** 残ると、次に撮り始めたときに
+   *    前の回のぶんが混じって出る
+   */
+  useEffect(() => {
+    if (telopMode === 'tap') return;          // 手で押す道はこれまでどおり
+    if (!isRecording || isPaused) return;
+
+    // 撮り始めは先頭から。前の回の続きから出ると順番が合わない
+    if (!isPaused) telopTurn.current = 0;
+
+    let timer: number | undefined;
+    let alive = true;
+
+    const tick = () => {
+      if (!alive) return;
+      const list = telopsRef.current.filter(s => s.trim());
+      if (list.length) {
+        const text = telopMode === 'random'
+          ? list[Math.floor(Math.random() * list.length)]
+          : list[telopTurn.current++ % list.length];
+        // 大きさ・場所・散り方は fireTelop の中でランダムに決まる。
+        // 位置の「ランダムに出す」設定はそのまま活かす
+        fireTelop(text, telopDarkRef.current, telopRandomRef.current);
+      }
+      // 次の1回までの間隔もでたらめ（0.8〜3.2秒）。
+      // 短いほうに寄せてあるのは、適当に押していたときの手の速さに近いから。
+      // 重なって出てもよい（伊波さん「連打もあっていいね」）
+      timer = window.setTimeout(tick, 800 + Math.random() * 2400);
+    };
+
+    // 撮り始めてすぐ1つ出す。無音のまま数秒待つと、動いていないように見える
+    timer = window.setTimeout(tick, 600);
+
+    return () => { alive = false; if (timer) clearTimeout(timer); };
+  }, [telopMode, isRecording, isPaused]);
 
   // 選んだ枠の絵を読み込んでおく。録画の直前に読むと間に合わない
   useEffect(() => {
@@ -1081,6 +1200,54 @@ function App() {
     return sheet;
   };
 
+  /**
+   * インスタに載る形にする（2026-08-23、伊波さん「インスタの投稿に乗せたかった
+   * けど、写真が大きすぎてはみ出た」「昨日は、他アプリで、フレーム（背景）
+   * 足して乗せた」）。
+   *
+   * ■ なぜ要るか
+   *
+   * 3連写真は縦で撮ると 1128x5856（比 5.19）になる。インスタに載る縦は
+   * **4:5（比 1.25）まで**で、それを超えると勝手に切られる。
+   * 伊波さんは他のアプリで背景を足して回避していた。**その一手間をここで済ませる。**
+   *
+   * ■ どうやるか
+   *
+   * ⚠️ **コマを詰めないこと。** 2026-08-17 に用紙の比へ上限をかけて
+   *    コマの高さを詰めたことがあるが、**可愛くなくなった**（伊波さん
+   *    「最初のかわいいぷり風に戻す」「今のは可愛くない」）。
+   *    プリクラは1コマが縦に大きいから可愛い。
+   *
+   * だから**出来上がりには一切手を入れず**、4:5 の白い紙の**まん中に置く**だけ。
+   * 写真は小さくなるが、形は崩れない。伊波さんが他アプリでやっていたことと同じ。
+   *
+   * @param sheet いつもの用紙（縦長のまま）
+   */
+  const toInstaSheet = (sheet: HTMLCanvasElement): HTMLCanvasElement => {
+    // インスタの縦の上限。これより縦長にすると切られる
+    const RATIO = 5 / 4;
+    const out = document.createElement('canvas');
+    // 幅は元のまま。高さだけ 4:5 まで伸ばす。
+    // 元がすでに 4:5 より横長なら、幅を伸ばして 4:5 に合わせる
+    if (sheet.height / sheet.width > RATIO) {
+      out.width = sheet.width;
+      out.height = Math.round(sheet.width * RATIO);
+    } else {
+      out.height = sheet.height;
+      out.width = Math.round(sheet.height / RATIO);
+    }
+    const g = out.getContext('2d');
+    if (!g) return sheet;
+    // 用紙と同じ白。継ぎ目が見えないように
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, out.width, out.height);
+    // まん中に、はみ出さない大きさで置く
+    const s = Math.min(out.width / sheet.width, out.height / sheet.height);
+    const w = sheet.width * s, h = sheet.height * s;
+    g.drawImage(sheet, (out.width - w) / 2, (out.height - h) / 2, w, h);
+    return out;
+  };
+
   // できあがりを見せる。ここで初めて「3枚が1枚になった姿」が分かる
   const openPreview = async () => {
     setPreviewBusy(true);
@@ -1107,7 +1274,7 @@ function App() {
    * プリクラ帳へは data URL、端末へは Blob と、要るものが違うので
    * シートは一度だけ作って使い回す。
    */
-  const savePhotoTo = async (where: 'both' | 'device' | 'album') => {
+  const savePhotoTo = async (where: 'both' | 'device' | 'album' | 'insta') => {
     // プレビューで作ったものをそのまま使う。無ければ作る（撮り直しなどで
     // 取っておいたものが古くなっている場合に備えて）
     const sheet = sheetRef.current ?? await buildPhotoSheet();
@@ -1150,8 +1317,10 @@ function App() {
       }
     }
 
-    // 端末へ
-    const blob = await new Promise<Blob | null>(res => sheet.toBlob(res, 'image/jpeg', 0.92));
+    // 端末へ。**インスタ用のときだけ 4:5 の白い紙に置き直す**（2026-08-23）。
+    // 出来上がりそのものには手を入れないので、いつもの保存は今までどおり
+    const out = where === 'insta' ? toInstaSheet(sheet) : sheet;
+    const blob = await new Promise<Blob | null>(res => out.toBlob(res, 'image/jpeg', 0.92));
     // ⚠️ **保存の終わりを待たずに戻すこと**（2026-08-18、伊波さん
     //    「すぐcamera選択（スタート）には戻らない（戻るけど遅い）」）。
     //    端末への書き出しは数秒かかる。待ってから戻すと、そのあいだ
@@ -1759,14 +1928,14 @@ function App() {
             {/* エフェクトが上、音が下（2026-08-14、伊波さん
                 「音ボタンとエフェクトボタン上下入れ替え」）。
                 前は音が上・エフェクトが下だった */}
+            {/* ⚠️ **残すのはフラッシュだけ**（2026-08-23、伊波さん
+                「フラッシュだけ、ミラーボールは先に」）。
+                ミラーボールとエモいは撮る前に選んでかけっぱなしにする形へ
+                移した。押しに行った指がレンズに被るため、撮影中に触るものは
+                減らす（「自撮りにすると指でカメラが隠れる」）。
+                フラッシュだけは**押した瞬間に光る**のが持ち味なので残す */}
             <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
               <RailFace id="flash" label={t('eff_flash')} />
-            </button>
-            <button className="effect-btn btn-burst" onClick={() => fire('mirrorball')}>
-              <RailFace id="mirrorball" label={t('eff_mirrorball')} />
-            </button>
-            <button className={`effect-btn btn-burst ${ambientOn ? 'on' : ''}`} onClick={toggleAmbient}>
-              <RailFace id="emotional" label={t('eff_emotional')} />
             </button>
             {/* 音は3つ（08cf11c「かんたん化」。10個＋自作枠2個から減らした） */}
             {(['clap', 'drum', 'blip'] as const)
@@ -1778,7 +1947,13 @@ function App() {
           </div>
         </div>
 
-        {/* 右側のテロップパネル */}
+        {/* 右側のテロップパネル。
+            ⚠️ **自動で出すときは柱ごと消す**（2026-08-23、伊波さん
+            「文字も先に出し方決めて、ボタン消そう」）。押す必要が無いのに
+            残しておくと、自撮りで**押しに行った指がレンズに被る**
+            （「自撮りにすると指でカメラが隠れる」）。
+            出しっぱなしより、無いほうがいい */}
+        {telopMode === 'tap' && (
         <div className="side-panel right" data-role="telop">
           <div className="panel-scroll">
             {/* 5つとも「自分で決める場所」。全部に番号を出す（08cf11c） */}
@@ -1801,6 +1976,7 @@ function App() {
             })}
           </div>
         </div>
+        )}
         </>
         )}
       </div>
@@ -2273,6 +2449,43 @@ function App() {
                 ))}
               </div>
 
+              {/* 動きの飾り（2026-08-23、伊波さん「ミラーボールは先に」）。
+                  撮っているあいだずっと出る。撮影中に押さなくて済む */}
+              <div className="opt-row">
+                <span className="opt-label wide">{t('title_ambient')}</span>
+                <div className="shape-switch">
+                  <button className={!ambientOn ? 'on' : ''} onClick={() => pickAmbient(null)}>{t('tone_none')}</button>
+                  <button className={ambientOn === 'emotional' ? 'on' : ''} onClick={() => pickAmbient('emotional')}>{t('eff_emotional')}</button>
+                  <button className={ambientOn === 'mirrorball' ? 'on' : ''} onClick={() => pickAmbient('mirrorball')}>{t('eff_mirrorball')}</button>
+                </div>
+              </div>
+
+              {/* 色味（2026-08-23、伊波さん「エフェクトも初めから選んで
+                  撮影中は出しておこう」）。撮っているあいだずっとかかる。
+                  フラッシュは一瞬のものでかけっぱなしにできないので、
+                  代わりに色味を置いた */}
+              <div className="opt-row">
+                <span className="opt-label wide">{t('title_tone')}</span>
+                <div className="shape-switch">
+                  <button className={!tone ? 'on' : ''} onClick={() => pickTone(null)}>{t('tone_none')}</button>
+                  <button className={tone === 'warm' ? 'on' : ''} onClick={() => pickTone('warm')}>{t('tone_warm')}</button>
+                  <button className={tone === 'cool' ? 'on' : ''} onClick={() => pickTone('cool')}>{t('tone_cool')}</button>
+                  <button className={tone === 'vivid' ? 'on' : ''} onClick={() => pickTone('vivid')}>{t('tone_vivid')}</button>
+                </div>
+              </div>
+
+              {/* 出し方（2026-08-23、伊波さん「文字の出現も自動で出す方が
+                  やりやすい」）。自撮りは押しに行った指がレンズに被るので、
+                  撮る前に決めておけば撮影中は何も触らずに済む */}
+              <div className="opt-row">
+                <span className="opt-label wide">{t('title_telop_mode')}</span>
+                <div className="shape-switch">
+                  <button className={telopMode === 'tap' ? 'on' : ''} onClick={() => pickTelopMode('tap')}>{t('telop_tap')}</button>
+                  <button className={telopMode === 'random' ? 'on' : ''} onClick={() => pickTelopMode('random')}>{t('telop_auto_random')}</button>
+                  <button className={telopMode === 'order' ? 'on' : ''} onClick={() => pickTelopMode('order')}>{t('telop_auto_order')}</button>
+                </div>
+              </div>
+
               <div className="opt-row">
                 <span className="opt-label">{t('title_position')}</span>
                 <div className="shape-switch">
@@ -2654,6 +2867,17 @@ function App() {
               <span className="where-emoji">📖</span>
               <span className="where-label">{t('opt_save_album')}</span>
               <span className="where-note">{t('desc_save_album')}</span>
+            </button>
+            {/* インスタ用（2026-08-23、伊波さん「インスタの投稿に乗せたかった
+                けど、写真が大きすぎてはみ出た」）。3連は縦に長すぎて
+                そのままでは切られるので、4:5 の白い紙のまん中に置く */}
+            <button
+              className="where-btn"
+              onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('insta'); }}
+            >
+              <span className="where-emoji">🖼️</span>
+              <span className="where-label">{t('opt_save_insta')}</span>
+              <span className="where-note">{t('desc_save_insta')}</span>
             </button>
             <button
               className="where-btn where-cancel"

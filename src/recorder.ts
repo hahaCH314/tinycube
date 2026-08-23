@@ -48,7 +48,7 @@ export type RecordOptions = {
 };
 
 import type { FrameAnchor, OutShape, FaceHole } from './frames';
-import { attachAudio, detachAudio, drawEffects, audioContext } from './effects';
+import { attachAudio, detachAudio, drawEffects, drawTone, audioContext } from './effects';
 
 /** 書き出しの形。読み込んだ動画が横長なら横で出す。
     16:9 の動画を無理に 9:16 へ詰めると、画面の6割が黒帯になる */
@@ -323,6 +323,9 @@ export function startStage(opts: StageOptions): () => void {
         g.restore();
       }
     }
+    // ⚠️ **色味は映像の直後、他の効果より前**（2026-08-23）。
+    //    逆にすると文字やミラーボールにまで色がかかって濁る
+    drawTone(g, OUT_W, OUT_H);
     drawEffects(g, OUT_W, OUT_H);
     if (watermark) {
       drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
@@ -390,6 +393,10 @@ export async function startRecording(opts: RecordOptions): Promise<RecordHandle>
       }
     }
 
+    // ⚠️ **色味は枠より前に置くこと**（2026-08-23）。枠のあとに重ねると
+    //    フレームの絵まで染まって、118枚ぶんの色が全部変わってしまう。
+    //    色をかけたいのは映像だけ
+    drawTone(g, OUT_W, OUT_H);
     // 一発エフェクトは枠より前、透かしより後ろ。
     // 枠の下に潜ると、下向きの飾りに隠れて何も見えないことがある
     if (frame) drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H, frame.slice);
