@@ -113,19 +113,19 @@ export const FRAMES: Frame[] = [
   // 穴は透明ではなく黒く塗ってある。フレームを先に描き、その上にカメラ映像を
   // 穴の位置でクリッピングして重ねることで、穴からカメラだけが見える。
   // faceHole の x,y,w,h は CMCUBE から実測した値（キャンバス全体に対する%）。
-  { id: 'fh_02', name: '顔ハメ 1',  file: './frames/02.webp', anchor: 'full', faceHole: { x: 42.6, y: 16.4, w: 25.3, h: 14.1 } },
-  { id: 'fh_03', name: '顔ハメ 2',  file: './frames/03.webp', anchor: 'full', faceHole: { x: 38.6, y: 15.4, w: 26.6, h: 15.0 } },
-  { id: 'fh_05', name: '顔ハメ 3',  file: './frames/05.webp', anchor: 'full', faceHole: { x: 37.0, y: 18.7, w: 30.1, h: 16.8 } },
-  { id: 'fh_06', name: '顔ハメ 4',  file: './frames/06.webp', anchor: 'full', faceHole: { x: 40.7, y: 22.7, w: 23.4, h: 14.5 } },
-  { id: 'fh_07', name: '顔ハメ 5',  file: './frames/07.webp', anchor: 'full', faceHole: { x: 38.5, y: 20.9, w: 25.3, h: 14.3 } },
-  { id: 'fh_10', name: '顔ハメ 6',  file: './frames/10.webp', anchor: 'full', faceHole: { x: 29.5, y: 21.5, w: 32.9, h: 18.1 } },
-  { id: 'fh_11', name: '顔ハメ 7',  file: './frames/11.webp', anchor: 'full', faceHole: { x: 33.3, y: 31.0, w: 33.4, h: 18.4 } },
-  { id: 'fh_12', name: '顔ハメ 8',  file: './frames/12.webp', anchor: 'full', faceHole: { x: 35.8, y: 25.9, w: 33.0, h: 19.1 } },
-  { id: 'fh_13', name: '顔ハメ 9',  file: './frames/13.webp', anchor: 'full', faceHole: { x: 36.1, y: 28.2, w: 31.1, h: 18.8 } },
-  { id: 'fh_14', name: '顔ハメ 10', file: './frames/14.webp', anchor: 'full', faceHole: { x: 38.6, y: 29.2, w: 27.1, h: 15.9 } },
-  { id: 'fh_16', name: '顔ハメ 11', file: './frames/16.webp', anchor: 'full', faceHole: { x: 31.5, y: 19.0, w: 34.9, h: 21.7 } },
-  { id: 'fh_17', name: '顔ハメ 12', file: './frames/17.webp', anchor: 'full', faceHole: { x: 39.3, y: 23.9, w: 22.3, h: 15.0 } },
-  { id: 'fh_18', name: '顔ハメ 13', file: './frames/18.webp', anchor: 'full', faceHole: { x: 43.0, y: 22.7, w: 25.5, h: 14.7 } },
+  { id: 'fh_02', name: '顔フレーム 1',  file: './frames/02.webp', anchor: 'full', faceHole: { x: 42.6, y: 16.4, w: 25.3, h: 14.1 } },
+  { id: 'fh_03', name: '顔フレーム 2',  file: './frames/03.webp', anchor: 'full', faceHole: { x: 38.6, y: 15.4, w: 26.6, h: 15.0 } },
+  { id: 'fh_05', name: '顔フレーム 3',  file: './frames/05.webp', anchor: 'full', faceHole: { x: 37.0, y: 18.7, w: 30.1, h: 16.8 } },
+  { id: 'fh_06', name: '顔フレーム 4',  file: './frames/06.webp', anchor: 'full', faceHole: { x: 40.7, y: 22.7, w: 23.4, h: 14.5 } },
+  { id: 'fh_07', name: '顔フレーム 5',  file: './frames/07.webp', anchor: 'full', faceHole: { x: 38.5, y: 20.9, w: 25.3, h: 14.3 } },
+  { id: 'fh_10', name: '顔フレーム 6',  file: './frames/10.webp', anchor: 'full', faceHole: { x: 29.5, y: 21.5, w: 32.9, h: 18.1 } },
+  { id: 'fh_11', name: '顔フレーム 7',  file: './frames/11.webp', anchor: 'full', faceHole: { x: 33.3, y: 31.0, w: 33.4, h: 18.4 } },
+  { id: 'fh_12', name: '顔フレーム 8',  file: './frames/12.webp', anchor: 'full', faceHole: { x: 35.8, y: 25.9, w: 33.0, h: 19.1 } },
+  { id: 'fh_13', name: '顔フレーム 9',  file: './frames/13.webp', anchor: 'full', faceHole: { x: 36.1, y: 28.2, w: 31.1, h: 18.8 } },
+  { id: 'fh_14', name: '顔フレーム 10', file: './frames/14.webp', anchor: 'full', faceHole: { x: 38.6, y: 29.2, w: 27.1, h: 15.9 } },
+  { id: 'fh_16', name: '顔フレーム 11', file: './frames/16.webp', anchor: 'full', faceHole: { x: 31.5, y: 19.0, w: 34.9, h: 21.7 } },
+  { id: 'fh_17', name: '顔フレーム 12', file: './frames/17.webp', anchor: 'full', faceHole: { x: 39.3, y: 23.9, w: 22.3, h: 15.0 } },
+  { id: 'fh_18', name: '顔フレーム 13', file: './frames/18.webp', anchor: 'full', faceHole: { x: 43.0, y: 22.7, w: 25.5, h: 14.7 } },
 
   // --- 16:9 の枠（横で書き出すときだけ出る） ---
   // 2026-08-13、伊波さんが元の絵を入れ直してくださった。
@@ -208,16 +208,16 @@ export const FRAMES: Frame[] = [
 
 
   // --- 顔ハメ（2026-08-11 追加。有料の枠）。穴から映像が見える ---
-  { id: 'goya',             name: 'ゴーヤ（顔ハメ）',         file: './frames/goya.webp',             anchor: 'wide', faceHoles: [{ x: 23.0, y: 27.5, w: 21.4, h: 47.1 }, { x: 56.2, y: 28.0, w: 20.6, h: 46.6 }], paid: true },
-  { id: 'japan_face',       name: '日本（顔ハメ）',          file: './frames/japan_face.webp',       anchor: 'wide', faceHoles: [{ x: 26.9, y: 26.9, w: 17.5, h: 34.4 }, { x: 53.8, y: 29.0, w: 17.9, h: 36.3 }], paid: true },
-  { id: 'kabuki_face',      name: '歌舞伎（顔ハメ）',         file: './frames/kabuki_face.webp',      anchor: 'wide', faceHoles: [{ x: 20.9, y: 25.4, w: 18.4, h: 46.1 }, { x: 62.1, y: 28.7, w: 17.8, h: 45.3 }], paid: true },
-  { id: 'bath_face',        name: 'お風呂（顔ハメ）',         file: './frames/bath_face.webp',        anchor: 'wide', faceHoles: [{ x: 31.8, y: 32.7, w: 12.7, h: 22.7 }, { x: 55.1, y: 30.6, w: 13.3, h: 23.4 }], paid: true },
-  { id: 'dog_face_w',       name: '犬（顔ハメ）',           file: './frames/dog_face_w.webp',       anchor: 'wide', faceHoles: [{ x: 29.6, y: 24.1, w: 14.3, h: 29.6 }, { x: 54.1, y: 25.3, w: 14.2, h: 30.7 }], paid: true },
-  { id: 'lemon_face',       name: 'レモン（顔ハメ）',         file: './frames/lemon_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.6, w: 32.2, h: 21.4 }, paid: true },
-  { id: 'otaku_face',       name: 'ヲタ（顔ハメ）',          file: './frames/otaku_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 27.3, w: 26.9, h: 20.1 }, { x: 53.9, y: 31.1, w: 25.6, h: 19.4 }], paid: true },
-  { id: 'onnagata',         name: '女形（顔ハメ）',          file: './frames/onnagata.webp',         anchor: 'full', faceHole: { x: 28.8, y: 33.3, w: 45.6, h: 37.9 }, paid: true },
-  { id: 'dog_face_p',       name: '犬 1（顔ハメ）',         file: './frames/dog_face_p.webp',       anchor: 'full', faceHole: { x: 25.6, y: 18.3, w: 48.1, h: 34.5 }, paid: true },
-  { id: 'dog_face_p_2',     name: '犬 2（顔ハメ）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', faceHole: { x: 33.2, y: 13.9, w: 34.8, h: 26.4 }, paid: true },
+  { id: 'goya',             name: 'ゴーヤ（顔フレーム）',         file: './frames/goya.webp',             anchor: 'wide', faceHoles: [{ x: 23.0, y: 27.5, w: 21.4, h: 47.1 }, { x: 56.2, y: 28.0, w: 20.6, h: 46.6 }], paid: true },
+  { id: 'japan_face',       name: '日本（顔フレーム）',          file: './frames/japan_face.webp',       anchor: 'wide', faceHoles: [{ x: 26.9, y: 26.9, w: 17.5, h: 34.4 }, { x: 53.8, y: 29.0, w: 17.9, h: 36.3 }], paid: true },
+  { id: 'kabuki_face',      name: '歌舞伎（顔フレーム）',         file: './frames/kabuki_face.webp',      anchor: 'wide', faceHoles: [{ x: 20.9, y: 25.4, w: 18.4, h: 46.1 }, { x: 62.1, y: 28.7, w: 17.8, h: 45.3 }], paid: true },
+  { id: 'bath_face',        name: 'お風呂（顔フレーム）',         file: './frames/bath_face.webp',        anchor: 'wide', faceHoles: [{ x: 31.8, y: 32.7, w: 12.7, h: 22.7 }, { x: 55.1, y: 30.6, w: 13.3, h: 23.4 }], paid: true },
+  { id: 'dog_face_w',       name: '犬（顔フレーム）',           file: './frames/dog_face_w.webp',       anchor: 'wide', faceHoles: [{ x: 29.6, y: 24.1, w: 14.3, h: 29.6 }, { x: 54.1, y: 25.3, w: 14.2, h: 30.7 }], paid: true },
+  { id: 'lemon_face',       name: 'レモン（顔フレーム）',         file: './frames/lemon_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.6, w: 32.2, h: 21.4 }, paid: true },
+  { id: 'otaku_face',       name: 'ヲタ（顔フレーム）',          file: './frames/otaku_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 27.3, w: 26.9, h: 20.1 }, { x: 53.9, y: 31.1, w: 25.6, h: 19.4 }], paid: true },
+  { id: 'onnagata',         name: '女形（顔フレーム）',          file: './frames/onnagata.webp',         anchor: 'full', faceHole: { x: 28.8, y: 33.3, w: 45.6, h: 37.9 }, paid: true },
+  { id: 'dog_face_p',       name: '犬 1（顔フレーム）',         file: './frames/dog_face_p.webp',       anchor: 'full', faceHole: { x: 25.6, y: 18.3, w: 48.1, h: 34.5 }, paid: true },
+  { id: 'dog_face_p_2',     name: '犬 2（顔フレーム）',         file: './frames/dog_face_p_2.webp',     anchor: 'full', faceHole: { x: 33.2, y: 13.9, w: 34.8, h: 26.4 }, paid: true },
 
   // --- 2026-08-18 追加。**無料の枠**（伊波さん「これを無料枠に追加」）---
   //     元絵は E:\syunp_data\Downloads\５００円  //     目印の色がバラバラ（黄・マゼンタ・緑・青）なので、色を見分けて抜いた
@@ -227,13 +227,13 @@ export const FRAMES: Frame[] = [
   { id: 'cyber_punk',       name: 'サイバーパンク',        file: './frames/cyber_punk.webp',       anchor: 'full' },
   { id: 'retro',            name: 'レトロ',             file: './frames/retro.webp',            anchor: 'full' },
   { id: 'wafu',             name: '和風',              file: './frames/wafu.webp',             anchor: 'full' },
-  { id: 'okami_face',       name: '女将（顔ハメ）',        file: './frames/okami_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.9, w: 26.9, h: 15.5 } },
-  { id: 'heisei_loli_face', name: '平成ロリ（顔ハメ）',      file: './frames/heisei_loli_face.webp', anchor: 'full', faceHole: { x: 38.0, y: 17.0, w: 23.8, h: 13.1 } },
-  { id: 'ryoushi_face',     name: '漁師（顔ハメ）',        file: './frames/ryoushi_face.webp',     anchor: 'full', faceHole: { x: 35.3, y: 17.4, w: 27.5, h: 15.1 } },
-  { id: 'kuroneko_face',    name: '黒猫（顔ハメ）',        file: './frames/kuroneko_face.webp',    anchor: 'full', faceHole: { x: 23.7, y: 17.6, w: 49.0, h: 25.9 } },
+  { id: 'okami_face',       name: '女将（顔フレーム）',        file: './frames/okami_face.webp',       anchor: 'full', faceHole: { x: 33.9, y: 17.9, w: 26.9, h: 15.5 } },
+  { id: 'heisei_loli_face', name: '平成ロリ（顔フレーム）',      file: './frames/heisei_loli_face.webp', anchor: 'full', faceHole: { x: 38.0, y: 17.0, w: 23.8, h: 13.1 } },
+  { id: 'ryoushi_face',     name: '漁師（顔フレーム）',        file: './frames/ryoushi_face.webp',     anchor: 'full', faceHole: { x: 35.3, y: 17.4, w: 27.5, h: 15.1 } },
+  { id: 'kuroneko_face',    name: '黒猫（顔フレーム）',        file: './frames/kuroneko_face.webp',    anchor: 'full', faceHole: { x: 23.7, y: 17.6, w: 49.0, h: 25.9 } },
   // 2人ぶんの穴。まとめて1つの範囲としてカメラを描くので、並んだ2人が収まる
-  { id: 'dog_spa_face',     name: '犬スパ（顔ハメ）',       file: './frames/dog_spa_face.webp',     anchor: 'full', faceHoles: [{ x: 11.8, y: 24.7, w: 40.0, h: 27.9 }, { x: 56.1, y: 26.7, w: 38.5, h: 27.9 }] },
-  { id: 'inaka_face',       name: '田舎暮らし（顔ハメ）',     file: './frames/inaka_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 25.9, w: 36.5, h: 25.0 }, { x: 55.3, y: 41.5, w: 30.3, h: 21.1 }] },
+  { id: 'dog_spa_face',     name: '犬スパ（顔フレーム）',       file: './frames/dog_spa_face.webp',     anchor: 'full', faceHoles: [{ x: 11.8, y: 24.7, w: 40.0, h: 27.9 }, { x: 56.1, y: 26.7, w: 38.5, h: 27.9 }] },
+  { id: 'inaka_face',       name: '田舎暮らし（顔フレーム）',     file: './frames/inaka_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 25.9, w: 36.5, h: 25.0 }, { x: 55.3, y: 41.5, w: 30.3, h: 21.1 }] },
 ];
 
 /** その枠が、いまの書き出しの形にぴったり合うか。

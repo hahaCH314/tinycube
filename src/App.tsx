@@ -1797,7 +1797,7 @@ function App() {
                 （2026-08-13、伊波さん「前もスマホはリアルタイムが難しかった」） */}
             {import.meta.env.DEV && (
               <span style={{ fontSize: '9px', opacity: 0.7, marginLeft: '6px', fontFamily: 'monospace' }}>
-                顔ハメ改
+                face-frame
               </span>
             )}
           </div>
