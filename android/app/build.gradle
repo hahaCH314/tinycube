@@ -96,8 +96,13 @@ android {
         //    （46 = 向きをデータに持たせた。読み込みのタイミングに
         //          左右されなくなった。2026-08-19）
         //    （47 = 古い写真も回るようにした（onload → decode）。2026-08-19）
-        versionCode 47
-        versionName "1.4.7"
+        //    （48 = 文字とスタンプを小さめに置くようにし、保存の係数を
+        //          文字用とスタンプ用で分けた。2026-08-23）
+        //    （49 = 動画は撮る前に決める形へ。動き・色み・文字の出し方を
+        //          設定で選び、撮影中はフラッシュと音だけにした。
+        //          インスタ用の保存（4:5 の白フチ）も足した。2026-08-23）
+        versionCode 49
+        versionName "1.5.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

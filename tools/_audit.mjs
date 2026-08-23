@@ -62,7 +62,9 @@ const run = async (lang) => {
   await page.locator('.where-btn').first().waitFor({timeout:20000}).catch(()=>{});
   const ms=Date.now()-t0;
   ok(`保存への誘導が出るまで ${ms}ms`, ms < 1200);
-  ok('行き先を4つ聞く', await page.locator('.where-btn').count()===4);
+  // 5つ = 両方 / 端末 / プリクラ帳 / インスタ用 / 保存しない
+  // （2026-08-23、インスタ用を足した。3連は縦に長くて投稿枠から切られるため）
+  ok('行き先を5つ聞く', await page.locator('.where-btn').count()===5);
   // 日本語の混入（英語のときだけ）
   if (lang==='en') {
     const jp = await page.evaluate(() => {
