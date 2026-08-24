@@ -36,6 +36,9 @@ type I18nDict = {
   unlock_p1: string;
   unlock_p2: string;
   unlock_buy: string;
+  /** Web にいま買う道が無いときに出す（2026-08-24）。BOOTH を閉じ、
+      Ko-fi は寄付専用にしたため。Stripe が入るまでの間 */
+  unlock_web_soon: string;
   /** アプリ（Android）で買うボタン。**外の売り場の名前を出してはいけない**。
       Play の課金を通すので「BOOTH で買う」とは書けない（2026-08-14）*/
   unlock_buy_app: string;
@@ -266,6 +269,7 @@ const dictJa: I18nDict = {
   unlock_p1: '🖼 新しいフレームが使える（サイバー・ゴシック・和風など）',
   unlock_p2: '✨ これから足すぶんも、追加のお金なしで使えます',
   unlock_buy: 'BOOTH で買う（¥300）',
+  unlock_web_soon: 'いまはアプリ版でだけ買えます。ブラウザからのお支払いは準備中です。',
   unlock_buy_app: 'ぜんぶ使えるようにする（¥300）',
   unlock_restore: '買ったのに使えないとき',
   unlock_buy_ng: 'いま買えませんでした。少し時間をおいて、もう一度ためしてください。',
@@ -495,6 +499,7 @@ const dictEn: I18nDict = {
   unlock_p1: '🖼 New frames (cyber, gothic, Japanese and more)',
   unlock_p2: '✨ Frames added in future are included too',
   unlock_buy: 'Buy on Ko-fi (¥300)',
+  unlock_web_soon: 'Purchases are available in the app for now. Payment from the browser is coming soon.',
   unlock_buy_app: 'Unlock everything (¥300)',
   unlock_restore: 'Already bought it?',
   unlock_buy_ng: 'Could not start the purchase. Please try again in a moment.',

@@ -2059,3 +2059,17 @@ button:active,
 @media (prefers-reduced-motion: reduce) {
   .save-toast { animation: none; }
 }
+
+/* Web に買う道が無いときの知らせ（2026-08-24）。
+   BOOTH を閉じ、Ko-fi は CUBICENGINE の寄付専用にしたため。
+   ⚠️ Stripe が入ったら、ここではなくボタンに戻す */
+.unlock-soon {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+}

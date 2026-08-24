@@ -600,17 +600,16 @@ function App() {
   const [keyInput, setKeyInput] = useState('');
   const [keyNG, setKeyNG] = useState(false);
   const unlockRef = useRef<HTMLDivElement>(null);
-  // 買うところ。BOOTH は日本、Ko-fi は英語圏。CMCUBE と同じ分け方（2026-08-11）
+  // 買うところ。
   //
-  // ⚠️ **アプリ（Android）では、この外の売り場へ連れて行ってはいけない。**
-  //    Google Play は、アプリの中で売るデジタルの品物に Play の課金を通すことを
-  //    求めていて、外の売り場へ誘導すると審査で弾かれる。
-  //    アプリでは Play の課金ボタン、Web ではこれまでどおり BOOTH / Ko-fi
-  //    （2026-08-14、伊波さん「A. アプリ版だけボタンを隠す」）
+  // ⚠️ **アプリ（Android / iOS）では、外の売り場へ連れて行ってはいけない。**
+  //    ストアは、アプリの中で売るデジタルの品物にストアの課金を通すことを
+  //    求めていて、外の売り場へ誘導すると審査で弾かれる
+  //    （2026-08-14、伊波さん「A. アプリ版だけボタンを隠す」）。
+  //
+  // ⚠️ **Web にはいま買う道が無い**（2026-08-24）。BOOTH を閉じ、Ko-fi は
+  //    CUBICENGINE の寄付専用にしたため。Stripe が入るまで「準備中」を出す
   const inApp = isNativeApp();
-  const buyUrl = getLang() === 'ja'
-    ? 'https://cubicengine.booth.pm/items/8705410'
-    : 'https://ko-fi.com/s/e4fc12b6e7';
   const [buyBusy, setBuyBusy] = useState(false);
   const [buyNG, setBuyNG] = useState(false);
   const submitKey = async () => {
@@ -2463,7 +2462,19 @@ function App() {
                         {buyNG && <p className="unlock-ng">{t('unlock_buy_ng')}</p>}
                       </>
                     ) : (
-                      <a className="unlock-buy" href={buyUrl} target="_blank" rel="noopener noreferrer">{t('unlock_buy')}</a>
+                      /* ⚠️ **Web では、いま買う道が無い**（2026-08-24）。
+                         BOOTH の商品ページを閉じ（伊波さん「BOOTHは消した」）、
+                         Ko-fi は CUBICENGINE の寄付専用にした（「KOFIもCUBICENGINEの
+                         寄付だけ」）。**寄付の導線に販売を混ぜない**という約束。
+
+                         リンクを残すと 404 に当たるので、代わりに「準備中」と出す。
+                         Web 決済は Stripe に移す話が進んでいる（ヒマワリの手紙
+                         2026-08-23「tinyCUBEのWeb決済Stripe導入の件」）。
+                         **入ったらここにボタンを戻すこと。**
+
+                         キー入力（下）はそのまま残す。前にキーを配った人が
+                         使えなくなるのを防ぐため */
+                      <p className="unlock-soon">{t('unlock_web_soon')}</p>
                     )}
                     {/* キー入力は Web だけ。アプリに残すと「外で買う道」に見えて
                         審査で引っかかる（買った人は Play が覚えているので要らない）*/}
