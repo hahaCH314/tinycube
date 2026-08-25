@@ -2124,3 +2124,15 @@ button:active,
   color: inherit;
   box-shadow: none;
 }
+
+/* 50枚ぶんの空き枠（2026-08-25、伊波さん「初めから５０枚入りのしーとにしたら？」）。
+   ⚠️ **写真と同じ大きさ・同じ場所取りにすること。** 違うと並びがガタつく。
+      .album-cell の aspect-ratio と box-sizing をそのまま受ける */
+.album-cell.empty {
+  border-style: dashed;
+  border-color: rgba(120, 100, 190, 0.35);
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+  /* 押せるものに見せない */
+  pointer-events: none;
+}

@@ -3102,6 +3102,14 @@ function App() {
                     )}
                   </button>
                 ))}
+                {/* ⚠️ **50枚ぶんの枠をはじめから出す**（2026-08-25、伊波さん
+                    「プリクラ帳は初めから５０枚入りのしーとにしたら？」）。
+                    実物のシールブックと同じで、**あと何枚貼れるかが目で分かる**。
+                    ⚠️ **1枚も無いときは出さない**（伊波さん「空の時は空で」）。
+                    空っぽの棚が50個並んでも、集めたくならない */}
+                {Array.from({ length: Math.max(0, ALBUM_LIMIT - albumList.length) }, (_, i) => (
+                  <div key={'empty' + i} className="album-cell empty" aria-hidden="true" />
+                ))}
               </div>
             </>
           )}

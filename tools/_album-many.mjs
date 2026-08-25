@@ -34,7 +34,7 @@ const info = await page.evaluate(() => {
   const scr=document.querySelector('.album-screen');
   const grid=document.querySelector('.album-grid');
   if(!scr||!grid) return {err:'なし'};
-  const cells=[...grid.querySelectorAll('.album-cell')];
+  const cells=[...grid.querySelectorAll('.album-cell:not(.empty)')];
   const rs=cells.map(c=>c.getBoundingClientRect());
   const over=[];
   for(let i=0;i<rs.length;i++)for(let j=i+1;j<rs.length;j++){
@@ -45,7 +45,8 @@ const info = await page.evaluate(() => {
   const cs=getComputedStyle(grid);
   const c0=cells[0], r0=rs[0], r3=rs[3];
   const s0=getComputedStyle(c0);
-  return { 枚数:cells.length, 重なり:over.slice(0,8), 重なり数:over.length,
+  return { 枚数:cells.length, 空き枠:grid.querySelectorAll('.album-cell.empty').length,
+    全部:grid.querySelectorAll('.album-cell').length, 重なり:over.slice(0,8), 重なり数:over.length,
     グリッド:{ 高さ:Math.round(grid.getBoundingClientRect().height),
       中身の高さ:grid.scrollHeight, スクロールできる:grid.scrollHeight>grid.clientHeight+2,
       overflowY:cs.overflowY, display:cs.display, minHeight:cs.minHeight, flex:cs.flex },
