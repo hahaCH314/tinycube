@@ -1889,6 +1889,13 @@ button:active,
      ⚠️ 隙間は詰めすぎないこと。6px だと似た色の写真が並んだとき
         境目が消えて1枚に見える */
   display: grid; grid-template-columns: repeat(3, 1fr);
+  /* ⚠️ **grid-auto-rows: max-content を必ず付けること**（2026-08-25、
+     伊波さん「写真重なってるし、スクロールできない」「写真に重ねないで」）。
+     これが無いと、grid が行の高さを 110.7px と見誤り、
+     **aspect-ratio で 161px になったセルが 50px はみ出して下の写真に食い込む**。
+     18枚入れて実測したときの数字。枚数が増えるほど食い込みも増える。
+     max-content なら「中身の高さ」で行を取るので、はみ出さない */
+  grid-auto-rows: max-content;
   gap: 12px;
   padding: 8px 12px calc(env(safe-area-inset-bottom, 0px) + 20px);
   align-content: start;

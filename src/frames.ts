@@ -363,14 +363,26 @@ export function inDisplayOrder(list: Frame[]): Frame[] {
   const rank = new Map(FRONT_ORDER.map((id, i) => [id, i]));
   const front: Frame[] = [];
   const rest: Frame[] = [];
+  const face: Frame[] = [];
   const locked: Frame[] = [];
+  // ⚠️ **顔フレームはひとまとめにする**（2026-08-25、伊波さん
+  //    「横フレームの顔フレームの並びも直っていない」）。
+  //    書いた順のままだと、顔フレームが3箇所に散らばって並び、
+  //    探している人が一覧を何度も往復することになる（実測で7つの塊）。
+  //    「顔ハメでない枠を先に」（2026-08-19）の方針はそのまま活かし、
+  //    **普通 → 顔 → 鍵つき** の順に寄せる
+  const 顔か = (f: Frame) => !!(f.faceHole || f.faceHoles);
   for (const f of list) {
     if (f.paid) locked.push(f);          // 鍵つきは何があっても最後
     else if (rank.has(f.id)) front.push(f);
+    else if (顔か(f)) face.push(f);
     else rest.push(f);
   }
   front.sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
-  return [...front, ...rest, ...locked];
+  // FRONT_ORDER で前に出したものの中にも顔フレームがある。そこも寄せる
+  const front普通 = front.filter(f => !顔か(f));
+  const front顔 = front.filter(顔か);
+  return [...front普通, ...rest, ...front顔, ...face, ...locked];
 }
 
 /** 読み込みが終わるまで待つ。録画中に間に合わないと、枠だけ抜けた動画が出てしまう */
