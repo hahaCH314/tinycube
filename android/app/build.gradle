@@ -101,8 +101,11 @@ android {
         //    （49 = 動画は撮る前に決める形へ。動き・色み・文字の出し方を
         //          設定で選び、撮影中はフラッシュと音だけにした。
         //          インスタ用の保存（4:5 の白フチ）も足した。2026-08-23）
-        versionCode 49
-        versionName "1.5.0"
+        //    （50 = プリクラ帳を1枚ずつ見えるようにし、並べ替えを付けた。
+        //          古いフレーム6枚を外し、秋の限定フレーム12枚を足した。
+        //          秋は 9/1〜11/30 のあいだ専用ボタンから開く。2026-08-25）
+        versionCode 50
+        versionName "1.5.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
