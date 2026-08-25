@@ -2084,3 +2084,12 @@ button:active,
   line-height: 1.6;
   text-align: center;
 }
+
+/* 並べ替えの案内（2026-08-24）。2枚選ぶと入れ替わる、という動きは
+   見ただけでは分からないので、選んでいる間ずっと出しておく */
+.album-hint {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: #6a5acd;
+  align-self: center;
+}

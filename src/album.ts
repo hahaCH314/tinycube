@@ -48,6 +48,14 @@ export type AlbumItem = {
    *     （伊波さん「プリクラ帳はこわれたまま」「直ってない」）。
    *     ここに持てば、読み込みのタイミングに左右されない */
   wide?: boolean;
+  /**
+   * 並べ替えたときの位置（2026-08-24、伊波さん「１枚ずつ選んで並べ替えたい」）。
+   *
+   * ⚠️ **持っていないものは id で並べる（＝新しい順）。**
+   *    これまでのものを全部書き換えると、そこで失敗したときに
+   *    並びが壊れる。**触ったものにだけ付ける。**
+   */
+  order?: number;
 };
 
 function open(): Promise<IDBDatabase> {
@@ -160,7 +168,15 @@ export async function list(): Promise<AlbumItem[]> {
       q.onerror = () => res([]);
     });
     return all
-      .sort((a, b) => b.id - a.id)
+      // ⚠️ **order を持っているものが先。** 並べ替えたものは、その位置に置く。
+      //    持っていないものは今までどおり新しい順（id の降順）
+      .sort((a, b) => {
+        const ao = a.order, bo = b.order;
+        if (ao !== undefined && bo !== undefined) return ao - bo;
+        if (ao !== undefined) return -1;
+        if (bo !== undefined) return 1;
+        return b.id - a.id;
+      })
       // ⚠️ **wide を落とさないこと。**
       //    以前は { id, thumb, count } しか返しておらず、せっかく add() が
       //    測って持たせた wide が毎回捨てられていた。すると App.tsx の
@@ -169,7 +185,7 @@ export async function list(): Promise<AlbumItem[]> {
       //    終わらず、**プリクラ帳が永久に開かなくなる**
       //    （2026-08-21、伊波さんの実機で発覚。「プリ帳開けない、
       //      １番最初にテストは開けてた」＝空のときだけ開けていた）。
-      .map(({ id, thumb, count, wide }) => ({ id, thumb, count, wide }));
+      .map(({ id, thumb, count, wide, order }) => ({ id, thumb, count, wide, order }));
   } finally {
     db.close();
   }
@@ -204,6 +220,44 @@ export async function remove(...ids: number[]): Promise<void> {
     const tx = db.transaction(STORE, 'readwrite');
     const st = tx.objectStore(STORE);
     for (const id of ids) st.delete(id);
+    await done(tx);
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * 2枚の場所を入れ替える（2026-08-24、伊波さん「１枚ずつ選んで並べ替えたい」
+ * 「B（2枚選んで入れ替える）」）。
+ *
+ * ⚠️ **並びを丸ごと書き直すこと。** order を持っていないものが混ざっていると、
+ *    2枚だけ書き換えても「持っている組」と「持っていない組」で
+ *    並びが分かれてしまう（list() の sort を見ること）。
+ *    いまの見た目の順で全部に番号を振り直せば、そこがズレない。
+ *
+ * @param order いま画面に出ている順の id。この2つを入れ替えて保存する
+ */
+export async function swap(order: number[], a: number, b: number): Promise<void> {
+  const ia = order.indexOf(a), ib = order.indexOf(b);
+  if (ia < 0 || ib < 0 || ia === ib) return;
+  const next = [...order];
+  next[ia] = b; next[ib] = a;
+
+  const db = await open();
+  try {
+    const tx = db.transaction(STORE, 'readwrite');
+    const st = tx.objectStore(STORE);
+    for (let i = 0; i < next.length; i++) {
+      const id = next[i];
+      // 読んでから書く。thumb と full を落とさないため
+      const cur = await new Promise<AlbumItem | null>(res => {
+        const q = st.get(id);
+        q.onsuccess = () => res((q.result as AlbumItem) ?? null);
+        q.onerror = () => res(null);
+      });
+      if (!cur) continue;
+      st.put({ ...cur, order: i });
+    }
     await done(tx);
   } finally {
     db.close();

@@ -1510,8 +1510,12 @@ function App() {
   const [albumView, setAlbumView] = useState<AlbumItem | null>(null);
   /** 消すために選んだもの */
   const [albumPicked, setAlbumPicked] = useState<Set<number>>(new Set());
-  /** 消すモードかどうか */
-  const [albumEditing, setAlbumEditing] = useState(false);
+  /**
+   * いま何をしているか。false なら見るだけ。
+   *   'del'  … 消すものを選ぶ
+   *   'sort' … 並べ替える（2枚選ぶと入れ替わる）
+   */
+  const [albumEditing, setAlbumEditing] = useState<false | 'del' | 'sort'>(false);
   /** いま何枚入っているか。0枚なら入口を出さない */
   const [albumHas, setAlbumHas] = useState(0);
   const [previewBusy, setPreviewBusy] = useState(false);
@@ -3008,7 +3012,7 @@ function App() {
           ) : (
             <>
               <div className="album-tools">
-                {albumEditing ? (
+                {albumEditing === 'del' ? (
                   <>
                     <button className="album-tool" onClick={() => { setAlbumEditing(false); setAlbumPicked(new Set()); }}>{t('btn_cancel')}</button>
                     <button
@@ -3017,8 +3021,20 @@ function App() {
                       onClick={deletePicked}
                     >{albumPicked.size ? `${albumPicked.size}枚を消す` : '消すものを選んでね'}</button>
                   </>
+                ) : albumEditing === 'sort' ? (
+                  <>
+                    <button className="album-tool" onClick={() => { setAlbumEditing(false); setAlbumPicked(new Set()); }}>{t('btn_cancel')}</button>
+                    {/* ⚠️ **何をすればいいかを出しておくこと。**
+                        2枚選ぶと入れ替わる、という動きは見ただけでは分からない */}
+                    <span className="album-hint">{t('msg_sort_hint')}</span>
+                  </>
                 ) : (
-                  <button className="album-tool" onClick={() => setAlbumEditing(true)}>{t('btn_choose_del')}</button>
+                  <>
+                    <button className="album-tool" onClick={() => setAlbumEditing('del')}>{t('btn_choose_del')}</button>
+                    {/* 並べ替え（2026-08-24、伊波さん「１枚ずつ選んで並べ替えたい」）。
+                        2枚タップすると、その2枚の場所が入れ替わる */}
+                    <button className="album-tool" onClick={() => { setAlbumEditing('sort'); setAlbumPicked(new Set()); }}>{t('btn_sort')}</button>
+                  </>
                 )}
               </div>
 
@@ -3033,6 +3049,18 @@ function App() {
                     //    it.wide が無い古いものは、下の useEffect が測って埋める
                     className={`album-cell ${albumPicked.has(it.id) ? 'picked' : ''} ${it.wide ? 'is-wide' : ''}`}
                     onClick={async () => {
+                      if (albumEditing === 'sort') {
+                        // ⚠️ **2枚目を押した時点で入れ替える。**
+                        //    「決定」を押させると一手増えるし、
+                        //    何が起きるのか分からないまま待たせることになる
+                        if (albumPicked.has(it.id)) { setAlbumPicked(new Set()); return; }
+                        const first = [...albumPicked][0];
+                        if (first === undefined) { setAlbumPicked(new Set([it.id])); return; }
+                        setAlbumPicked(new Set());
+                        await album.swap(albumList.map(x => x.id), first, it.id);
+                        setAlbumList(await album.list());
+                        return;
+                      }
                       if (albumEditing) {
                         // 選ぶ・選び直す
                         const next = new Set(albumPicked);

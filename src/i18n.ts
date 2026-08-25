@@ -248,6 +248,9 @@ type I18nDict = {
   btn_cancel: string;
   msg_choose_del: string;
   btn_choose_del: string;
+  /** 並べ替え（2026-08-24）。2枚選ぶと入れ替わる */
+  btn_sort: string;
+  msg_sort_hint: string;
   btn_close: string;
   btn_save_to_device: string;
 };
@@ -480,6 +483,8 @@ SNSへの投稿等及び、二次使用は
   btn_cancel: 'やめる',
   msg_choose_del: '消すものを選んでね',
   btn_choose_del: '選んで消す',
+  btn_sort: 'ならべかえ',
+  msg_sort_hint: '入れかえたい2まいを、じゅんばんにタップしてね',
   btn_close: 'とじる',
   btn_save_to_device: '端末に保存',
 };
@@ -710,6 +715,8 @@ Thank you.`,
   btn_cancel: 'Cancel',
   msg_choose_del: 'Choose what to delete',
   btn_choose_del: 'Select & Delete',
+  btn_sort: 'Reorder',
+  msg_sort_hint: 'Tap two photos to swap their places',
   btn_close: 'Close',
   btn_save_to_device: 'Save to device',
 };
