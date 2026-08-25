@@ -16,6 +16,39 @@ export type OutShape = 'portrait' | 'landscape';
 
 export type FaceHole = { x: number; y: number; w: number; h: number };
 
+/**
+ * 季節の限定フレーム（2026-08-25、ヒマワリからの手紙）。
+ *
+ * ⚠️ **通常の一覧には混ぜない。** 期間中だけ、別枠の専用ボタンから開く
+ *    （ヒマワリ「季節限定フレームは通常フレームのリスト（カテゴリ）には
+ *      並べない」「該当期間中のみ、UI上に専用ボタンが別枠で出現する」）。
+ *
+ * ⚠️ **期間は端末の日付で見る。** サーバーを持たないので、
+ *    日付をずらせば見えてしまう。それは承知のうえ。
+ *    課金でも何でもないので、厳密に締める必要はない
+ */
+export type SeasonId = 'autumn';
+
+/** 季節ごとの出る期間（月/日）。年はまたがない前提 */
+export const SEASONS: Record<SeasonId, { name: string; from: [number, number]; to: [number, number] }> = {
+  autumn: { name: '秋', from: [9, 1], to: [11, 30] },
+};
+
+/**
+ * いま出ている季節を返す。無ければ null。
+ * @param now 試すとき用。ふだんは渡さない
+ */
+export function seasonNow(now = new Date()): SeasonId | null {
+  const m = now.getMonth() + 1, d = now.getDate();
+  for (const [id, s] of Object.entries(SEASONS) as [SeasonId, typeof SEASONS[SeasonId]][]) {
+    const a = s.from[0] * 100 + s.from[1];
+    const b = s.to[0] * 100 + s.to[1];
+    const t = m * 100 + d;
+    if (t >= a && t <= b) return id;
+  }
+  return null;
+}
+
 export type Frame = {
   id: string;
   name: string;
@@ -29,6 +62,8 @@ export type Frame = {
    *  x, y は左上の座標、w, h は幅・高さ（いずれも %） */
   faceHole?: FaceHole;
   faceHoles?: FaceHole[];
+  /** 季節の限定フレーム。**通常の一覧には出さない**（専用ボタンから開く） */
+  season?: SeasonId;
   /** ¥300 の買い切りで解ける枠。true だと鍵がかかり、買うまで選べない。
    *
    *  ■ 経緯（行ったり来たりしたので残す）
@@ -228,14 +263,45 @@ export const FRAMES: Frame[] = [
   // 2人ぶんの穴。まとめて1つの範囲としてカメラを描くので、並んだ2人が収まる
   { id: 'dog_spa_face',     name: '犬スパ（顔フレーム）',       file: './frames/dog_spa_face.webp',     anchor: 'full', faceHoles: [{ x: 11.8, y: 24.7, w: 40.0, h: 27.9 }, { x: 56.1, y: 26.7, w: 38.5, h: 27.9 }] },
   { id: 'inaka_face',       name: '田舎暮らし（顔フレーム）',     file: './frames/inaka_face.webp',       anchor: 'full', faceHoles: [{ x: 18.9, y: 25.9, w: 36.5, h: 25.0 }, { x: 55.3, y: 41.5, w: 30.3, h: 21.1 }] },
+  // ---- 秋の限定フレーム（2026-09-01〜11-30）2026-08-25 ----
+  // ⚠️ **通常の一覧には出さない。** 期間中だけ専用ボタンから開く
+  { id: 'aki_tsukimi_p', name: 'お月見', file: './frames/aki_tsukimi_p.webp', anchor: 'full', season: 'autumn' },
+  { id: 'aki_tsukimi_w', name: 'お月見', file: './frames/aki_tsukimi_w.webp', anchor: 'wide', season: 'autumn' },
+  { id: 'aki_ringo_p', name: 'りんご飴（顔フレーム）', file: './frames/aki_ringo_p.webp', anchor: 'full', faceHole: { x: 28.8, y: 37.1, w: 42.2, h: 27 }, season: 'autumn' },
+  { id: 'aki_ika_p', name: 'イカ焼き（顔フレーム）', file: './frames/aki_ika_p.webp', anchor: 'full', faceHole: { x: 29.9, y: 30.1, w: 39.9, h: 33.5 }, season: 'autumn' },
+  { id: 'aki_budou_w', name: 'ぶどう', file: './frames/aki_budou_w.webp', anchor: 'wide', season: 'autumn' },
+  { id: 'aki_kuri_p', name: '栗（顔フレーム）', file: './frames/aki_kuri_p.webp', anchor: 'full', faceHole: { x: 27.9, y: 25.6, w: 44.6, h: 34.5 }, season: 'autumn' },
+  { id: 'aki_yakiniku_w', name: '焼肉（顔フレーム）', file: './frames/aki_yakiniku_w.webp', anchor: 'wide', faceHole: { x: 27, y: 12.1, w: 50.8, h: 55.5 }, season: 'autumn' },
+  { id: 'aki_matsuri_w', name: '秋祭り', file: './frames/aki_matsuri_w.webp', anchor: 'wide', season: 'autumn' },
+  { id: 'aki_momiji_p', name: '紅葉', file: './frames/aki_momiji_p.webp', anchor: 'full', season: 'autumn' },
+  { id: 'aki_momiji_w', name: '紅葉', file: './frames/aki_momiji_w.webp', anchor: 'wide', season: 'autumn' },
+  { id: 'aki_matsuri_p', name: '祭り女子（顔フレーム）', file: './frames/aki_matsuri_p.webp', anchor: 'full', faceHole: { x: 34.9, y: 23.7, w: 27.4, h: 20.1 }, season: 'autumn' },
+  { id: 'aki_shokuyoku_w', name: '食欲の秋（顔フレーム）', file: './frames/aki_shokuyoku_w.webp', anchor: 'wide', faceHole: { x: 42.3, y: 12, w: 19.6, h: 38.8 }, season: 'autumn' },
 ];
 
 /** その枠が、いまの書き出しの形にぴったり合うか。
     合わないものも使えるようにする（伊波さんの判断。欠けてでも全部使いたい）。
     ただし黙って切るのは不親切なので、一覧に印を出すためにここで判定だけしておく */
 export function fitsShape(frame: Frame, shape: OutShape): boolean {
+  // ⚠️ **季節のものは通常の一覧に出さない**（2026-08-25、ヒマワリからの手紙
+  //    「季節限定フレームは通常フレームのリストには並べない」）。
+  //    専用ボタンから seasonFrames() で開く
+  if (frame.season) return false;
   if (frame.anchor === 'top' || frame.anchor === 'bottom') return true;
   return shape === 'landscape' ? frame.anchor === 'wide' : frame.anchor === 'full';
+}
+
+/**
+ * いま出ている季節のフレームを、形に合うものだけ返す。
+ * 期間外なら空。**専用ボタンを出すかどうかも、この中身が空かで決める**
+ */
+export function seasonFrames(shape: OutShape, now = new Date()): Frame[] {
+  const id = seasonNow(now);
+  if (!id) return [];
+  return FRAMES.filter(f =>
+    f.season === id &&
+    (f.anchor === 'top' || f.anchor === 'bottom' ||
+     (shape === 'landscape' ? f.anchor === 'wide' : f.anchor === 'full')));
 }
 
 // ---- 一覧に出す順番（2026-08-15）---------------------------------------

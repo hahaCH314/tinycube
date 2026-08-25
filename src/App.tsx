@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import '../docs/tinycube-skin-shibuya.css'
 import './setup.css'
 import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
-import { FRAMES, loadFrame, fitsShape, inDisplayOrder, type Frame, type FrameAnchor, type FaceHole } from './frames'
+import { FRAMES, loadFrame, fitsShape, inDisplayOrder, seasonFrames, seasonNow, SEASONS, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import * as album from './album'
 import { ALBUM_LIMIT, type AlbumItem } from './album'
 import { fireEffect, fireTelop, setAmbient, setTone, type EffectId, type ToneId } from './effects'
@@ -163,6 +163,13 @@ function App() {
   };
 
   const [frameId, setFrameId] = useState<string | null>(null);
+  /**
+   * 季節の限定フレームを開いているか（2026-08-25、ヒマワリからの手紙）。
+   *
+   * ⚠️ **通常の一覧には混ぜない。** 期間中だけ出る専用ボタンから、
+   *    ここを true にして別の一覧に切り替える
+   */
+  const [seasonOpen, setSeasonOpen] = useState(false);
   const [customFrames, setCustomFrames] = useState<CustomFrameRecord[]>([]);
   useEffect(() => {
     getCustomFrames().then(setCustomFrames).catch(console.error);
@@ -2349,6 +2356,20 @@ function App() {
                 <p className="sheet-note" style={{ marginTop: 6 }}>{t('setting_shape_wide_note')}</p>
               )}
 
+              {/* 季節の限定フレームへの入口（2026-08-25、ヒマワリからの手紙
+                  「該当期間中のみ、UI上に専用ボタンが別枠で出現する」）。
+                  ⚠️ **期間外は出さない。** seasonFrames が空なら押す先も無い */}
+              {seasonFrames(shape).length > 0 && (
+                <button
+                  className={'season-btn' + (seasonOpen ? ' on' : '')}
+                  onClick={() => setSeasonOpen(v => !v)}
+                >
+                  {seasonOpen
+                    ? t('btn_season_back')
+                    : t('btn_season_open').replace('{s}', SEASONS[seasonNow()!].name)}
+                </button>
+              )}
+
               {/* 「フレームを選ぶ」の見出しは小窓の中に入れたので、ここには置かない */}
               {/* タイルの形はクラスで切り替える。CSS 変数（--tile-ar）だと
                   skin 側の指定と競合して効かないことがあった
@@ -2395,7 +2416,10 @@ function App() {
                     目を引くもの → 平成 → 推し色 → 残りは書いた順。
                     **分類のタブは付けない**（2026-08-15、伊波さん
                     「あえて、分類しないで、見つけていく楽しさもあるよね」） */}
-                {inDisplayOrder(FRAMES.filter(f => fitsShape(f, shape))).map(f => (
+                {/* 季節の限定フレーム（2026-08-25、ヒマワリからの手紙）。
+                    ⚠️ **通常の一覧には混ぜない。** 期間中だけ、ここに
+                       専用のボタンが出る。押すと一覧が季節のものに変わる */}
+                {(seasonOpen ? seasonFrames(shape) : inDisplayOrder(FRAMES.filter(f => fitsShape(f, shape)))).map(f => (
                   <button
                     key={f.id}
                     className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}

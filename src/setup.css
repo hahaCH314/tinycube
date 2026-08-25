@@ -2093,3 +2093,27 @@ button:active,
   color: #6a5acd;
   align-self: center;
 }
+
+/* 季節の限定フレームへの入口（2026-08-25、ヒマワリからの手紙）。
+   ⚠️ **通常の一覧の中に混ぜず、その上に別枠で置く。**
+      「いまだけ」であることが分かるよう、少し目立たせる */
+.season-btn {
+  display: block;
+  width: 100%;
+  margin: 8px 0 10px;
+  padding: 11px 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #e8622a, #c0392b);
+  box-shadow: 0 3px 10px rgba(192, 57, 43, 0.4);
+  cursor: pointer;
+}
+.season-btn.on {
+  /* 開いているときは「戻る」なので、押し出さず控えめにする */
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  box-shadow: none;
+}

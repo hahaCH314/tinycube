@@ -211,6 +211,9 @@ type I18nDict = {
   btn_loop_no: string;
   btn_loop_yes: string;
   title_choose_frame: string;
+  /** 季節の限定フレーム（2026-08-25）。{s} は季節の名前 */
+  btn_season_open: string;
+  btn_season_back: string;
   btn_decide_frame: string;
   btn_add: string;
   confirm_del_frame: string;
@@ -446,6 +449,8 @@ SNSへの投稿等及び、二次使用は
   btn_loop_no: 'ループしない',
   btn_loop_yes: 'ループする🔁',
   title_choose_frame: 'フレームを選ぶ',
+  btn_season_open: '🍁 {s}のフレーム（いまだけ）',
+  btn_season_back: '← ふつうのフレームにもどる',
   btn_decide_frame: 'フレーム決定',
   btn_add: '追加',
   confirm_del_frame: 'このフレームを削除しますか？',
@@ -678,6 +683,8 @@ Thank you.`,
   btn_loop_no: "Don't loop",
   btn_loop_yes: 'Loop 🔁',
   title_choose_frame: 'Choose a frame',
+  btn_season_open: '🍁 {s} frames (limited time)',
+  btn_season_back: '← Back to normal frames',
   btn_decide_frame: 'Select frame',
   btn_add: 'Add',
   confirm_del_frame: 'Delete this frame?',
