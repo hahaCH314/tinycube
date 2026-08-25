@@ -271,7 +271,7 @@ export const FRAMES: Frame[] = [
   { id: 'aki_ika_p', name: 'イカ焼き（顔フレーム）', file: './frames/aki_ika_p.webp', anchor: 'full', faceHole: { x: 29.9, y: 30.1, w: 39.9, h: 33.5 }, season: 'autumn' },
   { id: 'aki_budou_w', name: 'ぶどう', file: './frames/aki_budou_w.webp', anchor: 'wide', season: 'autumn' },
   { id: 'aki_kuri_p', name: '栗（顔フレーム）', file: './frames/aki_kuri_p.webp', anchor: 'full', faceHole: { x: 27.9, y: 25.6, w: 44.6, h: 34.5 }, season: 'autumn' },
-  { id: 'aki_yakiniku_w', name: '焼肉（顔フレーム）', file: './frames/aki_yakiniku_w.webp', anchor: 'wide', faceHole: { x: 27, y: 12.1, w: 50.8, h: 55.5 }, season: 'autumn' },
+  { id: 'aki_yakiniku_w', name: '焼肉（顔フレーム）', file: './frames/aki_yakiniku_w.webp', anchor: 'wide', faceHoles: [{ x: 27, y: 12.1, w: 21.1, h: 48.7 }, { x: 57.2, y: 21, w: 20.5, h: 46.4 }], season: 'autumn' },
   { id: 'aki_matsuri_w', name: '秋祭り', file: './frames/aki_matsuri_w.webp', anchor: 'wide', season: 'autumn' },
   { id: 'aki_momiji_p', name: '紅葉', file: './frames/aki_momiji_p.webp', anchor: 'full', season: 'autumn' },
   { id: 'aki_momiji_w', name: '紅葉', file: './frames/aki_momiji_w.webp', anchor: 'wide', season: 'autumn' },

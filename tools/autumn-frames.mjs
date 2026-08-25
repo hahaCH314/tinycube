@@ -129,3 +129,20 @@ for (const r of rows) {
   const hole = r.顔 ? `, faceHole: { x: ${r.x}, y: ${r.y}, w: ${r.w}, h: ${r.h} }` : '';
   console.log(`  { id: '${r.id}', name: '${r.name}', file: './frames/${r.file}', anchor: '${anchor}'${hole}, season: 'autumn' },`);
 }
+
+// ⚠️ **穴が2つ以上ある絵に気をつけること。**
+//
+//    ここは穴を「1つの塊」としてしか測っていない。二人用の枠だと、離れた
+//    2つの穴を**まとめた大きな四角**が出てしまう。焼肉がそれで
+//    「幅50.8 × 高さ55.5（画面の半分）」になっていた（2026-08-26 に発覚）。
+//
+//    比率が正方形に近い、あるいは面積が大きすぎるものは疑うこと。
+//    2つある枠は faceHoles（複数形）で書く。測り直しは
+//      node tools/_two-holes.mjs public/frames/xxx.webp
+const あやしい = rows.filter(r => r.顔 && (r.w * r.h > 1800 || Math.abs(r.w / r.h - 1) < 0.25));
+if (あやしい.length) {
+  console.log('\n⚠️ 穴が2つあるかもしれないもの（tools/_two-holes.mjs で測り直すこと）');
+  for (const r of あやしい) {
+    console.log(`  ${r.name}  w=${r.w} h=${r.h}  比 ${(r.w / r.h).toFixed(2)}  面積 ${(r.w * r.h / 100).toFixed(1)}%`);
+  }
+}
