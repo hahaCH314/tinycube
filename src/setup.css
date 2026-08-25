@@ -1931,21 +1931,26 @@ button:active,
   object-position: center 40%;
   display: block;
 }
-/* ⚠️ **横で撮ったものも、同じ枠に同じように収める**（2026-08-24）。
-   前は 90 度回して縦にしていたが（.is-wide）、回すと顔が横倒しになる。
-   枠が揃った以上、回す理由はもう無い。**回さずに切って埋める** */
-.album-cell.is-wide {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  overflow: hidden;
-}
+/* 横で撮ったものは**90度回して縦にする**（2026-08-18）。
+   プリクラ帳は縦に並べるものなので、横のまま置くと1枚だけ寝て見える。
+   ⚠️ **顔が横倒しになるのは承知のうえ**（2026-08-24、伊波さん
+      「顔がよこだおしでいいんだよ」）。一度これをやめてみたが、
+      **回すのが正しい**。並びの揃いのほうが大事。
+   ⚠️ 枠は縦のものと同じ 3:4 のまま。前は 9:16 にしていて、
+      **横だけ縦に伸びて隣とぶつかっていた**（「横フレームは重なって」）*/
 .album-cell.is-wide img {
-  position: static;
-  width: 100%; height: 100%;
+  position: absolute;
+  top: 50%; left: 50%;
+  /* 回すと「絵の幅」が枠の高さになる。枠は 3:4 なので 4/3 倍あれば埋まる。
+     少し大きめに取って、切れても隙間が出ないようにする */
+  width: calc(100% * 4 / 3);
+  height: auto;
+  min-height: 100%;
   object-fit: cover;
-  object-position: center 40%;
-  transform: none;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center;
 }
+
 .album-cell.picked { border-color: #6a5acd; }
 .album-check {
   position: absolute; top: 5px; right: 5px;
