@@ -106,8 +106,11 @@ android {
         //          秋は 9/1〜11/30 のあいだ専用ボタンから開く。2026-08-25）
         //    （51 = プリクラ帳の重なりを直し（grid-auto-rows）、50枚入りの
         //          シートにした。顔フレームをひとまとめに並べた。2026-08-25）
-        versionCode 51
-        versionName "1.5.2"
+        //    （52 = 動画ファイルを読み込めなかったのを直した。カメラの許可の
+        //          ために WebChromeClient を丸ごと差し替えていて、Capacitor の
+        //          onShowFileChooser が失われていた。2026-08-26）
+        versionCode 52
+        versionName "1.5.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
