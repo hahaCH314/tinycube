@@ -5,12 +5,12 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 
 /**
  * ⚠️ **ここを空のままにすると、実機でカメラが使えない。**
@@ -79,19 +79,35 @@ public class MainActivity extends BridgeActivity {
      * WebView の中の getUserMedia に答える係。
      *
      * ⚠️ **request.grant(request.getResources()) を呼ばないと、
-     *      アプリ側で許可済みでも映像が来ない。** WebView は既定で断る。
+     *      アプリ側で許可済みでも映像が来ない。** WebView は既定で断る
+     *      （2026-08-15、伊波さんが内部テストの実機で発見）。
+     *
+     * ⚠️ **Capacitor の BridgeWebChromeClient を土台にすること。**
+     *      new WebChromeClient() で丸ごと差し替えると、Capacitor が
+     *      持っていた **onShowFileChooser（ファイルを選ぶ画面を出す係）が
+     *      失われ、動画ファイルを読み込めなくなる**
+     *      （2026-08-26、伊波さん「tinyCUBEの動画のファイルの読み込みが
+     *      できない」「IOSの方はできてる」）。
+     *      iOS は WKWebView が自分で処理するので、この問題は出ない。
+     *      **上書きするのは onPermissionRequest だけにする。**
      */
     private void letTheWebViewUseCamera() {
         if (getBridge() == null || getBridge().getWebView() == null) return;
 
-        getBridge().getWebView().setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onPermissionRequest(final PermissionRequest request) {
-                runOnUiThread(() -> {
-                    // 自分のアプリの中の画面しか読み込まないので、求められたものをそのまま渡す
-                    request.grant(request.getResources());
-                });
+        getBridge().getWebView().setWebChromeClient(
+            new BridgeWebChromeClient(getBridge()) {
+                @Override
+                public void onPermissionRequest(final PermissionRequest request) {
+                    runOnUiThread(() -> {
+                        // 自分のアプリの中の画面しか読み込まないので、
+                        // 求められたものをそのまま渡す。
+                        // Capacitor 側は permissionLauncher を使う作りで、
+                        // onCreate で先に許可を取っている今の形だと answer が
+                        // 返らないことがある（8/15 に踏んだ）
+                        request.grant(request.getResources());
+                    });
+                }
             }
-        });
+        );
     }
 }
