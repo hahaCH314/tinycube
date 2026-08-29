@@ -607,6 +607,23 @@ function App() {
   const [keyInput, setKeyInput] = useState('');
   const [keyNG, setKeyNG] = useState(false);
   const unlockRef = useRef<HTMLDivElement>(null);
+  /**
+   * 「ぜんぶ使えるようにする」を単独で開くための箱（2026-08-30）。
+   *
+   * ⚠️ **カメラが動かないと買えない、という作りだった。**
+   *    購入の案内はフレーム一覧の中にしか無く、そこへ行くには
+   *    「フレームを選ぶ」ボタンが要る。ところがそのボタンは
+   *      {(camOn || videoSrc) && ...}
+   *    で守られていて、**カメラが起動しないと出てこない**。
+   *
+   *    Apple の審査は iPad の実機で行われ、カメラが使えない状態だった。
+   *    そのため審査員が購入にたどり着けず、Guideline 2.1(b) で差し戻された
+   *    （2026-08-29「we cannot locate the In-App Purchases within the app」）。
+   *
+   *    買いたい人がカメラを起動しないと買えないのは、審査以前に不親切。
+   *    最初の画面から直接開けるようにした。
+   */
+  const [buyOpen, setBuyOpen] = useState(false);
   // 買うところ。
   //
   // ⚠️ **アプリ（Android / iOS）では、外の売り場へ連れて行ってはいけない。**
@@ -2238,6 +2255,18 @@ function App() {
                 </span>
               </button>
 
+              {/* 買い切りの入口。**買った人には出さない。**
+                  ⚠️ ここが無いと、カメラが動かない端末では買う道が無い
+                     （buyOpen の宣言のところを読むこと）。
+                     プリクラ帳と同じ見た目で、下に控えめに置く */}
+              {!unlocked && (
+                <button className="album-open-btn" onClick={() => setBuyOpen(true)}>
+                  <span className="album-open-emoji">🔓</span>
+                  <span className="album-open-label">{t('unlock_buy_app')}</span>
+                  <span className="album-open-count">{t('unlock_lead_short')}</span>
+                </button>
+              )}
+
               <div style={{ textAlign: 'center', padding: '24px 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.05em' }}>
                 <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
                   ©２０２６CUBICENGINEstudio
@@ -3012,6 +3041,45 @@ function App() {
       {/* プリクラ帳。撮ったものを貯めて、後から見返す。
           **消すのは本人が選んだものだけ**（2026-08-15、伊波さん
           「勝手に消すんじゃなく」「自分で選んで消せるように」） */}
+      {/* ぜんぶ使えるようにする（単独の画面）。
+          ⚠️ **フレーム一覧の中にある案内とは別。** あちらはカメラが動かないと
+             たどり着けない。ここは最初の画面から直接開ける
+             （buyOpen の宣言のところを読むこと）。
+             中身は同じ StoreKit の買い物と、購入の復元 */}
+      {buyOpen && (
+        <div className="album-screen buy-screen">
+          <div className="album-head">
+            <button className="album-close" onClick={() => setBuyOpen(false)}>{t('btn_back')}</button>
+            <span className="album-title">{t('unlock_title')}</span>
+            <span className="album-count" />
+          </div>
+          <div className="buy-screen-body">
+            <div className={`unlock-box ${unlocked ? 'done' : ''}`}>
+              {unlocked ? (
+                <p className="unlock-ok">{t('unlock_ok')}</p>
+              ) : (
+                <>
+                  <p className="unlock-lead">{t('unlock_lead')}</p>
+                  <ul className="unlock-points">
+                    <li>{t('unlock_p1')}</li>
+                    <li>{t('unlock_p2')}</li>
+                  </ul>
+                  {/* ⚠️ アプリの中だけ。Web 版はこの画面を使わない
+                      （外の売り場へ誘導すると審査で弾かれる） */}
+                  <button className="unlock-buy" onClick={buyNow} disabled={buyBusy}>
+                    {buyBusy ? '…' : t('unlock_buy_app')}
+                  </button>
+                  <button className="unlock-restore" onClick={restoreNow} disabled={buyBusy}>
+                    {t('unlock_restore')}
+                  </button>
+                  {buyNG && <p className="unlock-ng">{t('unlock_buy_ng')}</p>}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {albumOpen && (
         <div className="album-screen">
           <div className="album-head">

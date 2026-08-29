@@ -2136,3 +2136,34 @@ button:active,
   /* 押せるものに見せない */
   pointer-events: none;
 }
+
+/* 「ぜんぶ使えるようにする」の単独画面（2026-08-30）。
+ *
+ * ⚠️ **.album-screen のパステルを打ち消すこと。** 器だけ借りているが、
+ *    プリクラ帳は「眺める場所」なので明るいパステル。買い物の画面まで
+ *    その色にすると、白地に白文字で**中身が読めなくなる**（実際になった）。
+ *    ここは撮る画面と同じ、暗いネオンに戻す。
+ *
+ * ⚠️ この画面が要る理由は App.tsx の buyOpen の宣言を読むこと。
+ *    カメラが動かない端末では、ここからしか買えない。
+ */
+.buy-screen {
+  background: linear-gradient(180deg, #0b1024 0%, #140b2e 100%);
+  color: #eaf2ff;
+  overflow-y: auto;
+}
+.buy-screen .album-head {
+  background: rgba(11, 16, 36, 0.92);
+  border-bottom: 1px solid rgba(102, 231, 255, 0.22);
+}
+.buy-screen .album-title { color: #9beeff; }
+.buy-screen .album-close {
+  background: rgba(255, 255, 255, 0.08);
+  color: #eaf2ff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.buy-screen-body {
+  padding: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+}

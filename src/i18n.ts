@@ -42,6 +42,7 @@ type I18nDict = {
   /** アプリ（Android）で買うボタン。**外の売り場の名前を出してはいけない**。
       Play の課金を通すので「BOOTH で買う」とは書けない（2026-08-14）*/
   unlock_buy_app: string;
+  unlock_lead_short: string;
   /** 買ったのに解けていない人の取り戻し（機種変えのあとなど）*/
   unlock_restore: string;
   /** 買い物の画面が出せなかったとき */
@@ -277,6 +278,7 @@ const dictJa: I18nDict = {
   unlock_buy: 'BOOTH で買う（¥300）',
   unlock_web_soon: 'いまはアプリ版でだけ買えます。ブラウザからのお支払いは準備中です。',
   unlock_buy_app: 'ぜんぶ使えるようにする（¥300）',
+  unlock_lead_short: 'フレーム53枚＋透かし消し',
   unlock_restore: '買ったのに使えないとき',
   unlock_buy_ng: 'いま買えませんでした。少し時間をおいて、もう一度ためしてください。',
   unlock_have: 'キーを持っている',
@@ -511,6 +513,7 @@ const dictEn: I18nDict = {
   unlock_buy: 'Buy on Ko-fi (¥300)',
   unlock_web_soon: 'Purchases are available in the app for now. Payment from the browser is coming soon.',
   unlock_buy_app: 'Unlock everything (¥300)',
+  unlock_lead_short: '53 more frames, no watermark',
   unlock_restore: 'Already bought it?',
   unlock_buy_ng: 'Could not start the purchase. Please try again in a moment.',
   unlock_have: 'I have a key',
