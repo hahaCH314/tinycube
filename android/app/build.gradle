@@ -114,8 +114,12 @@ android {
         //    （53 = 秋フレームの見本を作り忘れていて、一覧が本体を読んで
         //          いたのを直した（2.3MB→0.24MB）。カメラが動かなくても
         //          購入画面へ行けるようにした（審査 2.1(b) 対応）。2026-08-29）
-        versionCode 53
-        versionName "1.5.5"
+        //    （54 = カメラを画面の大きさで描くようにした（1コマ 128→44ms）。
+        //          カメラが死んだら気づいて繋ぎ直す。ズームが顔ハメ以外の枠に
+        //          効いて黒帯が出ていたのを直した。保存はいつも 4:5 に。
+        //          2026-08-30）
+        versionCode 54
+        versionName "1.5.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
