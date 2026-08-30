@@ -114,6 +114,17 @@ export type StageOptions = {
      *  1 未満で引く（顔が小さくなり穴に収まる）、1 超で寄る */
     zoom?: number;
     shape: OutShape;
+    /** 全開の大きさで描くか（2026-08-30）。
+     *
+     *  ⚠️ **録画中と、撮る瞬間だけ true にすること。**
+     *     ふだんは画面に見えている大きさで描けばよい。1920x1080 を
+     *     411px の画面に出すために毎コマ引き伸ばすのが、カクつきの正体だった
+     *     （実測 56.8ms → 38.7ms。CPU 6倍遅くしたときの1コマ）。
+     *
+     *  ⚠️ **写真と録画は canvas をそのまま使う。** 小さいまま撮ると
+     *     小さい写真・小さい動画になる。captureStream は**呼んだ瞬間の
+     *     大きさ**でトラックを決めるので、録り始める前に全開へ戻すこと */
+    full?: boolean;
     frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
   };
@@ -232,13 +243,31 @@ export function startStage(opts: StageOptions): () => void {
     beat++;
     const t0 = meter ? performance.now() : 0;
     try {
-    const { video, shape, frame, watermark, mirror, zoom, idle } = read();
+    const { video, shape, frame, watermark, mirror, zoom, idle, full } = read();
     // 画面が別のもので覆われているあいだは描かない。**ループは回したまま**に
     // して、戻ってきたら次のコマからすぐ絵が出るようにする。
     // 抜け方は下の requestAnimationFrame(draw) を必ず通ること
     if (!idle) {
     const camZoom = zoom && zoom > 0 ? zoom : 1;
-    const { w: OUT_W, h: OUT_H } = SIZES[shape];
+    // ⚠️ **見せているあいだは、画面の大きさで描く**（2026-08-30）。
+    //    1920x1080 を毎コマ作って 411px に縮めて出していたのが重かった。
+    //
+    //    dpr は 2 で頭打ちにする。3 にすると 411x3=1233 になり、
+    //    1080 を超えて**かえって重くなる**（Mac のシオンの指摘）。
+    //    等倍まで落とせば 3.3倍 速いが、伊波さん「きたないのはやだね」なので
+    //    **きれいさを優先して 2 にしている。**
+    const 全開 = SIZES[shape];
+    let OUT_W = 全開.w, OUT_H = 全開.h;
+    if (!full) {
+      const box = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.round(box.width * dpr);
+      // 形は変えない。**幅から高さを出す**（縦横比がずれると絵が歪む）
+      if (w > 0 && w < 全開.w) {
+        OUT_W = w;
+        OUT_H = Math.round(w * 全開.h / 全開.w);
+      }
+    }
     if (canvas.width !== OUT_W) canvas.width = OUT_W;
     if (canvas.height !== OUT_H) canvas.height = OUT_H;
 

@@ -761,6 +761,27 @@ function App() {
     liveRef.current.zoom = isFaceHoleFrame ? camZoom : 1;
   }, [camZoom, isFaceHoleFrame]);
 
+  /**
+   * 全開の大きさで描くか（2026-08-30）。
+   *
+   * ⚠️ **ref で持つこと。** 描画ループは毎コマ read() を呼ぶので、
+   *    state だと切り替えが1コマ遅れる。撮る直前に立てて、
+   *    **その場で効いてほしい**
+   */
+  const fullRef = useRef(false);
+
+  /**
+   * 全開にして、実際にその大きさで1コマ描き終わるまで待つ。
+   *
+   * ⚠️ **待たずに撮ると、小さいままの絵が焼かれる。** 描画ループは
+   *    次の rAF まで動かないので、立てた直後の canvas はまだ小さい。
+   */
+  const 全開にする = () => new Promise<void>(res => {
+    fullRef.current = true;
+    // 2コマぶん待つ（1コマ目で大きさが変わり、2コマ目で中身が入る）
+    requestAnimationFrame(() => requestAnimationFrame(() => res()));
+  });
+
 
   // 画面に出す係を1つだけ回す。録画していなくても同じ絵が出るので、
   // エフェクトを押せばその場で見える
@@ -774,8 +795,13 @@ function App() {
       // フレーム選びを開いているあいだは休ませる。誰も見ていない 1920x1080 を
       // 毎秒60回描き続けると、非力な端末ではスクロールとCPUを取り合う
       // （2026-08-16、伊波さん「かくかくする、フレーム選択が」）
+      // ⚠️ **full は「録画中」と「撮る瞬間」だけ true**（2026-08-30）。
+      //    ふだんは画面に見えている大きさで描く。1920x1080 を毎コマ作って
+      //    411px に縮めて出していたのが、カクつきの正体だった。
+      //    **写真も録画もこの canvas をそのまま使う**ので、
+      //    撮るときは必ず全開に戻すこと（fullRef が担う）
       read: () => ({ ...liveRef.current, video: videoRef.current, fill: camOnRef.current,
-        idle: pickerOpenRef.current }),
+        idle: pickerOpenRef.current, full: fullRef.current }),
       onTrouble: msg => setCamInfo(msg || null),
     });
   }, []);
@@ -1116,6 +1142,10 @@ function App() {
     setStartHint(false);
     const taken: string[] = [];
     try {
+      // ⚠️ **撮るあいだは全開の大きさで描く**（2026-08-30）。
+      //    ふだんは画面の大きさで描いているので、**そのまま撮ると
+      //    小さい写真になる。** 数え始める前に戻しておく
+      await 全開にする();
       // 1枚目の前だけ3つ数える。構える間を作る
       for (let n = 3; n > 0; n--) {
         setCountdown(n);
@@ -1141,6 +1171,8 @@ function App() {
       }
       setBurstNo(null);
     } finally {
+      // 撮り終わったら画面の大きさに戻す（軽くするため）
+      fullRef.current = false;
       setCountdown(null);
       setBurstNo(null);
       setIsBursting(false);
@@ -1784,6 +1816,8 @@ function App() {
     if (isRecording) {
       recorderRef.current?.stop();
       recorderRef.current = null;
+      // 録り終わったら画面の大きさに戻す（軽くするため）
+      fullRef.current = false;
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
@@ -1813,6 +1847,12 @@ function App() {
     setCountdown(null);
 
     try {
+      // ⚠️ **録り始める前に全開へ戻すこと**（2026-08-30）。
+      //    captureStream は**呼んだ瞬間の canvas の大きさ**でトラックを
+      //    決める。小さいまま録り始めると小さい動画になる。
+      //    録画中に大きさを変えると録画そのものが壊れるので、
+      //    **始まる前に戻し、終わるまで全開のまま**にする
+      await 全開にする();
       // 透かしは無料版の印。動画そのものに焼き込まれる。
       // 有料版にしたときは null を渡すだけで消える
       // 画面に出しているものをそのまま録る。別の絵を作らないので、
