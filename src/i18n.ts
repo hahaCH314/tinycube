@@ -98,6 +98,9 @@ type I18nDict = {
   cam_back: string;
   cam_off: string;
   cam_fail: string;
+  /** カメラを OS に取り上げられたとき（2026-08-30）。
+      黙って絵が固まるのが一番たちが悪い */
+  cam_lost: string;
   eff_emotional: string;
   eff_clap: string;
   eff_drum: string;
@@ -334,6 +337,7 @@ const dictJa: I18nDict = {
   cam_back: '外カメ',
   cam_off: '⏹ 使わない',
   cam_fail: 'カメラを開けませんでした。許可の設定を確かめてください。',
+  cam_lost: 'カメラがいったん止まりました。つなぎ直しています…',
   eff_emotional: '🌸 エモい',
   eff_clap: '👏 拍手',
   eff_drum: '🥁 ドラム',
@@ -569,6 +573,7 @@ Also, sponsors welcome :)`,
   cam_back: 'Back',
   cam_off: '⏹ Off',
   cam_fail: 'Could not open the camera. Check the permission settings.',
+  cam_lost: 'The camera stopped. Reconnecting…',
   eff_emotional: '🌸 Dreamy',
   eff_clap: '👏 Clap',
   eff_drum: '🥁 Drum',

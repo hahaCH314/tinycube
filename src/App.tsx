@@ -440,7 +440,6 @@ function App() {
     if (typeof window === 'undefined') return true;
     return !(window.innerWidth > window.innerHeight && window.innerHeight <= 500);
   });
-  useEffect(() => { liveRef.current.zoom = camZoom; }, [camZoom]);
 
   // ---- 写真（3枚連写 → テキスト → デコる → 保存） --------------------
   // 撮った3枚。data URL で持つ。編集中に何度も canvas へ描き直すので、
@@ -741,6 +740,27 @@ function App() {
   // 穴の無い枠では、ズームは映像を覆うだけで使い道が無い（2026-08-14）
   const isFaceHoleFrame = !!frame && ((frame.faceHoles && frame.faceHoles.length > 0) || !!frame.faceHole);
 
+  // ⚠️ **顔ハメでない枠では倍率を掛けないこと**（2026-08-30、
+  //    Mac のシオンが発見）。
+  //
+  //    つまみは顔ハメの枠のときだけ出している（2026-08-14「顔はめ以外
+  //    ズーム隠したら？」）。ところが値は枠に関係なく渡しっぱなしだった。
+  //    顔ハメで一度いじってから別の枠へ移ると：
+  //
+  //      0.5 側 … 映像が縮んで**黒帯が出る**（「黒帯を出さない」は
+  //               2026-08-10 の指示。recorder.ts にも警告がある）
+  //      2.0 側 … 寄ったまま
+  //
+  //    どちらも**つまみが消えているので、その画面からは戻せない。**
+  //    写真と録画にも乗る。閉じれば useState(1) に戻るので、
+  //    **「たまにおかしい、開き直すと直る」**という出方をする。
+  //
+  //    ⚠️ **この効果を isFaceHoleFrame より前へ戻さないこと。**
+  //       前に置くと、まだ枠が決まっていないので判断できない
+  useEffect(() => {
+    liveRef.current.zoom = isFaceHoleFrame ? camZoom : 1;
+  }, [camZoom, isFaceHoleFrame]);
+
 
   // 画面に出す係を1つだけ回す。録画していなくても同じ絵が出るので、
   // エフェクトを押せばその場で見える
@@ -929,7 +949,51 @@ function App() {
         );
       }
     }, 2500);
-    return () => clearTimeout(check);
+
+    // ⚠️ **カメラが死んだら気づくこと**（2026-08-30、Mac のシオンが発見）。
+    //    OS がカメラを取り上げると（他のアプリが使う・電話・熱・画面が消える）、
+    //    トラックだけが ended になる。**そのあとも <video> は最後のコマを
+    //    持ったまま videoWidth を返し続ける**ので、描画ループは律儀に
+    //    静止画を描き続け、**アプリは何も気づかない。**
+    //
+    //    2026-08-16 に入れた見張り役では拾えない。あれは「rAF が止まった」
+    //    ときのもので、ここではループは元気なまま絵だけが止まる。
+    //
+    //    伊波さん「外で撮影使用中に感じる」（2026-08-27）。
+    //    OS がカメラを取り上げる場面は屋外に集まる。
+    const track = camStreamRef.current.getVideoTracks()[0];
+    // ⚠️ **camVer を進めるだけでは繋ぎ直らない。** それは効果を
+    //    走らせ直すだけで、**古いストリームを使い回す**（実測で ended のまま）。
+    //    カメラそのものを開き直すこと
+    let 直し中 = false;
+    const 死んだ = () => {
+      if (直し中) return;          // ended と mute が続けて来ることがある
+      直し中 = true;
+      setCamInfo(t('cam_lost'));
+      // 少し置いてから開き直す。取り上げた相手がまだ握っていることがある
+      setTimeout(() => { void startCam(camFront); }, 400);
+    };
+    const 戻った = () => setCamInfo(null);
+    track?.addEventListener('ended', 死んだ);
+    track?.addEventListener('mute', 死んだ);
+    track?.addEventListener('unmute', 戻った);
+
+    // 画面から戻ってきたときも確かめる。**取り上げられたことに
+    // 気づかないまま戻ると、固まった絵のまま撮ることになる**
+    const 戻ってきた = () => {
+      if (document.visibilityState !== 'visible') return;
+      const tr = camStreamRef.current?.getVideoTracks()[0];
+      if (tr && tr.readyState !== 'live') 死んだ();
+    };
+    document.addEventListener('visibilitychange', 戻ってきた);
+
+    return () => {
+      clearTimeout(check);
+      track?.removeEventListener('ended', 死んだ);
+      track?.removeEventListener('mute', 死んだ);
+      track?.removeEventListener('unmute', 戻った);
+      document.removeEventListener('visibilitychange', 戻ってきた);
+    };
   }, [camOn, camVer, camFront]);
 
   const save = async (blob: Blob, ext: string) => {
