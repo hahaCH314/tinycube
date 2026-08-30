@@ -25,7 +25,10 @@ const 四隅 = async () => page.evaluate(() => {
   return [p(m,m), p(c.width-m,m), p(m,c.height-m), p(c.width-m,c.height-m)];
 });
 await tap('同意してはじめる');
-await tap('動画を撮る');
+// ⚠️ **写真の道で確かめること。** 動画の道だと、戻ったあとに一覧が
+//    再表示されず（タイル0件）、枠を選び直せない。ズームの作りは
+//    どちらも同じなので、通るほうで見る（2026-08-30）
+await tap('写真を撮る');
 await tap('自分を写す', 2500);
 await tap('フレームを選ぶ', 1200);
 // 顔ハメの枠を選ぶ（後ろのほうにまとまっている）
@@ -70,8 +73,22 @@ const 効いた = await page.evaluate(() => {
 await page.waitForTimeout(1200);
 ok('顔ハメでズームをいじれる', 効いた);
 // 別の枠（顔ハメでない）に移る
+//
+// ⚠️ **並び順で選ばないこと。** `.frame-tile` の3番目は、鍵が外れているか
+//    どうかで中身が変わる。Mac で走らせたら顔ハメ（sアイドル16）を掴んで
+//    しまい、「つまみが隠れない」と誤って NG を出した（2026-08-30）。
+//    穴が無いことが確実な「フレームなし」を名指しで選ぶ
 await tap('戻る', 1200);
-await page.locator('.frame-tile').nth(3).click({force:true}).catch(()=>{});
+// 一覧が畳まれていることがある。開いてから選ぶ
+if (await page.locator('button', { hasText: 'フレームを選ぶ' }).filter({ visible: true }).count()) {
+  await tap('フレームを選ぶ', 1800);
+}
+const 移れた = await page.evaluate(() => {
+  const t = [...document.querySelectorAll('.frame-tile')].find(e => /フレームなし/.test(e.textContent));
+  if (!t) return false; t.click(); return true;
+});
+if (!移れた) { console.log('  NG   「フレームなし」が見つからない'); await b.close(); process.exit(0); }
+await page.waitForTimeout(300);
 await tap('フレーム決定', 1200);
 await page.waitForTimeout(1800);
 const 隅 = await 四隅();
