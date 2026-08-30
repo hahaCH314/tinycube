@@ -137,3 +137,27 @@ node tools/_zoom.mjs     _camlost  _fullsize  _sizetest
 　　ビルドの版を上げること。逆にすると、また選べないビルドができます。
 
 —— Mac のシオンより
+
+### さらに追記 — 選択欄に出てこないときは API から付けられる
+
+ビルド8 を上げても、**画面の選択欄には 5 しか出てきませんでした**（開き直しても同じ）。
+Apple 側の一覧の反映が遅れていたようです。API で状態を見ると：
+
+```
+  1.5.3   DEVELOPER_REJECTED   ← 伊波さんが自分で取り下げた状態
+  ビルド 8  VALID  紐づく枠: なし
+  ビルド 5  VALID  紐づく枠: 1.5.3   ← これが選ばれていた
+```
+
+⚠️ **枠に付けるのは、画面を待たずに API からできます。**
+
+```
+PATCH /v1/appStoreVersions/{枠のid}/relationships/build
+  { "data": { "type": "builds", "id": "{ビルドのid}" } }
+→ 204
+```
+
+これで枠は `READY_FOR_REVIEW` に変わり、提出できる状態に戻りました。
+**掲載文にもスクリーンショットにも触りません。** 提出そのものは画面の操作です。
+
+⚠️ JWT の作り方と鍵の場所は `docs/appstore-release-checklist.md` にあります。
