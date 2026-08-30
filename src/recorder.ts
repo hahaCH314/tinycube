@@ -119,10 +119,71 @@ export type StageOptions = {
   };
 };
 
+/** 実機で「どこが重いのか」を測るためだけの覗き窓。
+ *
+ *  ⚠️ **`?fps=1` が付いていないときは、何も作らず何も測らない。**
+ *     普通に使っている人には存在しないのと同じであること。
+ *
+ *  なぜ要るか。カクつきは伊波さんの端末でしか出ない（2026-08-27
+ *  「前から重い」「外で撮影使用中に感じる」）。開発機の Chrome では
+ *  75fps 出てしまい、再現できないまま推測で触ることになっていた。
+ *  アプリを出し直さなくても、ウェブ版（tinycube.vercel.app）を端末で
+ *  開けば同じ絵を同じコードで描くので、そこで測れる。
+ *
+ *  ?fps=1 … 見るだけ。描画の邪魔をしないが、**描画 ms は当てにならない**
+ *  ?fps=2 … 厳密に測る。1コマごとに GPU の描き終わりを待つ
+ *
+ *  ⚠️ **なぜ2つあるか。** canvas への描画命令は積むだけですぐ戻ってくる。
+ *     絵を作るのは後から GPU なので、performance.now() で挟んでも
+ *     **0.1ms しか出ない**（2026-08-30、6倍に絞っても差が出なかった）。
+ *     1画素だけ読み返すと、そこで描き終わりを待つので本当の時間が出る。
+ *     ただし待つぶん全体は遅くなるので、**比べるときだけ使うこと。**
+ *
+ *  読み方：
+ *    fps  … 1秒に何コマ描けているか。60 に近ければ足りている
+ *    描画 … 1コマにかかったミリ秒（?fps=2 のときだけ意味がある）
+ *    顔ハメ … いま楕円のクリップを通っているかどうか
+ */
+function makeMeter() {
+  if (typeof location === 'undefined') return null;
+  const q = new URLSearchParams(location.search).get('fps');
+  if (q === null) return null;
+
+  const el = document.createElement('div');
+  el.id = 'fps-meter';
+  el.style.cssText =
+    'position:fixed;left:6px;top:6px;z-index:2147483647;pointer-events:none;' +
+    'font:12px/1.45 ui-monospace,monospace;color:#0f0;background:rgba(0,0,0,.72);' +
+    'padding:4px 7px;border-radius:5px;white-space:pre;text-align:left';
+  document.body.appendChild(el);
+
+  let frames = 0, spent = 0, worst = 0, since = performance.now();
+
+  return {
+    /** true なら、測る前に GPU の描き終わりを待つ */
+    strict: q === '2',
+    /** 1コマぶんの結果を足す。表示の書き換えは1秒に1回だけ
+     *  （毎コマ textContent を触ると、測る側が重くなる） */
+    tick(ms: number, note: string) {
+      frames++; spent += ms; if (ms > worst) worst = ms;
+      const now = performance.now();
+      const span = now - since;
+      if (span < 1000) return;
+      const fps = Math.round((frames * 1000) / span);
+      el.textContent =
+        fps + 'fps  描画 ' + (spent / frames).toFixed(1) + 'ms' +
+        '（最悪 ' + worst.toFixed(1) + '）\n' + note;
+      frames = 0; spent = 0; worst = 0; since = now;
+    },
+    stop() { el.remove(); },
+  };
+}
+
 export function startStage(opts: StageOptions): () => void {
   const { canvas, read } = opts;
   const g = canvas.getContext('2d');
   if (!g) { opts.onTrouble?.('canvas を用意できませんでした'); return () => {}; }
+  const meter = makeMeter();
 
   // 端末の余力が尽きると canvas の中身が失われ、以後まっ黒のままになる。
   // 黙って黒くなると原因が何ひとつ分からないので、起きたことを伝える
@@ -169,6 +230,7 @@ export function startStage(opts: StageOptions): () => void {
   const draw = () => {
     if (!running) return;
     beat++;
+    const t0 = meter ? performance.now() : 0;
     try {
     const { video, shape, frame, watermark, mirror, zoom, idle } = read();
     // 画面が別のもので覆われているあいだは描かない。**ループは回したまま**に
@@ -331,6 +393,17 @@ export function startStage(opts: StageOptions): () => void {
       drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
     }
     }
+    if (meter) {
+      // 1画素だけ読み返して、GPU が描き終わるのを待つ。これをしないと
+      // 描画の時間が測れない（積んだだけで戻ってきてしまう）
+      if (meter.strict) { try { g.getImageData(0, 0, 1, 1); } catch { /* 断られたら諦める */ } }
+      const hole = !!frame && ((frame.faceHoles?.length ?? 0) > 0 || !!frame.faceHole);
+      meter.tick(performance.now() - t0, idle
+        ? '休み中（描いていない）'
+        : (hole ? '顔ハメ あり' : '顔ハメ なし') +
+          '  canvas ' + canvas.width + 'x' + canvas.height +
+          '  表示 ' + Math.round(canvas.clientWidth) + 'px');
+    }
     } catch (e: any) {
       // 一度だけ伝える。毎コマ出すと読めない
       if (!told) { told = true; opts.onTrouble?.('描画でつまずきました: ' + (e?.name ?? '') + ' ' + (e?.message ?? '')); }
@@ -343,6 +416,7 @@ export function startStage(opts: StageOptions): () => void {
   document.addEventListener('visibilitychange', onVisible);
   return () => {
     running = false;
+    meter?.stop();
     clearInterval(watchdog);
     document.removeEventListener('visibilitychange', onVisible);
   };
