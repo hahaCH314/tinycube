@@ -1338,7 +1338,7 @@ function App() {
    * プリクラ帳へは data URL、端末へは Blob と、要るものが違うので
    * シートは一度だけ作って使い回す。
    */
-  const savePhotoTo = async (where: 'both' | 'device' | 'album' | 'insta') => {
+  const savePhotoTo = async (where: 'both' | 'device' | 'album') => {
     // プレビューで作ったものをそのまま使う。無ければ作る（撮り直しなどで
     // 取っておいたものが古くなっている場合に備えて）
     const sheet = sheetRef.current ?? await buildPhotoSheet();
@@ -1383,15 +1383,20 @@ function App() {
 
     // 端末へ。**インスタ用のときだけ作り直す**（2026-08-23）。
     // 1コマの縦を 16:9 まで詰めてから 4:5 の白い紙に置く。
-    // いつもの保存は sheet をそのまま使うので、今までどおり
-    // ⚠️ **インスタ用でも形を崩さないこと**（2026-08-30、伊波さん
-    //    「シールシートのようにできあがるのがよいのであって、
-    //      そこは妥協しちゃダメなとこデショ」）。
-    //    2026-08-23 は 4:5 に収めるために 1コマの縦を詰めていたが、
-    //    **それは手段が目的をねじ曲げていた。** 詰めると顔が切れ、
-    //    シールシートの形でもなくなる。
-    //    **小さくなってもいいので、形はそのまま**白フチで 4:5 に収める
-    const out = where === 'insta' ? toInstaSheet(sheet) : sheet;
+    // ⚠️ **端末へはいつも 4:5 で保存する**（2026-08-30、伊波さん
+    //    「インスタ用を通常にしようよ」）。
+    //
+    //    シールシートの形のままだと縦に長すぎて、インスタに上げると
+    //    切られる。4:5 の白い紙のまん中に置けば、**形も大きさも
+    //    変えずに**そのまま載せられる（左右に白い余白が出るだけ）。
+    //
+    // ⚠️ **形を崩して詰めないこと**（同日「シールシートのように
+    //    できあがるのがよいのであって、そこは妥協しちゃダメなとこデショ」）。
+    //    2026-08-23 は 4:5 に収めるために1コマの縦を詰めていたが、
+    //    顔が切れ、シールシートの形でもなくなった。
+    //
+    //    プリクラ帳へは1コマずつ入るので、こちらは通らない
+    const out = toInstaSheet(sheet);
     const blob = await new Promise<Blob | null>(res => out.toBlob(res, 'image/jpeg', 0.92));
     // ⚠️ **保存の終わりを待たずに戻すこと**（2026-08-18、伊波さん
     //    「すぐcamera選択（スタート）には戻らない（戻るけど遅い）」）。
@@ -3047,17 +3052,10 @@ function App() {
               <span className="where-label">{t('opt_save_album')}</span>
               <span className="where-note">{t('desc_save_album')}</span>
             </button>
-            {/* インスタ用（2026-08-23、伊波さん「インスタの投稿に乗せたかった
-                けど、写真が大きすぎてはみ出た」）。3連は縦に長すぎて
-                そのままでは切られるので、4:5 の白い紙のまん中に置く */}
-            <button
-              className="where-btn"
-              onClick={async () => { setAskWhere(false); setPreviewUrl(null); await savePhotoTo('insta'); }}
-            >
-              <span className="where-emoji">🖼️</span>
-              <span className="where-label">{t('opt_save_insta')}</span>
-              <span className="where-note">{t('desc_save_insta')}</span>
-            </button>
+            {/* ⚠️ **「インスタ用」は消した**（2026-08-30、伊波さん
+                「インスタ用を通常にしようよ」）。
+                端末へはいつも 4:5 で保存するので、分ける意味が無くなった。
+                選ぶものが減るほど迷わない */}
             <button
               className="where-btn where-cancel"
               onClick={() => setAskWhere(false)}
