@@ -1231,7 +1231,14 @@ function App() {
       g.beginPath();
       g.rect(PAD, dy, CELL_W, CELL_H);
       g.clip();
-      g.drawImage(cell, PAD + (CELL_W - w) / 2, dy + (CELL_H - h) / 2, w, h);
+      // ⚠️ **切るなら上を残すこと**（2026-08-30、伊波さんのインスタ投稿で
+      //    3枚とも額から上が切れていた）。
+      //    真ん中を残すと、顔ハメの顔は画面の上のほうにあるので
+      //    真っ先に頭が切れる。**顔が入っていない写真は使えない。**
+      //    はみ出すぶんの 15% だけ下へずらして、上を厚く残す
+      const はみ出し = h - CELL_H;
+      const 上寄せ = はみ出し > 0 ? -はみ出し * 0.15 : (CELL_H - h) / 2;
+      g.drawImage(cell, PAD + (CELL_W - w) / 2, dy + 上寄せ, w, h);
       g.restore();
     });
     // 透かしはここでは足さない。1コマ1コマに canvas の時点で焼かれているので、
