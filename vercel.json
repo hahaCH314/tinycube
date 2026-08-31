@@ -1,17 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-
-  "//": "2026-08-31。ここはもうアプリを配る場所ではない（伊波さん「WEB版やめる」）。",
-  "//2": "案内1枚とプライバシーポリシーだけを、そのまま置く静的サイト。",
-  "//3": "⚠️ buildCommand と installCommand は空文字にすること。null だと",
-  "//4": "   『未指定』と読まれて、ダッシュボード側の Vite の設定が生き残り、",
-  "//5": "   dist を作ろうとして web/ と食い違う。空文字は『やらない』の意味。",
-
+  "framework": null,
   "buildCommand": "",
   "installCommand": "",
   "outputDirectory": "web",
-  "framework": null,
-
   "headers": [
     {
       "source": "/(.*)",
