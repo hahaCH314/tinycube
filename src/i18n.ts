@@ -27,9 +27,7 @@ type I18nDict = {
   upload_hint: string;
 
   // Control Deck
-  btn_preview: string;
   btn_preview_stop: string;
-  btn_record: string;
   btn_stop: string;
   unlock_title: string;
   unlock_lead: string;
@@ -75,10 +73,6 @@ type I18nDict = {
   msg_pick_for_sheet: string;
   btn_photo: string;
   guide_photo: string;
-  btn_pause: string;
-  btn_resume: string;
-  paused_badge: string;
-  pause_na: string;
 
   // Effects (Burst)
   eff_flash: string;
@@ -105,11 +99,6 @@ type I18nDict = {
   telop_black: string;
   setting_sounds: string;
   setting_camera: string;
-  setting_srcaudio: string;
-  srcaudio_mic: string;
-  srcaudio_mix: string;
-  srcaudio_note: string;
-  srcaudio_off: string;
   cam_front: string;
   cam_back: string;
   cam_off: string;
@@ -157,23 +146,16 @@ type I18nDict = {
   // Settings Sheet
   setting_title: string;
   setting_close: string;
-  setting_video: string;
-  setting_video_change: string;
-  setting_video_load: string;
   setting_shape: string;
   setting_shape_wide_note: string;
   setting_shape_land: string;
   setting_shape_port: string;
-  setting_telop: string;
-  setting_telop_note: string;
   setting_frame: string;
   frame_none: string;
   frame_crop: string;
 
   // Alerts
   alert_load_first: string;
-  alert_rec_fail: string;
-  alert_mic_fail: string;
   // 2026-08-16、ヒマワリが App.tsx から93箇所を辞書へ移したぶん。
   // ⚠️ **型・dictJa・dictEn は3つで1組。** 辞書だけ足すと
   //    TS2345 が76個出てビルドが止まる（実際に起きた）
@@ -220,10 +202,8 @@ type I18nDict = {
   btn_return: string;
   btn_quit: string;
   btn_take_photo: string;
-  btn_take_video: string;
   tab_album: string;
   kind_photo_note: string;
-  kind_video_note: string;
   msg_album_empty: string;
   desc_shoot_self: string;
   desc_cam_in: string;
@@ -253,7 +233,6 @@ type I18nDict = {
   msg_come_again: string;
   msg_photo_taken: string;
   btn_redo: string;
-  btn_save_video: string;
   msg_done: string;
   btn_back_to_edit: string;
   btn_save_this: string;
@@ -284,11 +263,9 @@ const dictJa: I18nDict = {
   
   upload_hint: 'カメラをオンにしてね',
   
-  btn_preview: '▶ 試してみる（録画無し）',
   btn_preview_stop: '⏸ とめる',
   // 絵はボタン側（.ctrl-icon）で出すので、言葉だけ持つ。
   // ここに ● や ■ を付けると、ボタンの上で二重に出る（2026-08-13）
-  btn_record: '録画スタート',
   btn_stop: '停止',
   unlock_title: '追加フレームを使う（¥300・買い切り）',
   unlock_lead: '一度きりの買い物で、あとから足したフレームが全部使えます。',
@@ -333,10 +310,6 @@ const dictJa: I18nDict = {
   msg_pick_for_sheet: 'シートに使うものを選んでね',
   btn_photo: '写真を撮る',
   guide_photo: '📷 を押すと、そのときの画面がそのまま1枚の写真になります。枠もエフェクトも乗ったまま保存されます。',
-  btn_pause: '一時停止',
-  btn_resume: '録画を続ける',
-  paused_badge: '⏸ 一時停止中（ここは動画に入りません）',
-  pause_na: 'この端末では一時停止が使えません',
   
   eff_flash: '💥 フラッシュ',
   eff_mirrorball: '🪩 ミラーボール',
@@ -360,11 +333,6 @@ const dictJa: I18nDict = {
   telop_black: '⬛ 黒文字',
   setting_sounds: '効果音（3つ）',
   setting_camera: 'カメラ',
-  setting_srcaudio: '動画の音',
-  srcaudio_mic: '📱 スピーカー',
-  srcaudio_mix: '🎧 イヤホン',
-  srcaudio_note: 'イヤホンを使うなら「イヤホン」。そのままスピーカーで撮るなら「スピーカー」を選んでください。逆にすると、動画の音が二重に入るか、まったく入らなくなります。',
-  srcaudio_off: '🔇 消す',
   cam_front: '内カメ',
   cam_back: '外カメ',
   cam_off: '⏹ 使わない',
@@ -417,22 +385,15 @@ SNSへの投稿等及び、二次使用は
 
   setting_title: '⚙ 設定',
   setting_close: '閉じる',
-  setting_video: '動画',
-  setting_video_change: '動画を選び直す',
-  setting_video_load: '動画を読み込む',
   setting_shape: '書き出しの形',
   setting_shape_wide_note: 'カメラが横長です。スマホを横向きにすると大きく見えます。',
   setting_shape_land: '横',
   setting_shape_port: '縦',
-  setting_telop: 'テロップの言葉',
-  setting_telop_note: '5つとも、あなたの言葉です。書き換えると、そのまま動画に出ます。',
   setting_frame: '枠',
   frame_none: 'フレームなし',
   frame_crop: '端が欠けます',
 
   alert_load_first: '先にカメラをオンにしてください！',
-  alert_rec_fail: '録画に失敗しました: ',
-  alert_mic_fail: '録画の開始に失敗しました。マイクの許可設定を確認してください。\nエラー: ',
   eff_toutoi: '尊い',
   eff_huh: 'は？',
   eff_omg: 'やば',
@@ -476,10 +437,8 @@ SNSへの投稿等及び、二次使用は
   btn_return: 'もどる',
   btn_quit: '終わる',
   btn_take_photo: '写真を撮る',
-  btn_take_video: '動画を撮る',
   tab_album: 'プリクラ帳',
   kind_photo_note: '3枚つづけて撮ります\n撮ったあとに文字とスタンプで飾れます',
-  kind_video_note: '先に飾りを決めてから撮ります\n撮りながらスタンプを出せます',
   msg_album_empty: 'まだ空っぽ',
   desc_shoot_self: '自分を写す',
   desc_cam_in: '画面side（インカメラ）',
@@ -508,7 +467,6 @@ SNSへの投稿等及び、二次使用は
   msg_come_again: 'また来てね！',
   msg_photo_taken: '撮れました！',
   btn_redo: 'やりなおす',
-  btn_save_video: 'この動画を保存する',
   msg_done: 'できあがり！',
   btn_back_to_edit: 'もどって直す',
   btn_save_this: 'これで保存する',
@@ -538,9 +496,7 @@ const dictEn: I18nDict = {
   
   upload_hint: 'Turn the camera on', 
   
-  btn_preview: '▶ Preview (No recording)',
   btn_preview_stop: '⏸ Stop',
-  btn_record: 'Record',
   btn_stop: 'Stop',
   unlock_title: 'Unlock the extra frames (¥300, one-time)',
   unlock_lead: 'One purchase unlocks every frame added later.',
@@ -585,10 +541,6 @@ Also, sponsors welcome :)`,
   msg_pick_for_sheet: 'Choose the ones for your sheet',
   btn_photo: 'Take a photo',
   guide_photo: 'Press 📷 to save the screen as a still image. Frames and effects are baked in, just as you see them.',
-  btn_pause: 'Pause',
-  btn_resume: 'Resume',
-  paused_badge: '⏸ Paused — nothing here reaches the file',
-  pause_na: 'Pause is not available on this device',
   
   eff_flash: '💥 Flash',
   eff_mirrorball: '🪩 Mirror ball',
@@ -612,11 +564,6 @@ Also, sponsors welcome :)`,
   telop_black: '⬛ Black',
   setting_sounds: 'Sounds (3)',
   setting_camera: 'Camera',
-  setting_srcaudio: 'Video sound',
-  srcaudio_mic: '📱 Speaker',
-  srcaudio_mix: '🎧 Earphones',
-  srcaudio_note: 'Pick Earphones if you are wearing them, Speaker if you are not. The wrong one makes the video sound double up, or vanish entirely.',
-  srcaudio_off: '🔇 Mute',
   cam_front: 'Selfie',
   cam_back: 'Back',
   cam_off: '⏹ Off',
@@ -669,22 +616,15 @@ Thank you.`,
 
   setting_title: '⚙ Settings',
   setting_close: 'Close',
-  setting_video: 'Video',
-  setting_video_change: 'Change Video',
-  setting_video_load: 'Load Video',
   setting_shape: 'Output Shape',
   setting_shape_wide_note: 'The camera is landscape. Turn your phone sideways for a better view.',
   setting_shape_land: 'Landscape',
   setting_shape_port: 'Portrait',
-  setting_telop: 'Caption Texts',
-  setting_telop_note: 'All five are yours. Change them to display custom text.',
   setting_frame: 'Frames',
   frame_none: 'No frame',
   frame_crop: 'Edges cropped',
 
   alert_load_first: 'Please turn the camera on first!',
-  alert_rec_fail: 'Recording failed: ',
-  alert_mic_fail: 'Failed to start recording. Check your microphone permissions.\nError: ',
   eff_toutoi: 'Precious',
   eff_huh: 'Huh?',
   eff_omg: 'OMG',
@@ -728,10 +668,8 @@ Thank you.`,
   btn_return: 'Return',
   btn_quit: 'Quit',
   btn_take_photo: 'Take photo',
-  btn_take_video: 'Take video',
   tab_album: 'Album',
   kind_photo_note: 'Three shots in a row.\nAdd text and stickers afterwards.',
-  kind_video_note: 'Pick your decorations first.\nDrop stickers while you record.',
   msg_album_empty: 'Still empty',
   desc_shoot_self: 'Shoot yourself',
   desc_cam_in: 'Screen side (Selfie)',
@@ -760,7 +698,6 @@ Thank you.`,
   msg_come_again: 'Come again!',
   msg_photo_taken: 'Photo taken!',
   btn_redo: 'Redo',
-  btn_save_video: 'Save this video',
   msg_done: 'Done!',
   btn_back_to_edit: 'Back to edit',
   btn_save_this: 'Save this',

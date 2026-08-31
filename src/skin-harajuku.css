@@ -1,0 +1,961 @@
+/* ============================================================================
+   tinyCUBE — 原宿スキン（2026-08-31 大改造）
+   渋谷スキン（ダークガラス）の次。デコ文化の本場の名前をもらった。
+
+   伊波さんが愛着を持っている「ネオンピンク×シアン＋黒地スクラップブック」を、
+   ヒマワリさんの9画面モックアップ（手紙フォルダ 2026-08-31_ヒマワリ作_*.html）
+   に合わせて本物のアプリへ移植する係。
+
+   ■ 決めごと
+   - クラス名は1つも変えない。このファイルは「上書きする側」で、
+     App.tsx の構造には（原則）手を入れない
+   - 読み込み順は shibuya スキン → setup.css → ここ。最後なので同じ
+     詳細度なら勝つ
+   - .preview-stage（カメラ映像の中央）は聖域。飾りを乗せない
+   - 大きさは dvh と safe-area。vh は使わない（setup.css と同じ理由）
+
+   ■ モックアップの共通トークン（ヒマワリさんのHTMLから）
+     ink #111 / paper #fffdf2 / pink #f72f91 / cyan #27c7d4
+     yellow #ffdf00 / purple #7045ed
+   ========================================================================= */
+
+:root {
+  --y2k-ink: #111111;
+  --y2k-paper: #fffdf2;
+  --y2k-pink: #f72f91;
+  --y2k-cyan: #27c7d4;
+  --y2k-yellow: #ffdf00;
+  --y2k-purple: #7045ed;
+  --y2k-font: "Arial Rounded MT Bold", "Hiragino Maru Gothic ProN",
+              "Yu Gothic", sans-serif;
+  /* チェック柄。大きさは background-size で変える */
+  --y2k-checker: repeating-conic-gradient(var(--y2k-ink) 0 25%, #ffffff 0 50%);
+}
+
+/* ============================================================================
+   1. はじめに（同意）画面 — 黄色×ハーフトーン、縦書きのピンク見出し、
+      生成りのメモ帳、ちぎり紙の紫ボタン
+      モックアップ: 2026-08-31_ヒマワリ作_はじめに画面モックアップ.html
+   ========================================================================= */
+
+.manner-screen {
+  background-color: var(--y2k-yellow);
+  background-image:
+    radial-gradient(rgba(17, 17, 17, 0.15) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+  font-family: var(--y2k-font);
+  /* 中身を右へ寄せる（左は縦書き見出しの通り道） */
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+/* 右上に流すチェッカーテープ */
+.manner-screen::before {
+  content: "";
+  position: absolute;
+  top: 8%;
+  right: -22px;
+  width: 58px;
+  height: 240px;
+  background: var(--y2k-checker) 0 / 29px 29px;
+  transform: rotate(15deg);
+  clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 背景の大きなキューブ線画 */
+.manner-screen::after {
+  content: "";
+  position: absolute;
+  top: 14%;
+  left: 12%;
+  width: min(260px, 62vw);
+  height: min(260px, 62vw);
+  border: 8px solid rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 0 0 10px var(--y2k-cyan), 0 0 0 10px var(--y2k-cyan);
+  transform: rotate(45deg) skew(15deg, 15deg);
+  opacity: 0.8;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.manner-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  padding: 0;
+  gap: 0;
+  overflow-y: auto;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* 縦書きの大見出し。原寸のモックアップは font-size 85px。
+   320px 幅でもメモ帳（右寄せ）とすれ違えるよう clamp で抑える */
+.manner-title {
+  position: absolute;
+  left: 2px;
+  top: 34px;
+  z-index: 3;
+  margin: 0;
+  font-family: var(--y2k-font);
+  font-size: clamp(48px, 16vw, 68px);
+  font-weight: 900;
+  color: var(--y2k-pink);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: -0.18em;
+  transform: rotate(-5deg);
+  -webkit-text-stroke: 4px var(--y2k-ink);
+  text-shadow: 6px 8px 0 var(--y2k-ink);
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+
+/* 言語切り替え。丸ピルを左右に傾けて重ねる */
+.lang-switch {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 14px);
+  right: 14px;
+  z-index: 6;
+  margin: 0;
+  gap: 0;
+}
+.lang-switch button {
+  min-height: 40px;
+  padding: 0 15px;
+  font-family: var(--y2k-font);
+  font-size: 14px;
+  font-weight: 900;
+  border: 3px solid var(--y2k-ink);
+  border-radius: 20px;
+  color: var(--y2k-ink);
+  background: #ffffff;
+  transform: rotate(5deg) translate(-6px, 5px);
+}
+.lang-switch button.on {
+  color: #ffffff;
+  background: var(--y2k-cyan);
+  border-color: var(--y2k-ink);
+  transform: rotate(-5deg);
+  z-index: 2;
+  box-shadow: 2px 3px 0 var(--y2k-ink);
+}
+
+/* 生成りのメモ帳。左に見出しの通り道を空けて右へ寄せる。
+   ⚠️ **幅は「見出しの実測ぶん」を空けて決めること。**
+      72% にしていたとき、320〜412px のどの幅でも見出しの1列目
+      （縦書きなので右端＝「に」）に 25px ほど食い込んでいた
+      （2026-08-31、監査で実測）。見出しは clamp(48px…68px) なので、
+      **左に 78px 空ける**とどの幅でも当たらない */
+.manner-text {
+  position: relative;
+  z-index: 4;
+  box-sizing: border-box;
+  width: calc(100% - 92px);
+  max-width: 340px;
+  margin: calc(env(safe-area-inset-top, 0px) + 150px) 8px 150px auto;
+  padding: 24px 16px;
+  background: var(--y2k-paper);
+  border-right: 2px solid #e0dbba;
+  border-bottom: 2px solid #e0dbba;
+  box-shadow: 8px 10px 0 rgba(0, 0, 0, 0.15);
+  clip-path: polygon(0 1%, 2% 0, 98% 0.5%, 100% 2%, 99.5% 98%, 97% 100%, 3% 99.5%, 0 98%);
+  font-family: var(--y2k-font);
+  font-size: clamp(13px, 3.9vw, 15px);
+  font-weight: 700;
+  line-height: 2;
+  letter-spacing: 0.04em;
+  color: var(--y2k-ink);
+  text-align: left;
+}
+
+/* 下部の斜めブラシストローク（ピンク＋シアンの縁）。
+   ⚠️ **ボタンの擬似要素にしないこと。** ボタンは transform と clip-path を
+      持っているので、(1) transform が position:fixed の基準を
+      ボタン自身にしてしまい、(2) clip-path がはみ出しを切る。
+      結果、画面いっぱいの帯のはずが**ボタンの中の小さな楔**になっていた
+      （2026-08-31、監査で発覚）。画面側（.manner-content）に持たせる */
+.manner-content::after {
+  content: "";
+  position: fixed;
+  left: -30px;
+  right: -30px;
+  bottom: 44px;
+  height: 110px;
+  background: var(--y2k-pink);
+  border-top: 14px solid var(--y2k-cyan);
+  transform: rotate(-9deg);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 同意してはじめる。ちぎり紙の紫 */
+.manner-agree-btn {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+  transform: translateX(-50%);
+  z-index: 10;
+  width: min(90%, 400px);
+  min-height: 64px;
+  padding: 16px;
+  font-family: var(--y2k-font);
+  font-size: clamp(19px, 5.8vw, 24px);
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 2px 2px 0 var(--y2k-ink);
+  background: var(--y2k-purple);
+  border: none;
+  border-radius: 0;
+  clip-path: polygon(2% 4%, 98% 0%, 100% 95%, 96% 100%, 1% 98%, 0% 5%);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.2);
+  transition: transform 0.12s ease;
+}
+.manner-agree-btn:active {
+  transform: translateX(-50%) scale(0.97);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+
+/* ============================================================================
+   2. 設定画面ぜんたいの下地（なにを撮る？／どのカメラ／フレーム決定 が乗る）
+      生成りの紙 × 黒いちぎり紙のヘッダー
+      モックアップ: 2026-08-31_ヒマワリ作_なにを撮る画面モックアップ.html
+   ========================================================================= */
+
+.setup-screen {
+  background-color: #efe6d3;
+  background-image: none;
+  font-family: var(--y2k-font);
+}
+
+/* 黒いちぎり紙のヘッダー。下辺をギザギザに切る */
+.setup-header {
+  padding: calc(env(safe-area-inset-top, 0px) + 22px) 20px 26px;
+  background: var(--y2k-ink);
+  border-bottom: none;
+  clip-path: polygon(
+    0 0, 100% 0, 100% 84%,
+    97% 96%, 94% 84%, 90% 100%, 86% 89%, 82% 96%, 78% 84%, 74% 100%,
+    70% 89%, 66% 96%, 62% 84%, 58% 100%, 54% 89%, 50% 96%, 46% 84%,
+    42% 100%, 38% 89%, 34% 96%, 30% 84%, 26% 100%, 22% 89%, 18% 96%,
+    14% 84%, 10% 100%, 6% 89%, 3% 96%, 0 88%
+  );
+}
+
+.setup-title {
+  /* 右上の「終わる／もどる」に潜り込まないよう、その幅ぶん詰める */
+  max-width: calc(100% - 110px);
+  margin-right: auto;
+  margin-left: 0;
+  font-family: var(--y2k-font);
+  font-size: clamp(17px, 5.2vw, 24px);
+  font-weight: 900;
+  color: var(--y2k-pink);
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+}
+
+/* 右上の「終わる／もどる」 */
+.setup-close-btn {
+  font-family: var(--y2k-font);
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--y2k-ink);
+  background: var(--y2k-yellow);
+  border: none;
+  border-radius: 999px;
+  box-shadow: none;
+  padding: 8px 18px;
+}
+.setup-close-btn:active { transform: scale(0.96); }
+
+.setup-content {
+  background: transparent;
+}
+
+/* 生成りの地に白文字だと読めない。地の色に合わせて黒へ */
+.setup-content a[href*="cubicenginestudio"] { color: rgba(17, 17, 17, 0.45) !important; }
+.setup-content a[href*="cubicenginestudio"]:hover { color: rgba(17, 17, 17, 0.7) !important; }
+
+/* ⚠️ **地を生成りにしたら、暗い地の前提で書かれた字は全部読めなくなる。**
+      （2026-08-31、監査で発覚）。渋谷スキンは黒地だったので、
+      これらは薄い色や `var(--cyan)` のままで良かった。
+      新しく画面を足すときは、**必ず生成りの上での見え方を見ること。**
+
+      .opt-label   … setup.css:1095 が var(--cyan)。ネオンに戻した結果、
+                     生成りの上でほぼ消えた（1.12:1）。「動き」「色み」
+                     「撮るボタンの位置」の見出し
+      .sheet-note  … 「カメラが横長です…」「16:9 の場合は…」の案内 */
+.setup-screen .opt-label { color: var(--y2k-purple); }
+.setup-screen .sheet-note,
+.setup-content .sheet-note { color: rgba(17, 17, 17, 0.72); }
+
+/* 節の囲いは要らない。カード自体が主役になるので透明にする */
+.setup-section,
+.setup-section.highlight-section {
+  gap: 18px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* 見出しは黒いヘッダーに出ているので、節の見出しは隠す */
+.setup-section-title { display: none; }
+
+.kind-picker { display: block; }
+
+/* --- 3つの大きなカード（写真を撮る／プリシート／プリクラ帳） -------------
+   ⚠️ **プリクラ帳を小さくしないこと**（2026-08-31、伊波さん
+      「プリクラ帳の方がうちのメインでしょ」）。3枚とも同じ作りにする */
+.kind-btn,
+.album-open-btn {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 132px;
+  padding: 18px 120px 18px 20px;   /* 右はアイコンの居場所 */
+  text-align: left;
+  color: #ffffff;
+  font-family: var(--y2k-font);
+  border: none;
+  border-radius: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+  background-size: 8px 8px;
+  box-shadow: 5px 8px 0 rgba(0, 0, 0, 0.2);
+  clip-path: polygon(1% 2%, 99% 0, 100% 98%, 97% 100%, 2% 99%, 0 5%);
+  overflow: visible;
+}
+.kind-btn { background-color: var(--y2k-pink); transform: rotate(-2deg); }
+.album-open-btn.is-sheet { background-color: var(--y2k-purple); transform: rotate(1deg); }
+.album-open-btn.is-album { background-color: var(--y2k-cyan); transform: rotate(-1deg); }
+
+/* ⚠️ **買う導線は低くする。** 主役の3枚と同じ 132px にすると、
+      4枚を縦に積んだときに 320px / 360px の端末で**下がはみ出して押せない**
+      （2026-08-31、elementFromPoint と getBoundingClientRect で実測）。
+      ここは「プリクラ帳より目立たせない」場所でもあるので、低くて構わない */
+.album-open-btn.is-buy {
+  background-color: var(--y2k-ink);
+  transform: rotate(1deg);
+  min-height: 92px;
+  padding: 14px 96px 14px 18px;
+}
+.album-open-btn.is-buy .album-open-emoji { font-size: clamp(36px, 11vw, 46px); }
+
+.kind-btn:active,
+.album-open-btn:active { transform: translateY(4px); box-shadow: 2px 4px 0 rgba(0, 0, 0, 0.2); }
+
+/* 見出し。白抜き＋黒い影で貼り紙のように */
+.kind-title,
+.album-open-label {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: clamp(24px, 7.4vw, 34px);
+  font-weight: 900;
+  line-height: 1.1;
+  color: #ffffff;
+  -webkit-text-stroke: 2px var(--y2k-ink);
+  text-shadow: 4px 4px 0 var(--y2k-ink);
+  transform: rotate(-3deg);
+}
+/* 買う導線は控えめに（プリクラ帳より目立ってはいけない） */
+.album-open-btn.is-buy .album-open-label {
+  font-size: clamp(18px, 5.4vw, 24px);
+}
+
+/* 説明は黒い帯に白抜き。改行はそのまま出す */
+.kind-note,
+.album-open-count {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 700;
+  line-height: 1.5;
+  color: #ffffff;
+  background: var(--y2k-ink);
+  white-space: pre-line;
+  transform: rotate(1deg);
+}
+
+/* 大きな絵文字は右へ寄せる */
+.kind-icon,
+.album-open-emoji {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  font-size: clamp(48px, 15vw, 66px);
+  transform: translateY(-50%) rotate(-8deg);
+  filter: drop-shadow(3px 3px 0 var(--y2k-ink));
+}
+
+/* 角に貼るチェック柄のテープ */
+.kind-btn::before,
+.album-open-btn::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: -10px;
+  width: 76px;
+  height: 24px;
+  background: var(--y2k-checker) 0 / 20px 20px;
+  border: 1px solid var(--y2k-ink);
+  transform: rotate(-16deg);
+  z-index: 2;
+}
+.album-open-btn.is-sheet::before { left: auto; right: -10px; transform: rotate(22deg); }
+
+
+/* ============================================================================
+   3. どのカメラで撮りますか？ — 黒地にシアンの太枠、生成りの大きなカード2枚
+      モックアップ: 2026-08-31_ヒマワリ作_どのカメラ画面モックアップ.html
+   ⚠️ アイコンは SVG のまま（CamIcon.tsx）。絵文字に戻さない
+   ========================================================================= */
+
+.source-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.92);
+  border: 8px solid var(--y2k-cyan);
+  box-shadow: 0 0 0 2px #ffffff, inset 0 0 0 2px #ffffff;
+}
+
+.source-btn {
+  position: relative;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 190px;
+  padding: 18px 12px;
+  color: var(--y2k-ink);
+  background: #f0e6d2;
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 6px 8px 0 var(--y2k-ink);
+  font-family: var(--y2k-font);
+}
+.source-btn:active { transform: translate(2px, 4px); box-shadow: 4px 4px 0 var(--y2k-ink); }
+
+.source-btn.on {
+  background: #ffffff;
+  box-shadow: 6px 8px 0 var(--y2k-pink);
+}
+
+.source-icon {
+  width: 74px;
+  height: 74px;
+  filter: drop-shadow(3px 3px 0 rgba(17, 17, 17, 0.25));
+}
+.source-icon svg { width: 100%; height: 100%; }
+
+/* 「自分を写す」「外カメ」。1枚目は紫、2枚目は黄 */
+.source-text {
+  font-size: clamp(24px, 7.4vw, 32px);
+  font-weight: 900;
+  -webkit-text-stroke: 1px var(--y2k-ink);
+  text-shadow: 3px 3px 0 var(--y2k-ink);
+}
+.source-btn:nth-of-type(1) .source-text { color: var(--y2k-purple); transform: rotate(-3deg); }
+.source-btn:nth-of-type(2) .source-text { color: var(--y2k-yellow); transform: rotate(2deg); }
+
+.source-sub {
+  padding: 3px 10px;
+  font-size: clamp(12px, 3.4vw, 14px);
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--y2k-ink);
+}
+
+/* 選んだあとに出る「フレームを選ぶ」。黄色の大きな判 */
+.start-btn {
+  width: 100%;
+  min-height: 62px;
+  font-family: var(--y2k-font);
+  font-size: clamp(20px, 6vw, 26px);
+  font-weight: 900;
+  color: var(--y2k-ink);
+  background: var(--y2k-yellow);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 999px;
+  box-shadow: 4px 6px 0 var(--y2k-ink);
+  text-shadow: none;
+}
+.start-btn:active { transform: translate(2px, 3px); box-shadow: 2px 3px 0 var(--y2k-ink); }
+
+
+/* ============================================================================
+   4. フレーム決定 — ラベンダーの地に、生成りのバインダー紙
+      モックアップ: 2026-08-31_ヒマワリ作_フレーム決定画面モックアップ.html
+   ⚠️ **ここが tinyCUBE の売り。** フレームの絵が主役に見えるようにする
+   ========================================================================= */
+
+/* 縦／横のふせんタブ */
+.shape-switch,
+.shape-switch--mini {
+  display: flex;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+.shape-switch button {
+  flex: 1 1 0;
+  min-height: 46px;
+  font-family: var(--y2k-font);
+  font-size: clamp(15px, 4.4vw, 19px);
+  font-weight: 900;
+  color: var(--y2k-ink);
+  background: #ffffff;
+  border: 3px solid var(--y2k-ink);
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+  box-shadow: none;
+}
+.shape-switch button.on {
+  color: #ffffff;
+  background: var(--y2k-cyan);
+}
+.shape-switch button:nth-child(2).on { background: var(--y2k-pink); }
+
+/* 「フレーム決定」の判。黄色の付箋 */
+.start-btn.frame-decide {
+  margin-bottom: 4px;
+  background: var(--y2k-yellow);
+  border-radius: 0;
+  transform: rotate(-1.5deg);
+  box-shadow: 5px 6px 0 var(--y2k-ink);
+}
+
+/* 季節の限定フレームの入口 */
+.season-btn {
+  width: 100%;
+  min-height: 50px;
+  font-family: var(--y2k-font);
+  font-size: clamp(14px, 4.2vw, 17px);
+  font-weight: 900;
+  color: #ffffff;
+  background: var(--y2k-pink);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 3px 4px 0 var(--y2k-ink);
+}
+.season-btn.on { background: var(--y2k-purple); }
+
+/* バインダー紙。上辺に綴じ穴を打つ */
+.setup-content .frame-picker,
+.frame-picker {
+  position: relative;
+  gap: 12px 10px;
+  padding: 34px 12px 16px;
+  background: var(--y2k-paper);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.28);
+}
+/* 綴じ穴は紙の上辺そのものに描く（擬似要素だと中のタイルに重なる） */
+.setup-content .frame-picker,
+.frame-picker {
+  background-image: radial-gradient(circle at center, var(--y2k-purple) 0 5px, transparent 5px);
+  background-size: 40px 12px;
+  background-position: 14px 12px;
+  background-repeat: repeat-x;
+}
+
+/* フレームの見本。白ふちのカードにして絵を主役に */
+.frame-tile {
+  padding: 6px;
+  color: var(--y2k-ink);
+  background: #ffffff;
+  border: 2px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 3px 4px 0 rgba(0, 0, 0, 0.3);
+  font-family: var(--y2k-font);
+  font-size: 11px;
+  font-weight: 800;
+  /* 中の絵が切れないように、はみ出しは見せる */
+  overflow: visible;
+}
+.frame-tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* 透明部分はチェック柄（＝ここに顔が入る、と分かる） */
+  background:
+    repeating-conic-gradient(#d8d8d8 0 25%, #f4f4f4 0 50%) 0 / 14px 14px;
+}
+.frame-tile:active { transform: scale(0.95); }
+
+.frame-tile.on {
+  border-color: var(--y2k-pink);
+  border-width: 3px;
+  box-shadow: 3px 4px 0 var(--y2k-pink);
+}
+
+.frame-tile.none {
+  color: #ffffff;
+  background: #101828;
+  border-color: var(--y2k-pink);
+  border-style: solid;
+  border-width: 3px;
+}
+
+/* マイフレーム追加。点線のシアンで「ここに足せる」と見せる */
+.frame-tile.add {
+  flex-direction: column;
+  gap: 2px;
+  color: var(--y2k-cyan);
+  background: #ffffff;
+  border: 3px dashed var(--y2k-cyan);
+  box-shadow: none;
+}
+.frame-tile-add-icon { font-size: 24px; }
+.frame-tile-add-label { line-height: 1.3; font-weight: 900; }
+
+/* ⚠️ setup.css が「文字だけのタイル」を !important で黒く塗っている。
+      原宿スキンでは紙の上に置くので、こちらで塗り直す（2026-08-31） */
+.frame-picker .frame-tile.none,
+.frame-picker .frame-tile:not(:has(img)) {
+  background-image: none !important;
+}
+.frame-picker .frame-tile.none { background-color: #101828 !important; }
+.frame-picker .frame-tile.add  { background-color: #ffffff !important; }
+
+
+/* ============================================================================
+   5. 撮影画面 — 黒地にチェック柄、上下の帯と丸いシャッター
+      モックアップ: 2026-08-31_ヒマワリ作_撮影画面モックアップ.html
+
+   ⚠️ **.preview-stage / .stage-canvas は聖域。**（[[three-way-with-v0]]）
+      飾りは .header / .bottom-controls / .city-frame の中だけ。
+      canvas に枠を足すと、焼き上がりの絵と画面の見え方がずれる
+   ========================================================================= */
+
+.app-container {
+  background-color: #141414;
+  background-image: repeating-conic-gradient(
+    rgba(255, 255, 255, 0.05) 0 25%, transparent 0 50%);
+  background-size: 40px 40px;
+  font-family: var(--y2k-font);
+}
+
+/* 上下の帯。黒に統一して、中央の映像を邪魔しない */
+.city-frame.top,
+.city-frame.bottom {
+  background: linear-gradient(180deg, rgba(17, 17, 17, 0.92), rgba(17, 17, 17, 0.35));
+}
+.city-frame.bottom { background: linear-gradient(0deg, rgba(17, 17, 17, 0.92), rgba(17, 17, 17, 0.35)); }
+
+.header { font-family: var(--y2k-font); }
+
+.logo-text {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: var(--y2k-pink);
+  -webkit-text-stroke: 0.5px var(--y2k-ink);
+}
+
+/* 戻る／？／家。白い付箋のボタン */
+.tool-btn-small {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: var(--y2k-ink) !important;
+  background: #ffffff;
+  border: 2px solid var(--y2k-ink);
+  border-radius: 8px;
+  box-shadow: 2px 2px 0 var(--y2k-ink);
+}
+.tool-btn-small:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--y2k-ink); }
+
+/* 3枚撮るボタン。ピンクの大きな丸 */
+.photo-btn-round.burst {
+  font-family: var(--y2k-font);
+  color: #ffffff;
+  background: var(--y2k-pink);
+  border: 5px solid #ffffff;
+  box-shadow: 0 0 0 4px var(--y2k-ink), 5px 8px 0 var(--y2k-ink),
+              inset -6px -6px 0 rgba(0, 0, 0, 0.25);
+}
+.photo-btn-round.burst:active {
+  transform: translate(2px, 4px);
+  box-shadow: 0 0 0 4px var(--y2k-ink), 2px 3px 0 var(--y2k-ink),
+              inset -2px -2px 0 rgba(0, 0, 0, 0.25);
+}
+/* 丸の中に絵文字と言葉を積む。はみ出すと読めない（2026-08-31） */
+.photo-btn-round.burst {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1;
+}
+.photo-btn-round.burst .ctrl-icon { font-size: 22px; }
+.photo-btn-round.burst .ctrl-label {
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 var(--y2k-ink);
+}
+
+
+/* ============================================================================
+   6. プリクラ帳 — 黒地にドット、白ふちのシート
+      モックアップ: 2026-08-31_ヒマワリ作_プリクラ帳画面モックアップ.html
+
+   ⚠️ **ここが tinyCUBE の core**（伊波さん「プリクラ帳の方がうちのメイン」）。
+   ⚠️ 枠の影は白系で揃える（同「枠を白にしたら」）。シアン・ピンク・黄を
+      1枚ごとに変えると、帳を開いたときに散らかって見える
+   ========================================================================= */
+
+.album-screen {
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.16) 1.5px, transparent 1.5px) 0 0 / 15px 15px,
+    #141414;
+  font-family: var(--y2k-font);
+}
+
+.album-head {
+  border-bottom: 2px dashed var(--y2k-pink);
+}
+
+.album-title {
+  font-family: var(--y2k-font);
+  font-size: clamp(19px, 5.6vw, 24px);
+  font-weight: 900;
+  color: #ffffff;
+  background: var(--y2k-pink);
+  padding: 5px 18px;
+  border: 3px solid #ffffff;
+  box-shadow: 3px 4px 0 #ffffff;
+  transform: rotate(2deg);
+  text-shadow: 2px 2px 0 var(--y2k-ink);
+}
+
+.album-close {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: var(--y2k-ink);
+  background: var(--y2k-cyan);
+  border: 2px solid #ffffff;
+  border-radius: 0;
+  box-shadow: 2px 2px 0 #ffffff;
+  transform: rotate(-2deg);
+}
+
+/* 編集の道具（選んで消す／並び替え） */
+.album-tool {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: var(--y2k-ink);
+  background: #ffffff;
+  border: 2px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 2px 3px 0 rgba(255, 255, 255, 0.55);
+}
+.album-tool.album-del { color: #ffffff; background: var(--y2k-pink); }
+.album-tool.album-use { color: var(--y2k-ink); background: var(--y2k-yellow); }
+
+/* 1枚ずつのシート。白ふちで揃える */
+.album-cell {
+  border: 4px solid var(--y2k-paper);
+  border-radius: 0;
+  box-shadow: 3px 4px 0 rgba(255, 255, 255, 0.5);
+}
+.album-cell.picked {
+  border-color: var(--y2k-pink);
+  box-shadow: 3px 4px 0 var(--y2k-pink);
+}
+.album-cell.empty {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+}
+
+/* 空のときの案内。黒地なので白系で書く（パステル用の紫だと沈む） */
+.album-empty-main {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: var(--y2k-yellow);
+  text-shadow: 2px 2px 0 var(--y2k-ink);
+}
+.album-empty-sub { color: rgba(255, 255, 255, 0.72); }
+
+/* 枚数（0/150）。黒地に白 */
+.album-open-btn .album-open-count,
+.album-head .album-count { color: #ffffff; }
+
+
+/* ============================================================================
+   7. できあがり（保存前の見本）
+      モックアップ: 2026-08-31_ヒマワリ作_できあがり画面モックアップ.html
+
+   ⚠️ **ふちの色は選ばせない**（2026-08-31、伊波さん「フレームがあるから
+      白1色より、パステルカラーぐらいがベストかも」）。フレームで飾るので、
+      外側のカードまで飾ると喧嘩する。生成りで固定する。
+      色を選べるのは**プリシートのほう**（あちらは飾りが主役なので）
+   ========================================================================= */
+
+.preview-sheet {
+  padding: 12px 12px 30px;
+  background: var(--y2k-paper);
+  border: none;
+  border-radius: 0;
+  box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.4);
+  transform: rotate(-1deg);
+}
+.preview-sheet img,
+.preview-sheet video {
+  border: 2px solid var(--y2k-ink);
+  border-radius: 0;
+}
+
+
+/* ============================================================================
+   8. プリシートを作る — シアンのカッティングマット
+      モックアップ: 2026-08-31_ヒマワリ作_プリシート作成画面モックアップ.html
+
+   ⚠️ **3連ありきにしない**（2026-08-31、伊波さん）。3〜7枚の型が
+      フラットに並ぶのがこの機能の売り。3連は「初期値」であって前提ではない
+   ========================================================================= */
+
+.sheet-screen {
+  background-color: var(--y2k-cyan);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.sheet-screen .setup-header { background: var(--y2k-ink); }
+
+/* 材料をどこから取るか（プリクラ帳／端末の写真） */
+.sheet-src {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: var(--y2k-ink);
+  background: #ffffff;
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 3px 4px 0 var(--y2k-ink);
+}
+.sheet-src:active { transform: translate(2px, 3px); box-shadow: 1px 2px 0 var(--y2k-ink); }
+.sheet-src:disabled { opacity: 0.45; box-shadow: none; }
+
+/* 選んだ写真 */
+.sheet-picked-cell {
+  border: 3px solid var(--y2k-pink);
+  border-radius: 0;
+  box-shadow: 2px 3px 0 var(--y2k-ink);
+}
+
+/* 型えらび。選んでいるものは黄色く光らせる */
+.sheet-layout {
+  background: #ffffff;
+  border: 2px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.35);
+}
+.sheet-layout.on {
+  border-color: var(--y2k-yellow);
+  border-width: 3px;
+  box-shadow: 0 0 0 3px var(--y2k-yellow), 2px 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.sheet-save,
+.sheet-clear {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 4px 5px 0 var(--y2k-ink);
+}
+.sheet-save { color: #ffffff; background: var(--y2k-pink); }
+.sheet-clear { color: var(--y2k-ink); background: #ffffff; }
+
+/* 説明文はシアンの地に溶けるので、黒い帯に白抜きで書く */
+.sheet-screen .sheet-note,
+.sheet-lead {
+  padding: 8px 12px;
+  color: #ffffff;
+  background: var(--y2k-ink);
+  font-weight: 700;
+}
+
+
+/* ============================================================================
+   9. ぜんぶ使えるようにする（解除）
+   ⚠️ **プリクラ帳より目立たせない。** 買う道は要るが、主役ではない
+   ========================================================================= */
+
+.buy-screen { background: #141414; }
+
+.unlock-box {
+  background: var(--y2k-paper);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 6px 8px 0 rgba(0, 0, 0, 0.45);
+  color: var(--y2k-ink);
+}
+/* ⚠️ **`li` を名指しすること。** setup.css:109 が `.unlock-points li` に
+      直接 `color:#fff` を当てているので、親の `.unlock-points` を塗っても
+      勝てない。生成りの地に白字で、**¥300 の売り文句が消えていた**
+      （2026-08-31、監査で発覚。コントラスト 1.02:1） */
+.unlock-box .sheet-note,
+.unlock-box .unlock-lead,
+.unlock-points,
+.unlock-points li { color: rgba(17, 17, 17, 0.82); }
+
+.unlock-title,
+.unlock-done {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: var(--y2k-pink);
+  -webkit-text-stroke: 0.5px var(--y2k-ink);
+}
+
+.unlock-buy {
+  font-family: var(--y2k-font);
+  font-weight: 900;
+  color: #ffffff;
+  background: var(--y2k-purple);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 4px 5px 0 var(--y2k-ink);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+.unlock-restore {
+  font-family: var(--y2k-font);
+  font-weight: 800;
+  color: var(--y2k-ink);
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+}
+
+/* 鍵つきも色を殺さない（2026-08-31、伊波さん「鍵付きの絵を見せる」） */
+.frame-tile.locked { opacity: 1; color: var(--y2k-ink); }
+
+.lock-mark {
+  top: -8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  color: var(--y2k-ink);
+  background: var(--y2k-yellow);
+  border: 2px solid var(--y2k-ink);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}

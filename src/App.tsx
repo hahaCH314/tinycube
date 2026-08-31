@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import '../docs/tinycube-skin-shibuya.css'
 import './setup.css'
+import './skin-harajuku.css'
 import { startStage, type OutShape } from './recorder'
 import { FRAMES, loadFrame, fitsShape, inDisplayOrder, seasonFrames, seasonNow, SEASONS, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import * as album from './album'
@@ -291,9 +292,11 @@ function App() {
   // （2026-08-14、伊波さん「テキスト変更のとこのページみたいに動画とは逆に、
   // 撮ってから出す」）
   const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video' | 'photo' | 'sheet'>('agree');
-  // 撮るもの。'photo' は3枚連写、'video' は今まで通りの録画。
-  // フレームを選ぶ前に、まずこれを聞く（2026-08-14、伊波さん
-  // 「まず（なにを撮る？）ページ追加【フレーム選択ページの前】」）
+  // ⚠️ **`'video'` はもう「動画」ではない。**（2026-08-31、動画を廃止した）
+  //    いまは「カメラを映している撮影画面」の意味で、`screen === 'video'` の
+  //    分岐は1つも無い（他の画面を全部閉じた状態＝カメラが見えている）。
+  //    名前を変えると触る場所が増えるので、意味だけここに書いて残してある。
+  //    録画・マイク・MediaRecorder は recorder.ts ごと削除済み
   // カメラの寄り。顔ハメの穴に顔が入らない人がいる（2026-08-14、伊波さん
   // 「顔がデカい人は入らないと指摘、ズーム機能調整（インカメ）」）。
   // 1 が今まで通り。下げると引く（顔が小さくなって穴に収まる）
@@ -712,6 +715,55 @@ function App() {
       shapePicked.current = false;           // 新しい映像なので、また自動で合わせる
       setCamFront(front);
       setCamOn(true);
+      // ⚠️ **見え方を変えるのは、映像を描くときではなく「カメラ側」で。**
+      //    （2026-08-31、伊波さん「camera 少しだけブラックも white も強くできる？」
+      //     → 「強めにではなくね」→「ユーザーがほうれい線は消してくれと」）
+      //
+      //    描画のときに触るのは2回とも失敗している（recorder.ts の長い注意書き）。
+      //      g.filter                → 毎コマ全画素にかかって重い
+      //      globalCompositeOperation → 画面が真っ暗になった
+      //    こちらは**カメラの設定を1回変えるだけ**なので、描画は素のまま。
+      //
+      //    ⚠️ **コントラストは上げない。** 上げると影が濃くなって、
+      //       ほうれい線やクマがくっきり出る（求められているのは逆）。
+      //       代わりに**明るさ**で影を浅くし、**彩度**で色を鮮やかにする。
+      //       これがプリクラの定番の見え方（肌を飛ばして色は濃く）。
+      //
+      // ⚠️ **setCamOn(true) の「あと」に置くこと。**（2026-08-31、監査の指摘）
+      //    try/catch は「返ってこない promise」を助けられない。前に置くと、
+      //    applyConstraints が固まる端末で**撮影画面がいつまでも出ない**。
+      //    後ろなら、効かなくても映像は先に出る
+      // ⚠️ **知らない名前の制約は例外を投げる**（実測。黙って無視ではない）。
+      //    しかも advanced 全体が巻き添えで落ちるので、1つずつ試す。
+      //    step を外れた値も弾かれるため、刻みに合わせてから渡す
+      try {
+        const track = stream.getVideoTracks()[0];
+        type Range = { min: number; max: number; step?: number };
+        const caps = track?.getCapabilities?.() as
+          (MediaTrackCapabilities & { brightness?: Range; saturation?: Range }) | undefined;
+        // 真ん中から上へ、控えめに（伊波さん「強めにではなくね」）
+        const pick = (r: Range | undefined, ratio: number) => {
+          if (!r || typeof r.min !== 'number' || typeof r.max !== 'number') return null;
+          const raw = r.min + (r.max - r.min) * ratio;
+          if (!r.step) return raw;
+          // step の刻みに乗せる。外れた値は「満たせない」として弾かれる
+          const snapped = r.min + Math.round((raw - r.min) / r.step) * r.step;
+          return Math.min(r.max, Math.max(r.min, snapped));
+        };
+        const wants: Record<string, number | null> = {
+          brightness: pick(caps?.brightness, 0.58),   // 影を浅く
+          saturation: pick(caps?.saturation, 0.60),   // 色を少し濃く
+        };
+        for (const [name, value] of Object.entries(wants)) {
+          if (value === null || !track) continue;
+          // 1つずつ。まとめて渡すと、片方が駄目なだけで両方効かなくなる
+          try {
+            await track.applyConstraints(
+              { advanced: [{ [name]: value }] } as MediaTrackConstraints,
+            );
+          } catch { /* この端末では効かない。次を試す */ }
+        }
+      } catch { /* 触れなくてもそのまま。映像は流れている */ }
       setCamVer(v => v + 1);      // 繋ぎ直させる
       // ここで videoRef を触ってはいけない。カメラを入れるまで <video> は
       // 画面に無く、srcObject を入れる先がまだ存在しない（2026-08-10）。
@@ -1999,6 +2051,10 @@ function App() {
               {setupStep === 'kind' ? t('title_what_to_shoot')
                 : setupStep === 'mode' ? t('title_which_cam')
                 : setupStep === 'telop' ? t('title_edit_stamp')
+                /* フレームの段も見出しを出す（2026-08-31、原宿スキン）。
+                   前は小窓の中に書いてあったので空にしていたが、小窓は
+                   廃止済みで、黒いヘッダーだけが残って何の画面か分からなかった */
+                : setupStep === 'frame' ? t('title_choose_frame')
                 : ''}
             </h2>
             {/* 段階を1つ戻す。前は「撮影画面へ飛ぶ」だけだったので、
@@ -2188,13 +2244,15 @@ function App() {
                   skin 側の指定と競合して効かないことがあった
                   （2026-08-13、伊波さん「これなおしてくれないの？」） */}
               <div className={`frame-picker ${shape === 'portrait' ? 'ar-portrait' : 'ar-landscape'}`}>
-                <button 
-                  className="frame-tile"
+                {/* 色や地は skin（skin-harajuku.css の .frame-tile.add）で持つ。
+                    ここに style を直書きすると、スキンを替えたときに
+                    ここだけ古い色のまま取り残される（2026-08-31） */}
+                <button
+                  className="frame-tile add"
                   onClick={() => customFrameInputRef.current?.click()}
-                  style={{ border: '1px dashed #a855f7', background: 'rgba(0,0,0,0.3)' }}
                 >
-                  <div style={{ fontSize: '24px', marginBottom: '4px' }}>🖼️</div>
-                  <span style={{ color: '#a855f7', lineHeight: 1.3 }}>{t('my_frame')}<br />{t('btn_add')}</span>
+                  <div className="frame-tile-add-icon">🖼️</div>
+                  <span className="frame-tile-add-label">{t('my_frame')}<br />{t('btn_add')}</span>
                 </button>
                 <input type="file" accept="image/png,image/webp" ref={customFrameInputRef} style={{ display: 'none' }} onChange={handleCustomFrameUpload} />
                 
