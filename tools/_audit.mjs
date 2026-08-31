@@ -17,7 +17,11 @@ const run = async (lang) => {
   const ok=(n,v)=>console.log(`  ${v?'OK  ':'NG  '} ${n}`);
   const J=(a,b)=>lang==='ja'?a:b;
   console.log(`\n=== ${lang==='ja'?'日本語':'English'} ===`);
-  ok('同意画面', await tap(J('同意してはじめる','I agree')));
+  // ⚠️ **文言を変えたら、ここも直すこと。**（2026-08-31、Mac 側で気づいた）
+  //    f3dae80 でボタンが「はじめる」/「Start」に変わったのに、ここが
+  //    「同意してはじめる」/「I agree」を探したままで、**最初のタップで止まり、
+  //    その先の判定が全部 NG に倒れていた**（アプリは壊れていない）
+  ok('同意画面', await tap(J('はじめる','Start')));
   ok('プリクラ帳の入口', await page.locator('.album-open-btn').count()>0);
   ok('写真を撮る', await tap(J('写真を撮る','Take photo')));
   ok('自分を写す', await tap(J('自分を写す','Shoot yourself'),2500));

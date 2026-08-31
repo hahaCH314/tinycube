@@ -403,7 +403,13 @@
   display: block;
   width: 100%;
   min-height: 132px;
-  padding: 18px 120px 18px 20px;   /* 右はアイコンの居場所 */
+  /* 右はアイコンの居場所。⚠️ **決め打ちにしないこと。**（2026-08-31、実測）
+     120px の決め打ちだったが、アイコンは clamp(48px,15vw,66px) を right:14px に
+     置いているだけなので、実際に要るのは 320px 幅で約 76px。44px も余分に
+     取っていたせいで「プリシートを作る」が**どの幅でも折り返し**、
+     **ストア用スクショにも「プリシートを作／る」と割れて写っていた**。
+     アイコンの実寸から出す */
+  padding: 18px calc(clamp(48px, 15vw, 66px) + 28px) 18px 20px;
   text-align: left;
   color: #ffffff;
   font-family: var(--y2k-font);
@@ -459,11 +465,22 @@
 .album-open-btn.is-buy .album-open-label {
   font-size: clamp(18px, 5.4vw, 24px);
 }
+/* ⚠️ **「プリシートを作る」だけ少し小さくする。**（2026-08-31、実測）
+   8文字あって3枚の中でいちばん長い。余白を直しても 320px では 6.9px 足りず、
+   「作／る」と割れて「る」が1文字だけ落ちる。他の2枚は5文字なので触らない */
+.album-open-btn.is-sheet .album-open-label {
+  font-size: clamp(20px, 6.6vw, 30px);
+}
 
 /* 説明は黒い帯に白抜き。改行はそのまま出す */
 .kind-note,
 .album-open-count {
-  display: inline-block;
+  /* ⚠️ **札は見出しと同じ行に置かないこと。**（2026-08-31、Mac 側の監査で実測）
+     inline-block で並べていたので、-3deg の見出しと 1deg の札の角が重なる。
+     **ストア用スクショ（ios-6.9-2-nani）にも「プリクラ帳」の帳に札がかぶって
+     写っていた。** 行を分けて、幅は文字ぶんだけ持たせる */
+  display: block;
+  width: fit-content;
   padding: 4px 10px;
   font-size: clamp(12px, 3.4vw, 14px);
   font-weight: 700;
@@ -766,6 +783,13 @@
   box-shadow: 2px 2px 0 var(--y2k-ink);
 }
 .tool-btn-small:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--y2k-ink); }
+
+/* ⚠️ **押せる大きさは 44px を切らないこと。**（2026-08-31、監査で実測）
+   戻る 54x34 ／ ❓ 38x34 ／ 🏠 38x34 で、Apple の目安（44x44）を高さで
+   10px 下回っていた。ヘッダーは 320px 幅でも 44px×3 にして 188px 余る */
+.tool-btn-small { min-width: 44px; min-height: 44px; }
+/* シャッターも同じ。320px で 40x40 まで縮んでいた。ここは主役のボタン */
+.photo-btn-round.burst { min-width: 44px; min-height: 44px; }
 
 /* 3枚撮るボタン。ピンクの大きな丸 */
 .photo-btn-round.burst {
