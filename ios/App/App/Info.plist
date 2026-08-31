@@ -27,9 +27,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>写真と動画の撮影、および顔フレームをその場で重ねるために使います。撮ったものが外部へ送られることはありません。</string>
+	<string>写真の撮影、および顔フレームをその場で重ねるために使います。撮ったものが外部へ送られることはありません。</string>
+	<!-- 2026-08-31 追加。「プリシート」で、利用者ご自身が選んだ端末内の写真を
+	     使うため。選ばれた写真は端末の中だけで処理する。
+	     ⚠️ 最近の iOS は写真を選ぶだけなら不要だが、**無いまま必要になると
+	        その場で落ちる。** 実際に写真ライブラリを使う機能なので書いておく -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>プリシートに使う写真を、あなたが選ぶために使います。選んだ写真は端末の中だけで処理され、外部へ送られることはありません。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>できあがった写真と動画を、あなたの写真アプリに保存するために使います。既にある写真を読み取ることはありません。</string>
+	<string>できあがった写真を、あなたの写真アプリに保存するために使います。</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
