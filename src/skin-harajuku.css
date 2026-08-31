@@ -33,35 +33,50 @@
 }
 
 /* ============================================================================
-   1. はじめに（同意）画面 — 黄色×ハーフトーン、縦書きのピンク見出し、
-      生成りのメモ帳、ちぎり紙の紫ボタン
+   1. はじめに（同意）画面
+      斜めに割った黄×シアン×マゼンタの地、極太の縁取りの縦書き見出し、
+      ちぎり紙のメモ帳と紫のボタン
       モックアップ: 2026-08-31_ヒマワリ作_はじめに画面モックアップ.html
+      （ヒマワリさんが 2026-08-31 に作り直したもの。文字の重なりを直した版）
+
+   ⚠️ **モックアップは 400x800 の決め打ちだが、実機は幅がまちまち。**
+      場所は % と vw で持ち、決め打ちの px を持ち込まないこと。
+      320 / 360 / 390 / 412 で、**見出しとメモ帳・メモ帳とボタンが
+      重ならない**ことを必ず測ってから出す（2回とも実測で見つかった）
    ========================================================================= */
 
 .manner-screen {
+  /* 見出しの太さ。メモ帳の場所もこの値から決めるので、1か所で持つ。
+     ⚠️ 実際の幅は font-size の約 1.9 倍になる（縦書き＋傾き＋影） */
+  /* ⚠️ 幅だけでなく**高さも**見る。見出しは4文字を縦に積むので、
+     背の低い画面（320x568）では高さ側が効かないと1画面に入らない
+     （2026-08-31、伊波さん「スクロールは無し」） */
+  --title-w: clamp(40px, min(15vw, 11dvh), 64px);
+  /* 斜めに3色で割る。黄 → シアン → 右下だけマゼンタ */
   background-color: var(--y2k-yellow);
   background-image:
-    radial-gradient(rgba(17, 17, 17, 0.15) 1.5px, transparent 1.5px);
-  background-size: 8px 8px;
+    radial-gradient(rgba(0, 0, 0, 0.05) 20%, transparent 20%),
+    linear-gradient(135deg,
+      #ffe600 40%, #00dcf0 40%, #00dcf0 85%, #ff0073 85%);
+  background-size: 8px 8px, cover;
   font-family: var(--y2k-font);
-  /* 中身を右へ寄せる（左は縦書き見出しの通り道） */
   align-items: stretch;
   justify-content: flex-start;
   overflow: hidden;
 }
 
-/* 右上に流すチェッカーテープ */
+/* 右上のチェッカーテープ */
 .manner-screen::before {
   content: "";
   position: absolute;
-  top: 8%;
-  right: -22px;
-  width: 58px;
-  height: 240px;
-  background: var(--y2k-checker) 0 / 29px 29px;
-  transform: rotate(15deg);
-  clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
-  z-index: 1;
+  top: 17%;
+  right: -34px;
+  width: 132px;
+  height: 38px;
+  background: var(--y2k-checker) 0 / 19px 19px;
+  transform: rotate(70deg);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -69,28 +84,35 @@
 .manner-screen::after {
   content: "";
   position: absolute;
-  top: 14%;
-  left: 12%;
-  width: min(260px, 62vw);
-  height: min(260px, 62vw);
-  border: 8px solid rgba(255, 255, 255, 0.4);
-  box-shadow: inset 0 0 0 10px var(--y2k-cyan), 0 0 0 10px var(--y2k-cyan);
-  transform: rotate(45deg) skew(15deg, 15deg);
-  opacity: 0.8;
-  z-index: 0;
+  top: 15%;
+  left: 20%;
+  width: min(250px, 62vw);
+  height: min(250px, 62vw);
+  border: 4px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 20px 20px 0 -16px rgba(255, 255, 255, 0.4);
+  transform: rotate(15deg);
+  z-index: 1;
   pointer-events: none;
 }
 
 .manner-content {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   width: 100%;
   max-width: none;
   height: 100%;
   max-height: none;
-  padding: 0;
+  /* ⚠️ **スクロールさせない**（2026-08-31、伊波さん「スクロールは無し」）。
+     この画面は「開いて最初に読むお願い」なので、**1画面に全部見えること。**
+     入らないぶんは、文字を小さくして収める（下の .manner-text）。
+     ⚠️ 下にボタンのぶんは空ける。ボタンは position:fixed で画面の下に
+     居座るので、0 にすると文章の終わりが潜る（320x568 で 76px 隠れた）。
+     ⚠️ ただし**空けすぎないこと。** 118px にしたら、メモが 459px で
+     終わっているのに中身が 553px になり、今度は下に余りが出た（同日）。
+     ボタンの高さ（62px）＋下の余白ぶんだけでよい */
+  padding: 0 0 84px;
   gap: 0;
-  overflow-y: auto;
+  overflow: hidden;
   background: none;
   border: none;
   border-radius: 0;
@@ -99,24 +121,42 @@
   -webkit-backdrop-filter: none;
 }
 
-/* 縦書きの大見出し。原寸のモックアップは font-size 85px。
-   320px 幅でもメモ帳（右寄せ）とすれ違えるよう clamp で抑える */
+/* 左下のチェッカーテープ（.manner-content に持たせる） */
+.manner-content::before {
+  content: "";
+  position: fixed;
+  bottom: 8%;
+  left: -24px;
+  width: 168px;
+  height: 38px;
+  background: var(--y2k-checker) 0 / 19px 19px;
+  transform: rotate(-20deg);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 縦書きの大見出し。極太の黒縁＋黄色の影を重ねる */
 .manner-title {
   position: absolute;
-  left: 2px;
-  top: 34px;
-  z-index: 3;
+  left: 8px;
+  top: calc(env(safe-area-inset-top, 0px) + 26px);
+  z-index: 5;
   margin: 0;
   font-family: var(--y2k-font);
-  font-size: clamp(48px, 16vw, 68px);
+  font-size: var(--title-w);
   font-weight: 900;
+  line-height: 0.9;
   color: var(--y2k-pink);
   writing-mode: vertical-rl;
   text-orientation: upright;
-  letter-spacing: -0.18em;
   transform: rotate(-5deg);
-  -webkit-text-stroke: 4px var(--y2k-ink);
-  text-shadow: 6px 8px 0 var(--y2k-ink);
+  /* 縁取りは text-shadow を8方向に重ねて作る。
+     -webkit-text-stroke と違って、黄色の落ち影と併用できる */
+  text-shadow:
+    -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000,
+    -4px 0 0 #000, 4px 0 0 #000, 0 -4px 0 #000, 0 4px 0 #000,
+    6px 6px 0 var(--y2k-yellow), 10px 10px 0 var(--y2k-yellow);
   background: none;
   -webkit-background-clip: initial;
   background-clip: initial;
@@ -125,78 +165,89 @@
 /* 言語切り替え。丸ピルを左右に傾けて重ねる */
 .lang-switch {
   position: absolute;
-  top: calc(env(safe-area-inset-top, 0px) + 14px);
-  right: 14px;
-  z-index: 6;
+  top: calc(env(safe-area-inset-top, 0px) + 22px);
+  right: 16px;
+  z-index: 10;
   margin: 0;
   gap: 0;
 }
 .lang-switch button {
-  min-height: 40px;
+  min-height: 38px;
   padding: 0 15px;
   font-family: var(--y2k-font);
   font-size: 14px;
   font-weight: 900;
-  border: 3px solid var(--y2k-ink);
-  border-radius: 20px;
   color: var(--y2k-ink);
   background: #ffffff;
-  transform: rotate(5deg) translate(-6px, 5px);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 20px;
+  box-shadow: 2px 2px 0 var(--y2k-ink);
+  transform: rotate(5deg);
+  padding-left: 20px;
 }
 .lang-switch button.on {
+  position: relative;
+  left: 15px;
+  z-index: 2;
   color: #ffffff;
   background: var(--y2k-cyan);
-  border-color: var(--y2k-ink);
+  text-shadow: 1px 1px 0 var(--y2k-ink);
   transform: rotate(-5deg);
-  z-index: 2;
-  box-shadow: 2px 3px 0 var(--y2k-ink);
 }
 
-/* 生成りのメモ帳。左に見出しの通り道を空けて右へ寄せる。
-   ⚠️ **幅は「見出しの実測ぶん」を空けて決めること。**
-      72% にしていたとき、320〜412px のどの幅でも見出しの1列目
-      （縦書きなので右端＝「に」）に 25px ほど食い込んでいた
-      （2026-08-31、監査で実測）。見出しは clamp(48px…68px) なので、
-      **左に 78px 空ける**とどの幅でも当たらない */
+/* ちぎり紙のメモ帳。
+   ⚠️ **左は見出しのぶん、下はボタンのぶんを空ける。**
+      どちらも一度ずつ重ねてしまっている（2026-08-31、伊波さん
+      「字が重なってみえるって」）。見出しの実幅は font-size の約1.9倍 */
 .manner-text {
   position: relative;
-  z-index: 4;
+  z-index: 10;
   box-sizing: border-box;
-  width: calc(100% - 92px);
-  max-width: 340px;
-  margin: calc(env(safe-area-inset-top, 0px) + 150px) 8px 150px auto;
-  padding: 24px 16px;
-  background: var(--y2k-paper);
-  border-right: 2px solid #e0dbba;
-  border-bottom: 2px solid #e0dbba;
-  box-shadow: 8px 10px 0 rgba(0, 0, 0, 0.15);
-  clip-path: polygon(0 1%, 2% 0, 98% 0.5%, 100% 2%, 99.5% 98%, 97% 100%, 3% 99.5%, 0 98%);
+  width: calc(100% - (var(--title-w) * 1.9) - 14px);
+  max-width: 300px;
+  /* ⚠️ **上の余白は vh で取らない。** 41vh にしていたら、背の低い画面
+     （320x568 / 360x640）で本文が下へ押し出され、ボタンに 60〜76px
+     被った（2026-08-31、実測）。見出しの高さぶん（4文字ぶん）だけ
+     空ければ足りる。下はボタンの居場所を必ず残す */
+  /* 上は「見出しの高さ（4文字ぶん）」だけ空ける。背の低い画面では
+     見出し自体が小さくなるので、この式なら一緒に詰まる */
+  margin: calc(env(safe-area-inset-top, 0px) + (var(--title-w) * 3.9) + 14px) 14px 0 auto;
+  padding: 14px 15px 16px;
+  background: #fff6d9;
+  border: none;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.2);
+  /* ちぎった紙の縁。左側だけギザギザにする */
+  clip-path: polygon(
+    2% 1%, 98% 3%, 99% 97%, 1% 99%,
+    1% 90%, 0% 80%, 2% 70%, 0% 60%, 1% 50%, 0% 40%, 2% 30%, 0% 20%, 1% 10%
+  );
   font-family: var(--y2k-font);
-  font-size: clamp(13px, 3.9vw, 15px);
+  /* ⚠️ **幅ではなく「高さ」で決めること。**（2026-08-31、伊波さん
+     「スクロールは無し」）。文章は12行あるので、背の低い画面
+     （320x568）では 3.5vw だと縦に溢れてボタンの下に潜る。
+     dvh で決めれば、背の低い画面では自動で小さくなって収まる */
+  font-size: clamp(10px, 1.62dvh, 14px);
   font-weight: 700;
-  line-height: 2;
-  letter-spacing: 0.04em;
-  color: var(--y2k-ink);
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: #111111;
   text-align: left;
 }
 
-/* 下部の斜めブラシストローク（ピンク＋シアンの縁）。
-   ⚠️ **ボタンの擬似要素にしないこと。** ボタンは transform と clip-path を
-      持っているので、(1) transform が position:fixed の基準を
-      ボタン自身にしてしまい、(2) clip-path がはみ出しを切る。
-      結果、画面いっぱいの帯のはずが**ボタンの中の小さな楔**になっていた
-      （2026-08-31、監査で発覚）。画面側（.manner-content）に持たせる */
+/* 左下のハートの宝石 */
 .manner-content::after {
   content: "";
   position: fixed;
-  left: -30px;
-  right: -30px;
-  bottom: 44px;
-  height: 110px;
+  bottom: 21%;
+  left: 22px;
+  width: 60px;
+  height: 60px;
   background: var(--y2k-pink);
-  border-top: 14px solid var(--y2k-cyan);
-  transform: rotate(-9deg);
-  z-index: 1;
+  clip-path: polygon(50% 15%, 80% 0, 100% 30%, 50% 100%, 0 30%, 20% 0);
+  box-shadow: inset 5px 5px 10px rgba(255, 255, 255, 0.7),
+              inset -5px -5px 10px rgba(0, 0, 0, 0.3);
+  transform: rotate(-15deg) scale(1.2);
+  z-index: 4;
   pointer-events: none;
 }
 
@@ -204,29 +255,31 @@
 .manner-agree-btn {
   position: fixed;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
-  transform: translateX(-50%);
-  z-index: 10;
-  width: min(90%, 400px);
-  min-height: 64px;
-  padding: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 26px);
+  transform: translateX(-50%) rotate(-2deg);
+  z-index: 11;
+  width: min(84%, 340px);
+  min-height: 62px;
+  padding: 18px 0;
   font-family: var(--y2k-font);
   font-size: clamp(19px, 5.8vw, 24px);
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 2px 2px 0 var(--y2k-ink);
-  background: var(--y2k-purple);
+  background: #753bbb;
   border: none;
   border-radius: 0;
-  clip-path: polygon(2% 4%, 98% 0%, 100% 95%, 96% 100%, 1% 98%, 0% 5%);
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.2);
+  /* 上下をギザギザに切る */
+  clip-path: polygon(
+    1% 2%, 10% 0%, 20% 3%, 30% 0%, 40% 2%, 50% 0%, 60% 3%, 70% 0%, 80% 2%, 90% 0%, 99% 3%,
+    100% 97%, 90% 100%, 80% 98%, 70% 100%, 60% 97%, 50% 100%, 40% 98%, 30% 100%, 20% 97%, 10% 100%, 2% 98%,
+    0% 50%
+  );
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
   transition: transform 0.12s ease;
 }
 .manner-agree-btn:active {
-  transform: translateX(-50%) scale(0.97);
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.2);
+  transform: translateX(-50%) rotate(-2deg) scale(0.97);
 }
-
 
 /* ============================================================================
    2. 設定画面ぜんたいの下地（なにを撮る？／どのカメラ／フレーム決定 が乗る）
