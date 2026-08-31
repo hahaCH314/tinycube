@@ -89,13 +89,38 @@ export async function initBilling(owned: () => void): Promise<void> {
       platform,
     }]);
 
-    // 買った／前に買っていたことが分かったとき
+    // 買った／前に買っていたことが分かったとき。
+    //
+    // ⚠️⚠️ **必ず `store.owned(商品ID)` で確かめること。**（2026-08-31）
+    //
+    //   前はこう書いていた：
+    //       .verified((receipt) => { receipt.finish(); onOwned(); })
+    //
+    //   `verified` / `receiptUpdated` は **アプリのレシートが読めたときに飛ぶ**。
+    //   レシートは買っていなくても存在するので、中身を見ずに onOwned() を呼ぶと
+    //   **起動しただけで全員が「買った人」になる。**
+    //
+    //   実際にそうなっていた（伊波さん「かった事ない」のに解除済み、
+    //   入れ直しても同じ）。結果として：
+    //     ・有料の53枚が全員に無料で配られていた
+    //     ・買う入口は `{!unlocked && ...}` で消えるので、**購入ボタンが誰にも
+    //       出なかった**。2026-08-30 の App Store 却下（Guideline 2.1(b)
+    //       「アプリ内課金が見つけられない」）は、これが原因の可能性が高い
+    //
+    // ⚠️ **`verified` だけに頼らないこと。** あれは受け取りの検証役
+    //    （store.validator）を置いているときのイベント。うちは置いていないので、
+    //    検証役なしでも飛ぶ `receiptUpdated` でも見る（プラグインの説明書どおり）。
+    const 持っているか確かめる = () => {
+      try { if (s.owned(PRODUCT_ID)) onOwned?.(); }
+      catch { /* 確かめられないときは解除しない（安全側に倒す） */ }
+    };
     s.when()
       .approved((tx: any) => tx.verify())
       .verified((receipt: any) => {
-        receipt.finish();
-        onOwned?.();
-      });
+        try { receipt.finish(); } catch { /* 閉じられなくても持ち主かは下で見る */ }
+        持っているか確かめる();
+      })
+      .receiptUpdated(() => 持っているか確かめる());
 
     await s.initialize([platform]);
     ready = true;
