@@ -124,8 +124,13 @@ android {
         //          縦長の写真に合わせ、カメラの明るさ・彩度を少しだけ上げた。
         //          ⚠️ 55 はもう Play に上がっているので 56 にした。
         //          **同じ番号だと Play が受け取らない**。2026-08-31）
-        versionCode 56
-        versionName "1.6.0"
+        //    ⚠️ **versionName も使い回せない。**（2026-08-31）
+        //       versionCode 55 を 1.6.0 で上げていたので、Play が
+        //       「そのバージョン名は使われている」と断った。
+        //       **番号を上げるときは versionCode と versionName の両方**
+        //    （57 = 見た目の直しと、課金まわりの文言を作り直した版。2026-08-31）
+        versionCode 57
+        versionName "1.6.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
