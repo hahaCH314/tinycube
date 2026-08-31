@@ -15,6 +15,7 @@ import { isUnlocked, startBilling, onUnlockChange, relock } from './unlock'
 import { buy as buyInApp, restore as restoreInApp } from './billing'
 import { saveMedia, takeLastMediaError } from './save'
 import { FaceIcon, SceneIcon } from './CamIcon'
+import { SheetIcon } from './SheetIcon'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
 
 /*
@@ -2107,7 +2108,7 @@ function App() {
                   ⚠️ **プリクラ帳のすぐ下に置く。** 材料はプリクラ帳から取るので、
                      この2つは並んでいたほうが道が分かる */}
               <button className="album-open-btn is-sheet" onClick={openSheet}>
-                <span className="album-open-emoji">✂️</span>
+                <span className="album-open-emoji"><SheetIcon /></span>
                 <span className="album-open-label">{t('btn_make_sheet')}</span>
                 <span className="album-open-count">{t('sheet_note')}</span>
               </button>

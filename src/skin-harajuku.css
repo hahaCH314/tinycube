@@ -448,22 +448,17 @@
   font-size: clamp(24px, 7.4vw, 34px);
   font-weight: 900;
   line-height: 1.1;
-  color: #ffffff;
-  /* ⚠️ **-webkit-text-stroke を使わないこと。** stroke は**文字の内側も
-     削る**ので、太い字だと白い部分が痩せ、影が重なって黒く潰れる。
-     縁取りは text-shadow を8方向に重ねて、外側だけに付ける。
+  /* ⚠️ **縁取りを重ねないこと。**（2026-08-31、実機で伊波さん
+     「写真を撮るの文字は horror だし」「文字が気持ち悪い」）。
 
-     ⚠️ **ただし重ねすぎないこと。**（2026-08-31、実機で伊波さん
-        「写真を撮るの文字は horror だし」）。3px で8方向に重ねたら、
-        字の隙間まで黒が回り込んで**滲んだ影絵**になっていた。
-        **1.5px まで。** 落ち影も 5px → 4px に。
-        白い部分がはっきり残る太さで止める */
-  text-shadow:
-    -1.5px -1.5px 0 var(--y2k-ink), 1.5px -1.5px 0 var(--y2k-ink),
-    -1.5px 1.5px 0 var(--y2k-ink), 1.5px 1.5px 0 var(--y2k-ink),
-    -1.5px 0 0 var(--y2k-ink), 1.5px 0 0 var(--y2k-ink),
-    0 -1.5px 0 var(--y2k-ink), 0 1.5px 0 var(--y2k-ink),
-    4px 4px 0 var(--y2k-ink);
+     白抜き＋黒の縁取りを8方向に重ねる形は、2回とも失敗した。
+       -webkit-text-stroke 2px … 内側も削るので白が痩せ、黒く潰れた
+       text-shadow 3px ×8方向  … 字の隙間まで黒が回り込んで滲んだ
+       同 1.5px ×8方向         … まだ気持ち悪い
+     カードの地（ピンク・シアン・紫）は十分に濃いので、**黒い字に白い
+     落ち影**で足りる。縁取りは要らない。字の形がそのまま見える */
+  color: var(--y2k-ink);
+  text-shadow: 3px 3px 0 #ffffff;
   transform: rotate(-3deg);
 }
 /* 買う導線は控えめに（プリクラ帳より目立ってはいけない） */
@@ -474,7 +469,11 @@
    8文字あって3枚の中でいちばん長い。余白を直しても 320px では 6.9px 足りず、
    「作／る」と割れて「る」が1文字だけ落ちる。他の2枚は5文字なので触らない */
 .album-open-btn.is-sheet .album-open-label {
-  font-size: clamp(20px, 6.6vw, 30px);
+  /* ⚠️ **1行に収めること。**「作／る」で割れて「る」が落ちていた
+     （2026-08-31、実機）。8文字あって3枚の中でいちばん長いので、
+     ここだけ小さくして折り返さないようにする */
+  font-size: clamp(18px, 5.6vw, 26px);
+  white-space: nowrap;
 }
 
 /* 説明は黒い帯に白抜き。改行はそのまま出す */
@@ -505,6 +504,16 @@
   font-size: clamp(48px, 15vw, 66px);
   transform: translateY(-50%) rotate(-8deg);
   filter: drop-shadow(3px 3px 0 var(--y2k-ink));
+}
+/* SVG のアイコン（コラージュ）。絵文字と同じ大きさに合わせる。
+   ⚠️ 影は SVG 側で黒い線を持っているので、drop-shadow は薄めに */
+.album-open-emoji svg {
+  width: clamp(52px, 16vw, 72px);
+  height: auto;
+  display: block;
+}
+.album-open-btn.is-sheet .album-open-emoji {
+  filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.35));
 }
 
 /* 角に貼るチェック柄のテープ */

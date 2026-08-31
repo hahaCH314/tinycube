@@ -283,8 +283,10 @@ const dictJa: I18nDict = {
   unlock_p2: '💧 写真の「tinyCUBE」の透かしが消える',
   unlock_buy: 'BOOTH で買う（¥300）',
   unlock_web_soon: 'いまはアプリ版でだけ買えます。ブラウザからのお支払いは準備中です。',
-  unlock_buy_app: '推し色キラリフレームセット（¥300）',
-  unlock_lead_short: '鍵つき53枚＋透かし消し',
+  // ⚠️ **カードの見出しは短くすること。** 商品名をそのまま入れたら
+  //    2行に折れて重なった（2026-08-31、実機）。商品名は説明の側に置く
+  unlock_buy_app: '追加フレーム',
+  unlock_lead_short: '推し色キラリ 53枚 ¥300',
   unlock_restore: '買ったのに使えないとき',
   unlock_buy_ng: 'いま買えませんでした。少し時間をおいて、もう一度ためしてください。',
   unlock_have: 'キーを持っている',
@@ -316,7 +318,10 @@ const dictJa: I18nDict = {
   locked_hint: '🔒 鍵つき。推し色キラリフレームセット（¥300）でひらきます',
   trial_hint: '🔒 鍵つきの枠です。このまま撮れますが、斜めに鍵のシールが入ります。',
   trial_buy: '¥300でひらく（53枚セット）',
-  btn_make_sheet: 'プリシートを作る',
+  // ⚠️ カードの見出しは **「写真をコラージュ」**（2026-08-31、伊波さん→
+  //    ヒマワリさんのモックアップで反映済み）。「プリシート」だけだと
+  //    何をするのか伝わらなかった
+  btn_make_sheet: '写真をコラージュ',
   sheet_note: 'ためた写真を1枚に',
   sheet_title: 'プリシートを作る',
   sheet_lead: '3〜7枚えらぶと、1枚のシールシートになるよ。さいしょに選んだ1枚がいちばん大きく出ます。',
@@ -531,8 +536,8 @@ const dictEn: I18nDict = {
   unlock_p2: '💧 Removes the "tinyCUBE" watermark from your photos',
   unlock_buy: 'Buy on Ko-fi (¥300)',
   unlock_web_soon: 'Purchases are available in the app for now. Payment from the browser is coming soon.',
-  unlock_buy_app: 'Sparkle Frame Set (¥300)',
-  unlock_lead_short: '53 locked frames + no watermark',
+  unlock_buy_app: 'Extra frames',
+  unlock_lead_short: 'Sparkle Frame Set, 53 for ¥300',
   unlock_restore: 'Already bought it?',
   unlock_buy_ng: 'Could not start the purchase. Please try again in a moment.',
   unlock_have: 'I have a key',
@@ -554,7 +559,7 @@ I am looking forward to the day I run into your tinyCUBE shots on social media.`
   locked_hint: '🔒 Locked. Opens with the Sparkle Frame Set (¥300)',
   trial_hint: '🔒 A locked frame. You can still shoot, but a lock sticker goes in.',
   trial_buy: 'Open for ¥300 (53 frames)',
-  btn_make_sheet: 'Make a photo sheet',
+  btn_make_sheet: 'Collage your photos',
   sheet_note: 'Turn saved shots into one sheet',
   sheet_title: 'Make a photo sheet',
   sheet_lead: 'Pick 3 to 7 photos and they become one sticker sheet. The first one you pick comes out biggest.',
