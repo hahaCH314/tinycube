@@ -285,10 +285,16 @@ const dictJa: I18nDict = {
   // 2026-08-15、全部無料にした。ここは「買った人へのお知らせ」だった場所。
   // いまは開発者からのあいさつを置いている。
   // **文章は伊波さんが書いたもの。言い換え・要約をしないこと**
+  //
+  // ⚠️ 2026-08-31、**「スポンサーも募集中だよW」の1行だけ外した**
+  //    （伊波さんの判断）。ここは ¥300 を買ってくれた人にだけ出る画面で、
+  //    買った直後にさらにお金の話をすることになる。
+  //    寄付を募っているのは **CUBICENGINE のほう**で、tinyCUBE は買い切り。
+  //    製品どうしで収益の立て方を混ぜない（[[cubicengine-is-donation-based]]）。
+  //    前の2行は伊波さんの文章なので、そのまま残す
   unlock_done: '🎁 ぜんぶ使えます',
   unlock_done_note: `開発者から、みんなのフレームで遊ぶ姿、楽しく遊んでくれていたら嬉しいです。
-いつかSNSでtinyCUBEで撮った写真たちに出会えることを、楽しみにしております。
-スポンサーも募集中だよW`,
+いつかSNSでtinyCUBEで撮った写真たちに出会えることを、楽しみにしております。`,
   unlock_relock: 'この端末の解除をやめる',
   frame_locked: '🔒',
   locked_hint: 'このフレームは「ぜんぶ使う」に入っています。',
@@ -516,12 +522,12 @@ const dictEn: I18nDict = {
   unlock_ok: 'Unlocked. Thank you!',
   unlock_ng: 'That key did not work. Please check for typos.',
   // 2026-08-15、全部無料にした。日本語側と同じあいさつを置く。
-  // 伊波さんの原文の気持ち（遊ぶ姿がうれしい／SNSで出会えるのが楽しみ／
-  // スポンサー募集）をそのまま英語にしている
+  // 伊波さんの原文の気持ち（遊ぶ姿がうれしい／SNSで出会えるのが楽しみ）を
+  // そのまま英語にしている。
+  // ⚠️ 2026-08-31、日本語側と揃えて **'Also, sponsors welcome :)' を外した**
   unlock_done: '🎁 Everything unlocked',
   unlock_done_note: `From the developer: I hope you have fun playing with all the frames.
-I am looking forward to the day I run into your tinyCUBE shots on social media.
-Also, sponsors welcome :)`,
+I am looking forward to the day I run into your tinyCUBE shots on social media.`,
   unlock_relock: 'Remove the unlock from this device',
   frame_locked: '🔒',
   locked_hint: 'This frame is part of "Unlock everything".',
