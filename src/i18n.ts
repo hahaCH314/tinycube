@@ -355,7 +355,9 @@ SNSへの投稿等及び、二次使用は
 誰かを傷つける道具と
 なりませんよう
 お願い申し上げます`,
-  manner_agree: '同意してはじめる',
+  /* 2026-08-31、伊波さん「ボタン文言 はじめる だけに」。
+     同意そのものは上の文章で伝わっているので、ボタンは短く */
+  manner_agree: 'はじめる',
 
   guide_title: 'tinyCUBE の使い方',
   guide_step1_title: '枠をえらぶ',
@@ -586,7 +588,7 @@ and that this app never becomes
 a tool for insult, harassment,
 or hurting anyone.
 Thank you.`,
-  manner_agree: 'I agree — let\'s begin',
+  manner_agree: 'Start',
 
   guide_title: 'How to use tinyCUBE',
   guide_step1_title: 'Pick a frame',
