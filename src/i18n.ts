@@ -57,6 +57,22 @@ type I18nDict = {
   unlock_relock: string;
   frame_locked: string;
   locked_hint: string;
+  trial_hint: string;
+  trial_buy: string;
+  btn_make_sheet: string;
+  sheet_note: string;
+  sheet_title: string;
+  sheet_lead: string;
+  sheet_from_album: string;
+  sheet_from_device: string;
+  sheet_need_more: string;
+  sheet_room_full: string;
+  sheet_layout: string;
+  sheet_tap_del: string;
+  sheet_save: string;
+  sheet_clear: string;
+  btn_use_picked: string;
+  msg_pick_for_sheet: string;
   btn_photo: string;
   guide_photo: string;
   btn_pause: string;
@@ -266,7 +282,7 @@ const dictJa: I18nDict = {
   guide_btn: '? 使い方',
   settings_btn: '⚙ 設定',
   
-  upload_hint: 'タップして動画を読み込み',
+  upload_hint: 'カメラをオンにしてね',
   
   btn_preview: '▶ 試してみる（録画無し）',
   btn_preview_stop: '⏸ とめる',
@@ -299,6 +315,22 @@ const dictJa: I18nDict = {
   unlock_relock: 'この端末の解除をやめる',
   frame_locked: '🔒',
   locked_hint: 'このフレームは「ぜんぶ使う」に入っています。',
+  trial_hint: '🔒 おためし中。この枠のまま撮れますが、斜めに鍵のシールが入ります。',
+  trial_buy: 'シールを外す（¥300）',
+  btn_make_sheet: 'プリシートを作る',
+  sheet_note: 'ためた写真を1枚に',
+  sheet_title: 'プリシートを作る',
+  sheet_lead: '3〜7枚えらぶと、1枚のシールシートになるよ。さいしょに選んだ1枚がいちばん大きく出ます。',
+  sheet_from_album: '📖 プリクラ帳から',
+  sheet_from_device: '📱 端末の写真から',
+  sheet_need_more: 'あと{n}枚えらんでね',
+  sheet_room_full: 'ここまで（{n}枚）',
+  sheet_layout: 'ならべ方',
+  sheet_tap_del: 'タップで外せるよ',
+  sheet_save: 'このシートを保存する',
+  sheet_clear: 'えらび直す',
+  btn_use_picked: '{n}枚を使う',
+  msg_pick_for_sheet: 'シートに使うものを選んでね',
   btn_photo: '写真を撮る',
   guide_photo: '📷 を押すと、そのときの画面がそのまま1枚の写真になります。枠もエフェクトも乗ったまま保存されます。',
   btn_pause: '一時停止',
@@ -346,7 +378,7 @@ const dictJa: I18nDict = {
   manner_title: 'はじめに',
   manner_text: `このアプリケーションは
 みなさんの日常を切り取る
-動画＆写真撮影アプリです
+写真撮影アプリです
 SNSへの投稿等及び、二次使用は
 自由に行えます
 みなさんの愛のあるご利用を
@@ -358,22 +390,22 @@ SNSへの投稿等及び、二次使用は
   manner_agree: '同意してはじめる',
 
   guide_title: 'tinyCUBE の使い方',
-  guide_step1_title: '動画を読み込む',
-  guide_step1_desc: 'すでに撮ってある動画に、声とエフェクトを乗せる道具です。',
-  guide_step2_title: '録画スタートを押して喋る',
-  guide_step2_desc: '動画が流れます。マイクの許可を聞かれたら「許可」を押してください。',
-  guide_step3_title: 'もう一度押すと止まります',
-  guide_step3_desc: 'そのまま保存できます。iPhone は共有シートから「ビデオを保存」を選んでください。',
+  guide_step1_title: '枠をえらぶ',
+  guide_step1_desc: '顔ハメや推し色の枠から1つ。縦か横かも、ここで決めます。',
+  guide_step2_title: '📸 を押して3枚つづけて撮る',
+  guide_step2_desc: 'カメラの許可を聞かれたら「許可」を押してください。1・2・3と数えてから撮ります。',
+  guide_step3_title: '文字とスタンプで飾って保存',
+  guide_step3_desc: '3枚が1枚のシートになります。プリクラ帳にためた写真は、あとから「プリシートを作る」で好きな組み合わせに組み直せます。',
   guide_warn_title: '⚠ 撮る前に、必ず確認してください',
   guide_warn1_title: '他人の個人情報を映さない。',
-  guide_warn1_desc: '読み込んだ動画に映ったチャット、名前、住所、通知はすべて残ります。一度公開した動画は取り消せません。',
+  guide_warn1_desc: '写真に映り込んだ名前、住所、画面の通知はすべて残ります。一度公開したものは取り消せません。',
   guide_warn2_title: '他人の作品を無断で使わない。',
-  guide_warn2_desc: 'ゲーム映像、動画、音楽、画像には権利者がいます。投稿や収益化の可否は、各権利者の規約に従ってください。',
-  guide_warn3_title: '人を映す・録音するときは、相手の同意を得てください。',
-  guide_warn3_desc: 'マイクの内容は実際に記録されます。',
+  guide_warn2_desc: '写真、イラスト、グッズには権利者がいます。投稿や収益化の可否は、各権利者の規約に従ってください。',
+  guide_warn3_title: '人を撮るときは、相手の同意を得てください。',
+  guide_warn3_desc: '撮った写真は、そのまま人に見せられる形で残ります。',
   guide_warn4_title: '人を貶める目的、誤解させる目的で使わないでください。',
   guide_note1: '枠の絵は本来 CMCUBE（PC版）のもので、16:9 で描かれています。縦（9:16）で使うと左右が欠けます。それでも使えるようにしてあるので、欠けるものには一覧で印を出しています。',
-  guide_note2: 'tinyCUBE がロイヤリティフリーを保証するのは、あなた自身が作った部分だけです。読み込んだ素材の権利処理は利用者の責任になります。',
+  guide_note2: 'tinyCUBE がロイヤリティフリーを保証するのは、あなた自身が作った部分だけです。持ち込んだ写真の権利処理は利用者の責任になります。',
   guide_promo_badge: 'PC版',
   guide_promo_lead: '撮りながら、演出する。',
   guide_promo_p1: 'ゲーム画面をそのまま録画。読み込む手間がありません',
@@ -389,7 +421,7 @@ SNSへの投稿等及び、二次使用は
   setting_video_change: '動画を選び直す',
   setting_video_load: '動画を読み込む',
   setting_shape: '書き出しの形',
-  setting_shape_wide_note: '読み込んだ動画は横長です。スマホを横向きにすると大きく見えます。',
+  setting_shape_wide_note: 'カメラが横長です。スマホを横向きにすると大きく見えます。',
   setting_shape_land: '横',
   setting_shape_port: '縦',
   setting_telop: 'テロップの言葉',
@@ -398,7 +430,7 @@ SNSへの投稿等及び、二次使用は
   frame_none: 'フレームなし',
   frame_crop: '端が欠けます',
 
-  alert_load_first: '先に動画を読み込んでください！',
+  alert_load_first: '先にカメラをオンにしてください！',
   alert_rec_fail: '録画に失敗しました: ',
   alert_mic_fail: '録画の開始に失敗しました。マイクの許可設定を確認してください。\nエラー: ',
   eff_toutoi: '尊い',
@@ -416,7 +448,7 @@ SNSへの投稿等及び、二次使用は
   err_play_rejected: '再生を断られました: ',
   label_none: 'なし',
   msg_saved: '保存しました！',
-  msg_save_hint: '「画像を保存」または「ビデオを保存」をえらんでね',
+  msg_save_hint: '「画像を保存」をえらんでね',
   msg_saving_prep: '保存の準備をしています…',
   err_save_failed: '保存できませんでした（',
   msg_storing: 'しまっています…',
@@ -424,7 +456,7 @@ SNSへの投稿等及び、二次使用は
   msg_wait: 'ちょっとまってね',
   warn_land_frame1: '（横フレームが選択されています。',
   warn_land_frame2: 'スマホを横にしてください。）',
-  msg_push_record: '録画ボタンを押してね',
+  msg_push_record: '📸 を押してね',
   btn_back: '戻る',
   msg_shooting: '撮影中…',
   btn_shoot_3: '3枚撮る',
@@ -462,7 +494,7 @@ SNSへの投稿等及び、二次使用は
   confirm_del_frame: 'このフレームを削除しますか？',
   title_edit_stamp: 'テキストスタンプの変更',
   title_position: '場所',
-  title_rec_btn_pos: '録画ボタンの位置',
+  title_rec_btn_pos: '撮るボタンの位置',
   btn_shoot_with_setting: 'この設定で撮る',
   btn_reshoot: '撮り直す',
   msg_drop_to_trash: 'はなすと捨てる',
@@ -504,7 +536,7 @@ const dictEn: I18nDict = {
   guide_btn: '? How to use',
   settings_btn: '⚙ Settings',
   
-  upload_hint: 'Tap to load a video',
+  upload_hint: 'Turn the camera on', 
   
   btn_preview: '▶ Preview (No recording)',
   btn_preview_stop: '⏸ Stop',
@@ -535,6 +567,22 @@ Also, sponsors welcome :)`,
   unlock_relock: 'Remove the unlock from this device',
   frame_locked: '🔒',
   locked_hint: 'This frame is part of "Unlock everything".',
+  trial_hint: '🔒 Trying it on. You can still shoot, but a little lock sticker goes in.',
+  trial_buy: 'Remove the sticker (¥300)',
+  btn_make_sheet: 'Make a photo sheet',
+  sheet_note: 'Turn saved shots into one sheet',
+  sheet_title: 'Make a photo sheet',
+  sheet_lead: 'Pick 3 to 7 photos and they become one sticker sheet. The first one you pick comes out biggest.',
+  sheet_from_album: '📖 From the album',
+  sheet_from_device: '📱 From your photos',
+  sheet_need_more: 'Pick {n} more',
+  sheet_room_full: 'That is the limit ({n})',
+  sheet_layout: 'Layout',
+  sheet_tap_del: 'Tap one to take it out',
+  sheet_save: 'Save this sheet',
+  sheet_clear: 'Start over',
+  btn_use_picked: 'Use {n}',
+  msg_pick_for_sheet: 'Choose the ones for your sheet',
   btn_photo: 'Take a photo',
   guide_photo: 'Press 📷 to save the screen as a still image. Frames and effects are baked in, just as you see them.',
   btn_pause: 'Pause',
@@ -583,7 +631,7 @@ Also, sponsors welcome :)`,
   manner_title: 'Before you begin',
   manner_text: `This app is for capturing
 the everyday moments of your life
-in video and photos.
+in photos.
 You are free to post what you make
 on social media, and to build on it.
 We ask that you use it with kindness,
@@ -594,22 +642,22 @@ Thank you.`,
   manner_agree: 'I agree — let\'s begin',
 
   guide_title: 'How to use tinyCUBE',
-  guide_step1_title: 'Load a video',
-  guide_step1_desc: 'Add voice and effects to a video you have already recorded.',
-  guide_step2_title: 'Press Start Recording and talk',
-  guide_step2_desc: 'The video will play. Allow microphone access if prompted.',
-  guide_step3_title: 'Press again to stop',
-  guide_step3_desc: 'Save directly. On iPhone, choose "Save Video" from the share sheet.',
-  guide_warn_title: '⚠ Please confirm before recording',
+  guide_step1_title: 'Pick a frame',
+  guide_step1_desc: 'One from the face cut-outs or the fan colours. Choose portrait or landscape here too.',
+  guide_step2_title: 'Press 📸 for three shots in a row',
+  guide_step2_desc: 'Allow camera access if prompted. It counts 1, 2, 3 before each shot.',
+  guide_step3_title: 'Decorate with text and stickers, then save',
+  guide_step3_desc: 'The three shots become one sheet. Photos saved in your album can be rearranged later with "Make a photo sheet".',
+  guide_warn_title: '⚠ Please confirm before you shoot',
   guide_warn1_title: 'Do not show others\' personal information.',
-  guide_warn1_desc: 'Chats, names, addresses, and notifications in the video will be recorded. You cannot undo this once published.',
+  guide_warn1_desc: 'Names, addresses, and on-screen notifications caught in a photo stay in it. You cannot undo this once published.',
   guide_warn2_title: 'Do not use others\' work without permission.',
-  guide_warn2_desc: 'Game footage, video, music, and images have rights holders. Follow their terms for posting and monetization.',
-  guide_warn3_title: 'Get consent when recording others.',
-  guide_warn3_desc: 'Your microphone audio is permanently recorded.',
+  guide_warn2_desc: 'Photos, artwork, and merchandise have rights holders. Follow their terms for posting and monetization.',
+  guide_warn3_title: 'Get consent before photographing others.',
+  guide_warn3_desc: 'What you shoot stays in a form you can show to anyone.',
   guide_warn4_title: 'Do not use this to demean or mislead people.',
   guide_note1: 'The frame art is originally from CMCUBE (PC version) and drawn in 16:9. If you use it in vertical (9:16), the sides will be cropped. A warning mark is shown for frames that will be cropped.',
-  guide_note2: 'tinyCUBE only guarantees that the parts you made yourself are royalty-free. Clearing rights for imported materials is your responsibility.',
+  guide_note2: 'tinyCUBE only guarantees that the parts you made yourself are royalty-free. Clearing rights for photos you bring in is your responsibility.',
   guide_promo_badge: 'PC Version',
   guide_promo_lead: 'Direct, live-feel recording.',
   guide_promo_p1: 'Records your game screen directly. No loading required.',
@@ -625,7 +673,7 @@ Thank you.`,
   setting_video_change: 'Change Video',
   setting_video_load: 'Load Video',
   setting_shape: 'Output Shape',
-  setting_shape_wide_note: 'The loaded video is landscape. Turn your phone sideways for a better view.',
+  setting_shape_wide_note: 'The camera is landscape. Turn your phone sideways for a better view.',
   setting_shape_land: 'Landscape',
   setting_shape_port: 'Portrait',
   setting_telop: 'Caption Texts',
@@ -634,7 +682,7 @@ Thank you.`,
   frame_none: 'No frame',
   frame_crop: 'Edges cropped',
 
-  alert_load_first: 'Please load a video first!',
+  alert_load_first: 'Please turn the camera on first!',
   alert_rec_fail: 'Recording failed: ',
   alert_mic_fail: 'Failed to start recording. Check your microphone permissions.\nError: ',
   eff_toutoi: 'Precious',
@@ -652,7 +700,7 @@ Thank you.`,
   err_play_rejected: 'Playback rejected: ',
   label_none: 'None',
   msg_saved: 'Saved!',
-  msg_save_hint: "Choose 'Save Image' or 'Save Video'",
+  msg_save_hint: "Choose 'Save Image'",
   msg_saving_prep: 'Preparing to save...',
   err_save_failed: 'Could not save (',
   msg_storing: 'Storing...',
@@ -660,7 +708,7 @@ Thank you.`,
   msg_wait: 'Please wait',
   warn_land_frame1: '(Landscape frame selected.',
   warn_land_frame2: 'Please turn your phone sideways.)',
-  msg_push_record: 'Press the record button',
+  msg_push_record: 'Press 📸',
   btn_back: 'Back',
   msg_shooting: 'Shooting...',
   btn_shoot_3: 'Shoot 3',
@@ -698,7 +746,7 @@ Thank you.`,
   confirm_del_frame: 'Delete this frame?',
   title_edit_stamp: 'Edit text stamp',
   title_position: 'Position',
-  title_rec_btn_pos: 'Record button position',
+  title_rec_btn_pos: 'Shutter button position',
   btn_shoot_with_setting: 'Shoot with this setting',
   btn_reshoot: 'Reshoot',
   msg_drop_to_trash: 'Release to trash',

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tinyCUBE — スマホのプリクラ</title>
+<meta name="description" content="顔ハメと推し色の枠で撮る、スマホのプリクラ。撮ったものは端末の中だけで処理されます。広告なし・アカウント不要。">
+<link rel="icon" href="https://cubicenginestudio.vercel.app/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+<style>
+  /* ご近所物語作戦。紺の地に、パステルと生成り（アプリと同じ考え方）。
+     ⚠️ ここは**アプリではない**。案内とプライバシーポリシーの置き場だけ。 */
+  :root{
+    --ink-900:#070B18; --ink-800:#0B1021; --ink-700:#111834;
+    --pink:#FF87B8; --cyan:#8FE5E0; --violet:#C3A9F0; --lemon:#FBEBA6;
+    --cream:#FDF6EC; --dim:#A9B4D8;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100dvh; background:var(--ink-900); color:var(--cream);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+    display:flex; align-items:center; justify-content:center; padding:32px 20px;
+  }
+  .card{
+    width:100%; max-width:420px; text-align:center;
+    background:linear-gradient(160deg,
+      color-mix(in srgb,var(--pink) 22%,transparent),
+      color-mix(in srgb,var(--violet) 12%,transparent) 60%, rgba(0,0,0,.3));
+    border:1.5px solid color-mix(in srgb,var(--cream) 45%,transparent);
+    border-radius:22px; padding:34px 26px;
+    box-shadow:0 0 30px color-mix(in srgb,var(--pink) 20%,transparent);
+  }
+  h1{
+    margin:0 0 6px; font-size:2rem; letter-spacing:.04em;
+    font-family:"Hachi Maru Pop",cursive; color:var(--cream);
+  }
+  .lead{margin:0 0 22px; font-size:.92rem; line-height:1.8; color:var(--cream)}
+  .note{margin:0 0 24px; font-size:.78rem; line-height:1.9; color:var(--dim)}
+  .stores{display:flex; flex-direction:column; gap:10px; margin-bottom:24px}
+  .store{
+    display:block; padding:14px; border-radius:14px; text-decoration:none;
+    font-weight:800; font-size:.92rem; color:var(--ink-900);
+    background:var(--cream); border:1.5px solid var(--cream);
+  }
+  .store.sub{background:transparent; color:var(--cream)}
+  .links{display:flex; gap:16px; justify-content:center; flex-wrap:wrap;
+    font-size:.76rem; padding-top:20px;
+    border-top:1px solid color-mix(in srgb,var(--cream) 18%,transparent)}
+  .links a{color:var(--cyan); text-decoration:none}
+  footer{margin-top:22px; font-size:.68rem; color:var(--dim)}
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>tinyCUBE</h1>
+    <p class="lead">
+      顔ハメと推し色の枠で撮る、<br>スマホのプリクラ。
+    </p>
+
+    <!-- App Store の住所は iTunes の検索APIで確かめたもの（2026-08-31）。
+         ストア名は「tinyCUBE　プリクラカメラ」／ id6803792204。
+
+         ⚠️ **Google Play のボタンは、まだ置いていません。**
+            play.google.com/store/apps/details?id=com.cubicenginestudio.tinycube が
+            404 を返します（内部テストのままで未公開と思われます）。
+            公開されたら、下のコメントを外してください。 -->
+    <div class="stores">
+      <a class="store" href="https://apps.apple.com/jp/app/id6803792204"
+         target="_blank" rel="noopener noreferrer">App Store でひらく</a>
+      <!-- <a class="store sub" href="https://play.google.com/store/apps/details?id=com.cubicenginestudio.tinycube"
+         target="_blank" rel="noopener noreferrer">Google Play でひらく</a> -->
+    </div>
+
+    <p class="note">
+      ブラウザ版は終了しました。<br>
+      アプリでお使いください。
+    </p>
+
+    <p class="note">
+      撮ったものは、すべて端末の中だけで処理されます。<br>
+      外のサーバーへ送られることはありません。<br>
+      広告なし・アカウント登録なし。
+    </p>
+
+    <div class="links">
+      <a href="./privacy.html">プライバシーポリシー</a>
+      <a href="https://cubicenginestudio.vercel.app/" target="_blank" rel="noopener noreferrer">CUBICENGINEstudio</a>
+    </div>
+    <footer>&copy; 2026 CUBICENGINEstudio</footer>
+  </main>
+</body>
+</html>

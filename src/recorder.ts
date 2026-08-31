@@ -1,54 +1,24 @@
-// 動画を canvas に描き直してから録る。
+// カメラの絵を canvas に描き直してから、写真として撮る。
 //
 // なぜ canvas を挟むのか。理由は2つあって、どちらも外せない。
 //
-// 1. iPhone で動かないから。
-//    元は video 要素から直接 captureStream() していたが、Safari は
-//    HTMLMediaElement.captureStream を実装していない。iPhone では
-//    その1行で必ず落ちる。canvas.captureStream は Safari も持っている。
-// 2. 透かしを焼き込めないから。
-//    画面に CSS で重ねても、出来上がった動画には映らない。録るのは
-//    あくまで映像トラックなので、トラックに入る絵そのものへ描く必要がある。
+// 1. 枠・雰囲気・色味・透かしを**焼き込む**ため。
+//    画面に CSS で重ねても、出来上がった写真には映らない。
+//    絵に関わるものは全部この canvas を通す。
+// 2. 顔ハメの穴からカメラだけを見せるため。
+//    枠を先に描き、その上にカメラ映像を穴の形で切り抜いて重ねる。
 //
-// 音は「動画の音」と「マイク」を AudioContext で混ぜる。
-// video 要素を muted のままにすると動画の音がどこにも残らない。
-
-export type RecordHandle = {
-  stop: () => void;
-  /** 止めているあいだは、そこがファイルに入らない（黒い間も無音も残らない） */
-  pause: () => void;
-  resume: () => void;
-  /** 一時停止できる環境か。古い Safari は持っていないことがある */
-  canPause: boolean;
-  mimeType: string;
-};
-
-export type RecordOptions = {
-  video: HTMLVideoElement;
-  /** 焼き込む枠。上か下だけの飾りで、横幅いっぱいに置く。null なら枠なし */
-  frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
-  /** 透かしの文字。null なら焼かない（有料版） */
-  watermark: string | null;
-  /** 書き出しの形。既定は縦 */
-  shape?: OutShape;
-  /** 画面に出している canvas。渡すとそれをそのまま録る */
-  canvas?: HTMLCanvasElement;
-  /** 動画そのものの音の扱い。
-   *  'mix'    … 動画の音をそのまま録音に混ぜ、耳にも出す。イヤホン向け（高音質）
-   *  'mic'    … 混ぜない。スピーカーから出た音をマイクが拾う。イヤホン無し向け
-   *  'off'    … 動画の音を使わない。声とエフェクトだけ
-   *
-   *  スピーカーで 'mix' にすると、同じ音が「直接」と「マイク越し」で二重に入る
-   *  （2026-08-11、伊波さんの「二重奏」）。イヤホンなら二重にならないので、
-   *  どちらが良いかは環境次第。だから選んでもらう */
-  srcAudio?: 'mix' | 'mic' | 'off';
-  /** 書き出しが終わったときに呼ばれる */
-  onFinish: (blob: Blob, ext: string) => void;
-  onError: (e: Error) => void;
-};
+// ■ 2026-08-31、録画をやめた
+//
+// 伊波さん「思い切って動画やめようかな」。
+// **startRecording・MediaRecorder・マイク・音の合流・一時停止・
+// コーデック選びを全部消した。** 残っているのは画面に出す係（startStage）と、
+// そこが使う描画の道具だけ。音はもうどこでも扱っていない。
+//
+// 焼いた絵をどう1枚にするかは App.tsx（3枚連写）と sheet.ts（プリシート）にある。
 
 import type { FrameAnchor, OutShape, FaceHole } from './frames';
-import { attachAudio, detachAudio, drawEffects, drawTone, audioContext } from './effects';
+import { drawEffects, drawTone } from './effects';
 
 /** 書き出しの形。読み込んだ動画が横長なら横で出す。
     16:9 の動画を無理に 9:16 へ詰めると、画面の6割が黒帯になる */
@@ -127,6 +97,9 @@ export type StageOptions = {
     full?: boolean;
     frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
+    /** 鍵のかかった枠を試着中か。true なら斜めの鍵シールを焼く。
+     *  画面にも同じものが出る（見えているものと出てくるものを一致させるため） */
+    trial?: boolean;
   };
 };
 
@@ -138,8 +111,9 @@ export type StageOptions = {
  *  なぜ要るか。カクつきは伊波さんの端末でしか出ない（2026-08-27
  *  「前から重い」「外で撮影使用中に感じる」）。開発機の Chrome では
  *  75fps 出てしまい、再現できないまま推測で触ることになっていた。
- *  アプリを出し直さなくても、ウェブ版（tinycube.vercel.app）を端末で
- *  開けば同じ絵を同じコードで描くので、そこで測れる。
+ *  アプリを出し直さなくても、同じ絵を同じコードで描くので、
+ *  手元のブラウザ（npm run dev）でも測れる。
+ *  ⚠️ ウェブ版は 2026-08-31 にやめた。実機で見たいときはアプリを入れ直すこと。
  *
  *  ?fps=1 … 見るだけ。描画の邪魔をしないが、**描画 ms は当てにならない**
  *  ?fps=2 … 厳密に測る。1コマごとに GPU の描き終わりを待つ
@@ -243,7 +217,7 @@ export function startStage(opts: StageOptions): () => void {
     beat++;
     const t0 = meter ? performance.now() : 0;
     try {
-    const { video, shape, frame, watermark, mirror, zoom, idle, full } = read();
+    const { video, shape, frame, watermark, trial, mirror, zoom, idle, full } = read();
     // 画面が別のもので覆われているあいだは描かない。**ループは回したまま**に
     // して、戻ってきたら次のコマからすぐ絵が出るようにする。
     // 抜け方は下の requestAnimationFrame(draw) を必ず通ること
@@ -421,6 +395,8 @@ export function startStage(opts: StageOptions): () => void {
     if (watermark) {
       drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
     }
+    // おためしの印は透かしより後（いちばん上）。枠の飾りに隠れないように
+    if (trial) drawTrial(g, OUT_W, OUT_H);
     }
     if (meter) {
       // 1画素だけ読み返して、GPU が描き終わるのを待つ。これをしないと
@@ -451,186 +427,6 @@ export function startStage(opts: StageOptions): () => void {
   };
 }
 
-export async function startRecording(opts: RecordOptions): Promise<RecordHandle> {
-  const { video, watermark, frame } = opts;
-  const { w: OUT_W, h: OUT_H } = SIZES[opts.shape ?? 'portrait'];
-
-  // 画面に出しているものをそのまま録る。別の canvas を作らない
-  const canvas = opts.canvas ?? document.createElement('canvas');
-  const g = canvas.getContext('2d');
-  if (!g) throw new Error('canvas を用意できませんでした');
-  if (!opts.canvas) {
-    canvas.width = OUT_W;
-    canvas.height = OUT_H;
-  }
-
-  let running = true;
-  const draw = () => {
-    if (!running || opts.canvas) return;   // 画面側が回しているなら任せる
-    if (frame?.bgImg) {
-      drawFrame(g, frame.bgImg, frame.anchor, OUT_W, OUT_H, frame.slice);
-    } else {
-      g.fillStyle = '#000';
-      g.fillRect(0, 0, OUT_W, OUT_H);
-    }
-
-    const vw = video.videoWidth, vh = video.videoHeight;
-    const isFaceHole = frame && ((frame.faceHoles && frame.faceHoles.length > 0) || !!frame.faceHole);
-    if (vw && vh && !isFaceHole) {
-      if (frame?.anchor === 'split4') {
-        const halfW = OUT_W / 2;
-        const halfH = OUT_H / 2;
-        const scale = Math.min(halfW / vw, halfH / vh);
-        const w = vw * scale, h = vh * scale;
-        const dx = (halfW - w) / 2;
-        const dy = (halfH - h) / 2;
-        g.drawImage(video, dx, dy, w, h);
-        g.drawImage(video, halfW + dx, dy, w, h);
-        g.drawImage(video, dx, halfH + dy, w, h);
-        g.drawImage(video, halfW + dx, halfH + dy, w, h);
-      } else {
-        // 縦画面に収める（切らずに全部見せる）
-        const scale = Math.min(OUT_W / vw, OUT_H / vh);
-        const w = vw * scale, h = vh * scale;
-        g.drawImage(video, (OUT_W - w) / 2, (OUT_H - h) / 2, w, h);
-      }
-    }
-
-    // ⚠️ **色味は枠より前に置くこと**（2026-08-23）。枠のあとに重ねると
-    //    フレームの絵まで染まって、118枚ぶんの色が全部変わってしまう。
-    //    色をかけたいのは映像だけ
-    drawTone(g, OUT_W, OUT_H);
-    // 一発エフェクトは枠より前、透かしより後ろ。
-    // 枠の下に潜ると、下向きの飾りに隠れて何も見えないことがある
-    if (frame) drawFrame(g, frame.img, frame.anchor, OUT_W, OUT_H, frame.slice);
-    drawEffects(g, OUT_W, OUT_H);
-    // 下に飾りのある枠のときは、透かしを右上へ逃がす。
-    // 右下のままだと絵の上に重なって、どちらも読みにくくなる
-    if (watermark) drawWatermark(g, watermark, OUT_W, OUT_H, frame?.anchor === 'bottom' ? 'top' : 'bottom');
-    requestAnimationFrame(draw);
-  };
-  requestAnimationFrame(draw);
-
-  // 音を混ぜる。マイクが拒否されても、動画の音だけで録れるようにする。
-  //
-  // AudioContext と、動画に繋ぐ入口（MediaElementSource）は使い回す。
-  // createMediaElementSource は 1つの video 要素につき1回しか呼べず、
-  // 録画のたびに作ると2回目で必ず落ちる（2026-08-10 に実際そうなっていた）。
-  const actx = audioContext() ?? getContext();
-  // 眠っていたら起こす。ただし待たない。
-  // resume() は「利用者が操作した」と見なされないと返ってこないことがあり、
-  // await すると録画そのものが始まらなくなる（2026-08-10 に実際そうなった）。
-  // 本物の指のタップなら即座に起きるし、起きなくても録画は進む
-  if (actx.state === 'suspended') actx.resume().catch(() => { /* 起きなくても続ける */ });
-  const dest = actx.createMediaStreamDestination();
-
-  try {
-    const mic = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false },
-      video: false,
-    });
-    const micGain = actx.createGain();
-    micGain.gain.value = 1.0;
-    actx.createMediaStreamSource(mic).connect(micGain).connect(dest);
-    micStreams.push(mic);
-  } catch {
-    // マイクを断られただけ。動画の音だけで続ける
-  }
-
-  // 動画の音。video 要素は muted のままだと無音なので解除する。
-  // createMediaElementSource を通すと既定の出力から外れるため、
-  // 本人にも聞こえるように actx.destination へも繋ぎ直す
-  video.muted = false;
-  const src = getElementSource(actx, video);
-  const mode = opts.srcAudio ?? 'mic';
-  const videoGain = actx.createGain();
-  videoGain.gain.value = mode === 'off' ? 0 : 0.8;
-  src.connect(videoGain);
-  // 耳へは 'off' 以外なら出す。そうしないと本人が動画を聞けない
-  if (mode !== 'off') videoGain.connect(actx.destination);
-  // 録音へ直接混ぜるのは 'mix' のときだけ。'mic' はマイク越しの一本にする
-  if (mode === 'mix') videoGain.connect(dest);
-
-  // 効果音はここへ流し込む。自前で AudioContext を作ると動画に入らない
-  attachAudio(actx, dest);
-
-  const stream = new MediaStream([
-    ...canvas.captureStream(30).getVideoTracks(),
-    ...dest.stream.getAudioTracks(),
-  ]);
-
-  // 使える形式を上から順に試す。iPhone は mp4 しか録れないので、
-  // webm を決め打ちにしてはいけない
-  const type = pickMimeType();
-  const recorder = type ? new MediaRecorder(stream, { mimeType: type }) : new MediaRecorder(stream);
-
-  const chunks: Blob[] = [];
-  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-  recorder.onerror = () => opts.onError(new Error('録画中に問題が起きました'));
-  recorder.onstop = () => {
-    running = false;
-    // 実際に録れた形式を録画器に聞き直す。指定した形式が通るとは限らない
-    const actual = recorder.mimeType || type || 'video/webm';
-    const ext = actual.includes('mp4') ? 'mp4' : 'webm';
-    opts.onFinish(new Blob(chunks, { type: actual }), ext);
-    detachAudio();
-    stream.getTracks().forEach(t => t.stop());
-    micStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
-    micStreams.length = 0;
-    // この録画のために作った枝だけ外す。AudioContext は閉じない
-    // （閉じると次の録画で作り直すことになり、動画への入口が二度と繋げない）
-    videoGain.disconnect();
-    src.disconnect(videoGain);
-  };
-
-  recorder.start();
-
-  // 一時停止。MediaRecorder が止まっているあいだのフレームと音は
-  // まったく記録されないので、その部分はファイルに存在しない。
-  // 古い Safari は pause を持っていないことがあるので、無ければ使えないと伝える
-  const canPause = typeof recorder.pause === 'function' && typeof recorder.resume === 'function';
-  return {
-    stop: () => recorder.stop(),
-    pause: () => { if (canPause && recorder.state === 'recording') recorder.pause(); },
-    resume: () => { if (canPause && recorder.state === 'paused') recorder.resume(); },
-    canPause,
-    mimeType: recorder.mimeType,
-  };
-}
-
-const micStreams: MediaStream[] = [];
-
-// AudioContext はアプリの間ずっと使い回す。録画のたびに作って閉じると、
-// 動画への入口（MediaElementSource）を作り直せなくなる
-let sharedCtx: AudioContext | null = null;
-function getContext(): AudioContext {
-  if (!sharedCtx || sharedCtx.state === 'closed') sharedCtx = new AudioContext();
-  return sharedCtx;
-}
-
-// 1つの video 要素につき1つだけ作って覚えておく。
-// 2回目に createMediaElementSource を呼ぶと必ず例外になる
-const elementSources = new WeakMap<HTMLMediaElement, MediaElementAudioSourceNode>();
-function getElementSource(ctx: AudioContext, el: HTMLMediaElement): MediaElementAudioSourceNode {
-  const found = elementSources.get(el);
-  if (found) return found;
-  const made = ctx.createMediaElementSource(el);
-  elementSources.set(el, made);
-  return made;
-}
-
-function pickMimeType(): string | null {
-  const candidates = [
-    'video/mp4;codecs=avc1,mp4a.40.2',   // iPhone / Safari はこれしか録れない
-    'video/webm;codecs=vp9,opus',
-    'video/webm;codecs=vp8,opus',
-    'video/webm',
-  ];
-  for (const c of candidates) {
-    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(c)) return c;
-  }
-  return null;                            // ブラウザの既定に任せる
-}
 
 /** 枠の描画（9スライス対応） */
 function drawFrame(
@@ -690,7 +486,70 @@ function drawFrame(
 
 /** 無料版の印。右下に置く。動画そのものに焼き込まれる。
     有料版は watermark に null を渡すだけで消える */
-function drawWatermark(
+/** 角の丸い四角。roundRect は古い WebView に無いので自分で引く。
+ *  プリシート（sheet.ts）からも使う */
+export function 丸四角(
+  g: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number,
+) {
+  const rr = Math.min(r, w / 2, h / 2);
+  g.beginPath();
+  g.moveTo(x + rr, y);
+  g.arcTo(x + w, y, x + w, y + h, rr);
+  g.arcTo(x + w, y + h, x, y + h, rr);
+  g.arcTo(x, y + h, x, y, rr);
+  g.arcTo(x, y, x + w, y, rr);
+  g.closePath();
+}
+
+/** おためしの鍵シール。**鍵のかかった枠を試着したまま撮ると焼かれる。**
+ *
+ *  2026-08-31、伊波さん「試着＋撮れる。でも帯が入る」
+ *  「鍵と文字が可愛く、斜めに」。
+ *
+ *  プリクラの落書きは斜めに入れるもの（App.tsx の photoAngle と同じ考え方）。
+ *  文字は平成ギャルのまるもじ（Hachi Maru Pop）。index.html で読み込んでいる。
+ *
+ *  ⚠️ **canvas に直接描くこと。** CSS で画面に重ねると、見えてはいても
+ *     写真にも動画にも入らない（透かしと同じ理由）。
+ *  ⚠️ **顔を避けて、真ん中より少し下に置く。** 顔は上寄りに写るので、
+ *     ど真ん中に置くと顔ハメの穴を塞いでしまう。 */
+let まるもじを取りに行った = false;
+function drawTrial(g: CanvasRenderingContext2D, OUT_W: number, OUT_H: number) {
+  const text = '🔒 tinyCUBE';
+  // 初回だけ、まるもじを取りに行く。届くまではふつうの字で出る（待たない）
+  if (!まるもじを取りに行った) {
+    まるもじを取りに行った = true;
+    try { void document.fonts?.load('64px "Hachi Maru Pop"', text); } catch { /* 無くても出る */ }
+  }
+  const S = Math.min(OUT_W, OUT_H);
+  const size = Math.round(S * 0.072);
+  g.save();
+  g.translate(OUT_W / 2, OUT_H * 0.62);
+  g.rotate(-12 * Math.PI / 180);          // 斜め。プリクラの落書きと同じ角度感
+  g.font = `${size}px "Hachi Maru Pop", cursive`;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  const w = g.measureText(text).width + size * 1.4;
+  const h = size * 1.7;
+  // 白いテープに、ピンクのふちどり。角を丸くしてシールに見せる
+  g.shadowColor = 'rgba(0,0,0,0.3)';
+  g.shadowBlur = size * 0.3;
+  g.shadowOffsetY = size * 0.08;
+  丸四角(g, -w / 2, -h / 2, w, h, h * 0.42);
+  g.fillStyle = 'rgba(255,255,255,0.92)';
+  g.fill();
+  g.shadowColor = 'transparent';
+  g.lineWidth = Math.max(2, size * 0.07);
+  g.strokeStyle = '#ff4da6';
+  g.stroke();
+  g.fillStyle = '#ff4da6';
+  g.fillText(text, 0, size * 0.04);
+  g.restore();
+}
+
+/** 透かし。プリシート（sheet.ts）からも使う */
+export function drawWatermark(
   g: CanvasRenderingContext2D, text: string,
   OUT_W: number, OUT_H: number, side: 'top' | 'bottom' = 'bottom',
 ) {

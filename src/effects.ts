@@ -1,109 +1,22 @@
-// 一発エフェクトの実体。
+// 撮っているあいだ、ずっと画面に乗っている飾り。
 //
 // ここが canvas に直接描く。CSS で画面に重ねると、見えてはいても
-// 出来上がった動画には入らない（録るのは canvas に描いた絵なので）。
+// 出来上がった写真には入らない（撮るのは canvas に描いた絵なので）。
 // 透かしのときと同じ理由で、絵に関わるものは全部ここを通す。
 //
-// ボタン側（App.tsx）は fireEffect('flash') を呼ぶだけでよい。
-// 録画していないときに押しても、プレビューには出る（練習できるように）。
+// ■ 2026-08-31、動画をやめたときに半分になった
 //
-// 音は recorder が持っている AudioContext を借りる。録画に混ぜるためで、
-// 自前で AudioContext を作ると、鳴っても動画に入らない。
-
-// 音は3つだけ。拍手・ドラム・電子音
-// （2026-08-13、伊波さん「音数を、１．拍手２．ドラム３電子音 にしぼり操作しやすくする」）。
-// 前は効果音10個＋自分で入れる枠2個の12個あって、対象（40〜50代と子ども）には多すぎた。
+// 伊波さん「思い切って動画やめようかな」。
+// **一発もの（フラッシュ・流れるテロップ）と、音3つ（拍手・ドラム・電子音）は
+// 全部消した。** どれも録画中に押すためのもので、写真では押す場面が無かった
+// （画面にも `captureKind !== 'photo'` で出していなかった）。
+// 音を扱わなくなったので、AudioContext もここには無い。
 //
-// 音ファイルの読み込みも同じ指示で廃止。sounds.ts ごと消してある
-// （「音ぼファイル挿入廃止」）。
-export type EffectId =
-  | 'flash'         // 白く弾ける
-  | 'mirrorball'    // 光の粒が回りながら流れる（音は鳴らさない）
-  | 'clap'          // 効果音（拍手）
-  | 'drum'          // 効果音（ドラム）
-  | 'blip'          // 効果音（電子音）
-  | 'telop';        // 文字を出す（中身は利用者が決める）
+// 残したのは、撮る前に選んでおく2つだけ：
+//   雰囲気（ambient） … エモい／ミラーボール。撮っているあいだずっと出る
+//   色味（tone）      … あたたかい／つめたい／あざやか
+// どちらも写真にそのまま乗る。
 
-type Live = {
-  id: EffectId; start: number; dur: number; text?: string; dark?: boolean;
-  /** 出る場所。画面の幅・高さに対する割合（0.5, 0.5 が真ん中） */
-  x?: number; y?: number;
-};
-
-const live: Live[] = [];
-
-/** 効果の長さ（ミリ秒）。音だけのものは絵を持たないので 0 */
-const DUR: Record<EffectId, number> = {
-  flash: 260,
-  // ミラーボールはひと回りする長さが要る。420ms だと光が流れきる前に消えて、
-  // 何が起きたのか分からない（2026-08-13、A案「光の粒が回りながら流れる」）
-  mirrorball: 2200,
-  clap: 0,
-  drum: 0,
-  blip: 0,
-  telop: 1500,
-};
-
-// 音の出し先。
-//
-// 以前は録画中しか鳴らなかった（recorder が渡してくるまで null だったため）。
-// ボタンを押しても無反応で、押した手応えが無い（2026-08-10、伊波さんの指摘）。
-// いまは自前の AudioContext を持ち、録画が始まったらそこへ枝を1本足す。
-let ctx: AudioContext | null = null;
-let recDest: AudioNode | null = null;
-
-function getCtx(): AudioContext | null {
-  try {
-    if (!ctx || ctx.state === 'closed') ctx = new AudioContext();
-    // 眠っていたら起こす。待たない（利用者が触っていれば起きる）
-    if (ctx.state === 'suspended') ctx.resume().catch(() => { /* 起きなくても続ける */ });
-    return ctx;
-  } catch {
-    return null;   // 音が出せない環境でも、絵は出る
-  }
-}
-
-/** 録画側の合流点を借りる。ここへも流したものが動画に入る */
-export function attachAudio(_ctx: AudioContext, dest: AudioNode) {
-  recDest = dest;
-}
-export function detachAudio() {
-  recDest = null;
-}
-
-/** 録画が使う AudioContext。効果音と同じものを使う（別々だと動画に入らない） */
-export function audioContext(): AudioContext | null {
-  return getCtx();
-}
-
-// 音ファイルの読み込みは廃止した（2026-08-13、伊波さん「音ぼファイル挿入廃止」）。
-// sounds.ts も消してある。鳴るのは、ここで作る3つの音だけ
-
-export function fireEffect(id: EffectId, text?: string, dark?: boolean, x?: number, y?: number) {
-  const dur = DUR[id] ?? 300;
-  if (dur > 0) {
-    // 同じものを連打したときは、前のを消してから出す。
-    // 重ねると明滅が濁って、押した回数が分からなくなる
-    const i = live.findIndex(e => e.id === id);
-    if (i >= 0) live.splice(i, 1);
-    live.push({ id, start: performance.now(), dur, text, dark, x, y });
-  }
-  playSoundFor(id);
-}
-
-/** 文字を出す。中身は利用者が設定で書き換えたもの。
-    dark を渡すと黒文字・白フチになる（明るい映像の上で読みやすい） */
-export function fireTelop(text: string, dark = false, random = false) {
-  if (!text.trim()) return;                     // 空のまま押しても何も起きない
-  // ばらけさせるときも、端に寄せすぎると切れる。真ん中寄りの範囲に収める
-  const x = random ? 0.3 + Math.random() * 0.4 : 0.5;
-  const y = random ? 0.25 + Math.random() * 0.5 : 0.5;
-  fireEffect('telop', text, dark, x, y);
-}
-
-// ずっと出しておく演出。押した瞬間だけの一発ものとは別枠。
-// CMCUBE の「エモーショナル」（光の粒がふわっと漂う）を canvas で作り直したもの。
-// 中央に被せない縛りは CMCUBE の枠の話なので、ここでは画面全体に散らす
 type Mote = {
   x: number; y: number; r: number; vy: number; sway: number; life: number; age: number;
   /** 光の色。淡いピンクからオレンジのあいだで1つずつ変える */
@@ -306,48 +219,17 @@ function grainPattern(g: CanvasRenderingContext2D): CanvasPattern | null {
   return grainTile;
 }
 
-/** 録画をやめたときに呼ぶ。出しっぱなしの効果を消す */
-export function clearEffects() {
-  live.length = 0;
-}
-
-/** recorder の描画ループから毎フレーム呼ばれる */
+/** recorder の描画ループから毎フレーム呼ばれる。
+ *  いまは雰囲気（ambient）だけ。一発ものは 2026-08-31 に無くなった */
 export function drawEffects(g: CanvasRenderingContext2D, W: number, H: number) {
   drawAmbient(g, W, H);
-  const now = performance.now();
-  for (let i = live.length - 1; i >= 0; i--) {
-    const e = live[i];
-    const t = (now - e.start) / e.dur;          // 0 → 1
-    if (t >= 1) { live.splice(i, 1); continue; }
-    switch (e.id) {
-      case 'flash':  drawFlash(g, W, H, t); break;
-      case 'mirrorball': drawMirrorball(g, W, H, t); break;
-      case 'telop': drawTelop(g, W, H, t, e.text ?? '', e.dark ?? false, e.x ?? 0.5, e.y ?? 0.5); break;
-      default: break;
-    }
-  }
 }
 
-/** 白く弾けて、すっと引く */
-function drawFlash(g: CanvasRenderingContext2D, W: number, H: number, t: number) {
-  // 出るのは速く、消えるのはゆっくり。同じ速さだと安っぽく見える
-  const a = t < 0.15 ? t / 0.15 : 1 - (t - 0.15) / 0.85;
-  g.save();
-  g.globalAlpha = Math.max(0, a) * 0.85;
-  g.fillStyle = '#fff';
-  g.fillRect(0, 0, W, H);
-  g.restore();
-}
-
-// ミラーボールの光の粒。
-//
-// 90年代ディスコ（2026-08-13、伊波さんの指示）。ヒマワリさんとの決定で A案
-// 「光の粒が回りながら流れる」を採った。中央に球は描かない。
+// ミラーボールは「光の粒が回りながら流れる」形。中央に球は描かない。
 // 顔ハメ枠のあるアプリなので、真ん中に物を置くと顔と重なるため。
 //
 // 粒の位置は毎フレーム計算で出す。乱数で散らすと、フレームごとに別の場所へ
-// 飛んで「回っている」ように見えない（フラッシュやグリッチのような一瞬の
-// 演出なら乱数でよいが、2.2秒かけて回すものは位置が続かないと成立しない）。
+// 飛んで「回っている」ように見えない（2.2秒かけて回すものは、位置が続かないと成立しない）。
 const BALL_SPOTS = 28;
 
 /** 粒ひとつぶんの、いまの居場所と明るさ。
@@ -517,211 +399,3 @@ function drawMirrorball(g: CanvasRenderingContext2D, W: number, H: number, t: nu
 
 /** 文字。ぽんと出て、少し待って、消える。
     長い言葉を入れられても画面からはみ出さないよう、文字数で大きさを落とす */
-function drawTelop(
-  g: CanvasRenderingContext2D, W: number, H: number, t: number,
-  text: string, dark: boolean, rx: number, ry: number,
-) {
-  const base = Math.min(W, H) * 0.16;
-  const size = Math.round(Math.min(base, (W * 0.86) / Math.max(1, text.length)));
-  // 0→0.15 で飛び出し、0.75→1 で消える
-  const pop = t < 0.15 ? t / 0.15 : 1;
-  const fade = t > 0.75 ? 1 - (t - 0.75) / 0.25 : 1;
-  const scale = 0.6 + pop * 0.4 + (pop === 1 ? 0 : 0);
-
-  g.save();
-  g.globalAlpha = fade;
-  g.translate(W * rx, H * ry);
-  g.scale(scale, scale);
-  g.font = `900 ${size}px sans-serif`;
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
-  // フチを厚めに。どんな映像の上でも読めるようにする。
-  // 白文字は暗い映像に、黒文字は明るい映像に強い。中と外を入れ替えるだけ
-  g.lineWidth = size * 0.16;
-  g.strokeStyle = dark ? '#fff' : '#000';
-  g.lineJoin = 'round';
-  g.strokeText(text, 0, 0);
-  g.fillStyle = dark ? '#111' : '#fff';
-  g.fillText(text, 0, 0);
-  g.restore();
-}
-
-/** ざらざらした音のもと。拍手やドラムのように、音程の無い音に使う */
-function noiseSource(ctx: AudioContext, seconds: number): AudioBufferSourceNode {
-  const len = Math.floor(ctx.sampleRate * seconds);
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  return src;
-}
-
-// ---- 80年代の音づくり（2026-08-11、伊波さんの指示） ----------------------
-//
-// 波形をそのまま鳴らすと、どうしてもピコピコした電子音になる。
-// 当時の機材に近づける要素は3つあって、どれも安く作れる。
-//
-//   1. 少しずらした同じ音を2つ重ねる（アナログの発振器は揃わなかった）
-//   2. 上の周波数を落とす（テープとアナログ回路の丸み）
-//   3. 短いディレイを薄く掛ける（当時のレコードはほぼ全部これが乗っている）
-//
-// 3 は音ごとに作らず、鳴らすたびに1本の出口へまとめて通す。
-
-/** その一発ぶんの出口。耳と録画の両方へ同じものを流す
- *  （別々の AudioContext にすると、鳴っても動画に入らない） */
-function bus80s(ctx: AudioContext): GainNode {
-  const input = ctx.createGain();
-
-  // アナログの丸み。上のほうを少し削る
-  const tone = ctx.createBiquadFilter();
-  tone.type = 'lowpass';
-  tone.frequency.value = 7600;
-
-  // 薄いディレイ。返りは高音から先に減らす（テープのエコーと同じ癖）
-  const delay = ctx.createDelay(1.0);
-  delay.delayTime.value = 0.16;
-  const damp = ctx.createBiquadFilter();
-  damp.type = 'lowpass';
-  damp.frequency.value = 3000;
-  const feedback = ctx.createGain();
-  feedback.gain.value = 0.24;
-  const wet = ctx.createGain();
-  wet.gain.value = 0.28;
-
-  input.connect(tone);
-  tone.connect(delay);
-  delay.connect(damp);
-  damp.connect(feedback);
-  feedback.connect(delay);
-  delay.connect(wet);
-
-  const outs: AudioNode[] = [ctx.destination];
-  if (recDest) outs.push(recDest);
-  for (const o of outs) { tone.connect(o); wet.connect(o); }
-  return input;
-}
-
-type Env = {
-  /** 立ち上がり。0 に近いほど硬い音になる */
-  attack?: number;
-  /** そのまま伸ばす時間 */
-  hold?: number;
-  /** 消えるまでの時間 */
-  release: number;
-  level: number;
-};
-
-/** 音程のある一声。detune を渡すと、同じ音を少しずらして重ねられる */
-function voice(
-  ctx: AudioContext, out: AudioNode, type: OscillatorType,
-  hz: number, now: number, env: Env,
-  opts: { detune?: number; to?: number; glide?: number; delay?: number } = {},
-) {
-  const t0 = now + (opts.delay ?? 0);
-  const a = env.attack ?? 0.004;
-  const hold = env.hold ?? 0;
-  const end = t0 + a + hold + env.release;
-
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.type = type;
-  o.detune.value = opts.detune ?? 0;
-  o.frequency.setValueAtTime(hz, t0);
-  if (opts.to) o.frequency.exponentialRampToValueAtTime(opts.to, t0 + (opts.glide ?? env.release));
-
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(env.level, t0 + a);
-  g.gain.setValueAtTime(env.level, t0 + a + hold);
-  g.gain.exponentialRampToValueAtTime(0.0001, end);
-
-  o.connect(g);
-  g.connect(out);
-  o.start(t0);
-  o.stop(end + 0.05);
-}
-
-/** 音程を持たない音。削り方で叩き物にも金物にもなる */
-function hit(
-  ctx: AudioContext, out: AudioNode, now: number, seconds: number,
-  filter: BiquadFilterType, freq: number, q: number, env: Env,
-  opts: { to?: number; delay?: number } = {},
-) {
-  const t0 = now + (opts.delay ?? 0);
-  const a = env.attack ?? 0.002;
-  const end = t0 + a + (env.hold ?? 0) + env.release;
-
-  const src = noiseSource(ctx, seconds);
-  const f = ctx.createBiquadFilter();
-  const g = ctx.createGain();
-  f.type = filter;
-  f.frequency.setValueAtTime(freq, t0);
-  if (opts.to) f.frequency.exponentialRampToValueAtTime(opts.to, end);
-  f.Q.value = q;
-
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(env.level, t0 + a);
-  g.gain.setValueAtTime(env.level, t0 + a + (env.hold ?? 0));
-  g.gain.exponentialRampToValueAtTime(0.0001, end);
-
-  src.connect(f); f.connect(g); g.connect(out);
-  src.start(t0); src.stop(end + 0.05);
-}
-
-/** 効果音。ファイルを持たずにその場で作る（読み込み待ちが無く、容量も増えない） */
-function playSoundFor(id: EffectId) {
-  // 文字を出すボタンは鳴らさない。押すたびに動画へ音が乗ってしまい、
-  // 効果音を自分で選ぶ意味が薄れる（2026-08-10、伊波さんの指示）。
-  // ミラーボールも鳴らさない。光の演出は音のボタンと役割を分ける
-  // （2026-08-13、伊波さん・ヒマワリさんの決定）
-  if (id === 'telop' || id === 'mirrorball') return;
-  const ctx = getCtx();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-  // 耳にも届かせ、録画中なら動画にも入れる
-  const out = bus80s(ctx);
-
-  switch (id) {
-    case 'clap':
-      // 拍手。当時のドラムマシンと同じで、細かく3回叩いてから余韻を残す
-      for (let i = 0; i < 3; i++) {
-        hit(ctx, out, now, 0.06, 'bandpass', 1050, 1.1,
-          { release: 0.035, level: 0.34 - i * 0.06 }, { delay: i * 0.012 });
-      }
-      hit(ctx, out, now, 0.40, 'bandpass', 1150, 0.9,
-        { attack: 0.006, release: 0.26, level: 0.22 }, { delay: 0.036 });
-      break;
-
-    case 'drum':
-      // ドラムロール。だんだん強く、最後に一発
-      for (let i = 0; i < 14; i++) {
-        hit(ctx, out, now, 0.05, 'bandpass', 220, 1.4,
-          { release: 0.045, level: 0.10 + i * 0.016 }, { delay: i * 0.055 });
-      }
-      voice(ctx, out, 'sine', 190, now, { release: 0.34, level: 0.5 },
-        { to: 55, glide: 0.24, delay: 0.80 });
-      break;
-
-    case 'blip':
-      // ぴこ。8ビットの残り香。2音を素早く上げる
-      voice(ctx, out, 'square', 1046, now, { attack: 0.001, release: 0.05, level: 0.16 });
-      voice(ctx, out, 'square', 1568, now, { attack: 0.001, release: 0.07, level: 0.14 },
-        { delay: 0.055 });
-      break;
-
-    case 'flash':
-      // 光と一緒に鳴る音。下から一気に持ち上げて弾けさせる
-      hit(ctx, out, now, 0.24, 'highpass', 600, 0.8,
-        { attack: 0.10, release: 0.10, level: 0.20 }, { to: 8000 });
-      voice(ctx, out, 'triangle', 1568, now, { release: 0.45, level: 0.18 }, { delay: 0.10 });
-      break;
-
-    // ミラーボールは鳴らさない。光の演出のボタンと、音のボタン（拍手・ドラム・
-    // 電子音）で役割をはっきり分ける（2026-08-13、伊波さん・ヒマワリさんの決定）。
-    // 早期に return しているので、ここに case は無い
-
-    default:
-      break;
-  }
-}

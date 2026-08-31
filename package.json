@@ -5,12 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node tools/stamp-sw.mjs",
+    "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "frames": "node tools/frames.mjs",
-    "icons": "node tools/icons.mjs",
-    "keys": "node tools/keys.mjs"
+    "icons": "node tools/icons.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

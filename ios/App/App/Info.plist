@@ -28,8 +28,6 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>写真と動画の撮影、および顔フレームをその場で重ねるために使います。撮ったものが外部へ送られることはありません。</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>動画を録るときの音声を収録するために使います。録音したものが外部へ送られることはありません。</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>できあがった写真と動画を、あなたの写真アプリに保存するために使います。既にある写真を読み取ることはありません。</string>
 	<key>UIApplicationSceneManifest</key>

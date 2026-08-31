@@ -1,35 +1,23 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "vite",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+
+  "//": "2026-08-31。ここはもうアプリを配る場所ではない（伊波さん「WEB版やめる」）。",
+  "//2": "案内1枚とプライバシーポリシーだけを、そのまま置く静的サイト。",
+  "//3": "⚠️ buildCommand と installCommand は空文字にすること。null だと",
+  "//4": "   『未指定』と読まれて、ダッシュボード側の Vite の設定が生き残り、",
+  "//5": "   dist を作ろうとして web/ と食い違う。空文字は『やらない』の意味。",
+
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": "web",
+  "framework": null,
+
   "headers": [
     {
-      "source": "/frames/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    },
-    {
-      "source": "/(.*\\.html)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, s-maxage=0, no-cache, no-store, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/",
+      "source": "/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, s-maxage=0, no-cache, no-store, must-revalidate" }
       ]
     }
-  ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
   ]
 }

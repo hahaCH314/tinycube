@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect } from 'react'
 import '../docs/tinycube-skin-shibuya.css'
 import './setup.css'
-import { startRecording, startStage, type RecordHandle, type OutShape } from './recorder'
+import { startStage, type OutShape } from './recorder'
 import { FRAMES, loadFrame, fitsShape, inDisplayOrder, seasonFrames, seasonNow, SEASONS, type Frame, type FrameAnchor, type FaceHole } from './frames'
 import * as album from './album'
-import { ALBUM_LIMIT, type AlbumItem } from './album'
-import { fireEffect, fireTelop, setAmbient, setTone, type EffectId, type ToneId } from './effects'
+import { ALBUM_LIMIT, PAGE_SIZE, ALBUM_PAGES, type AlbumItem } from './album'
+import { LAYOUTS, layoutsFor, buildSheet, MIN_PHOTOS, MAX_PHOTOS, type Layout } from './sheet'
+import { setAmbient, setTone, type ToneId } from './effects'
 import { t, getLang, setLang } from './i18n'
 // savedKey / relock は 2026-08-15 に全部無料にしたとき使わなくなった。
 // unlock.ts 側には残してある（気が変わったときに戻せるように）
-import { isUnlocked, tryUnlock, startBilling, onUnlockChange } from './unlock'
-import { isNativeApp, buy as buyInApp, restore as restoreInApp } from './billing'
+import { isUnlocked, startBilling, onUnlockChange } from './unlock'
+import { buy as buyInApp, restore as restoreInApp } from './billing'
 import { saveMedia, takeLastMediaError } from './save'
 import { FaceIcon, SceneIcon } from './CamIcon'
 import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRecord } from './idb'
@@ -43,70 +44,21 @@ import { saveCustomFrame, getCustomFrames, deleteCustomFrame, type CustomFrameRe
 // 英語で開いた人にも同じお願いが伝わらないと意味がない
 // （2026-08-13、伊波さん「ここは大事なページだからちゃんと訳してね」）
 
-// ---- シティポップの絵柄（2026-08-11、伊波さんの指示） -------------------
-//
-// 左の柱。上2つの「1」「2」は、自分の音を入れる枠
-// （2026-08-11、伊波さん「音１，２がユーザーが追加できる機能」）。
-// 番号は「あなたが決める場所」の印で、覚えやすさのための番号ではない。
-// 3つめからは80年代の小物を、音の意味に合わせて並べる。
-// 絵だけにはしない。何のボタンか分からなくなるので、小さな言葉を必ず下に置く
-// 並び順を変えても絵柄がずれないよう、番号ではなくボタンの名前で引く
-const RAIL_ICONS: Record<string, string> = {
-  my1: '1', my2: '2',        // 自分の音を入れる枠
-  bam: '🥁',                 // どんっ   … 叩く音そのもの（車＝ぶつかる音は却下）
-  ding: '🌟',                // きらっ   … ネオンスターが光る
-  pon: '🍹',                 // ぽん     … 栓が抜ける
-  buzz: '☎️',                // ぶー     … 話し中の音
-  clap: '💗',                // 拍手     … 喝采
-  drum: '📻',                // ドラム   … ラジカセ
-  blip: '📼',                // ぴこ     … 小さな機械の音
-  dread: '🌇',               // ずーん   … 日が沈む
-  slash: '✨',               // しゃきん … 刃が閃く
-  fanfare: '💿',             // ジャーン … レコードの一発
-  // ⚠️ 🪩 だったが 💥 に変えた（2026-08-23）。ミラーボールを撮る前に
-  //    選ぶ形へ移したので、フラッシュが 🪩 だと取り違える。
-  //    ラベル側（eff_flash）はもともと 💥 なので、そちらに合わせた
-  flash: '💥',               // フラッシュ … ぱっと弾ける
-  glitch: '📺',              // グリッチ … ブラウン管の乱れ
-  emotional: '🌴',           // エモい   … 南国の夕暮れの空気
-};
 
-// i18n の言葉には絵文字が付いている。絵柄はこちらで差し替えるので、言葉だけ取り出す
-const bare = (s: string) => s.replace(/^[^\p{L}\p{N}]+/u, '').trim();
-
-/** 左の柱のボタンの中身。絵柄（または番号）と、その下の小さな言葉 */
-function RailFace({ id, label }: { id: string; label: string }) {
-  const icon = RAIL_ICONS[id] ?? '🎵';
-  const isNum = /^[0-9]$/.test(icon);
-  return (
-    <>
-      <span className={isNum ? 'number-icon' : 'btn-icon'}>{icon}</span>
-      <span className="btn-label">{bare(label)}</span>
-    </>
-  );
-}
-
-// テロップの絵柄（BUBBLE / ZIGZAG）は 08cf11c で不要になった。
-// 5つとも「自分で決める場所」になり、全部が番号表示になったため
+// 左右の柱（音・テロップ）とその絵柄は、動画をやめたときに全部無くなった
+// （2026-08-31、伊波さん「思い切って動画やめようかな」）。
+// 音3つ・フラッシュ・ミラーボール・流れるテロップは、動画だけのものだった。
+// 写真の文字とスタンプ（プリクラの落書き）は別の仕組みなので残っている
 
 function App() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPreviewing, setIsPreviewing] = useState(false);
-  // 一時停止。止めているあいだは動画も進めない。
-  // 録画側を止めるだけだと、再開したときに動画だけ先へ進んでいて話が飛ぶ
-  const [isPaused, setIsPaused] = useState(false);
-  const [canPause, setCanPause] = useState(true);
 
   // フローティングUI用のタブ状態は、いまの作り（左右の柱にボタンを常に出す）では
   // 使わなくなったので消した。ビルドが止まっていた（2026-08-11）
 
-  const [videoSrc, setVideoSrc] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // 録画関連のRef
-  const recorderRef = useRef<RecordHandle | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // 描画の係が毎フレーム読むもの。React の state を直接読むと、
   // 係が作られた時点の古い値を見続けることになる
@@ -118,49 +70,17 @@ function App() {
     // 真ん中にカメラ、一番上に img を重ねる。recorder.ts 側は対応済み
     frame: { img: HTMLImageElement; bgImg?: HTMLImageElement; anchor: FrameAnchor; slice?: { t: number; r: number; b: number; l: number }; faceHole?: FaceHole; faceHoles?: FaceHole[] } | null;
     watermark: string | null;
+    /** 鍵のかかった枠を試着中か。true なら斜めの鍵シールが画面にも出る
+     *  （2026-08-31、伊波さん「鍵付きの絵を見せる」） */
+    trial: boolean;
     mirror: boolean;
     zoom: number;
-  }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE', mirror: false, zoom: 1 });
+  }>({ video: null, fill: false, shape: 'landscape', frame: null, watermark: 'tinyCUBE', trial: false, mirror: false, zoom: 1 });
   
-  // ボタンから呼ばれる口。中身は effects.ts が持っている。
-  // 録画していないときに押しても鳴る（本番前に手応えを確かめられるように）。
-  // ただし絵は canvas に描くものなので、録画していないあいだは画面に出ない
-  const fire = (effectName: EffectId) => fireEffect(effectName);
 
   // テロップの言葉。利用者が設定で書き換えられる。
   // 決め打ちの「草」「神」だけだと、その人の言い回しが使えない（2026-08-10）。
   // 消えると次に使うとき打ち直しになるので、localStorage に残す
-  // 言葉は12個。一発エフェクト2つと効果音4つを足して、ちょうど18個になる。
-  // デッキは6列なので 6×3 で隙間なく埋まる（2026-08-10、伊波さんの指示）。
-  // 空にしたものはデッキに出ないので、使う人が減らすこともできる
-  // 番号の付いた3つだけが、利用者の言葉。残りは決め打ちで動かさない
-  // （2026-08-11、伊波さん「入れ替えれる言葉は上の数字の3か所」）。
-  // 番号は「あなたが決める場所」の印なので、全部が変えられると意味が消える
-  // 12個（自分の3＋決め打ち9）から **5つ・全部が変更可能** に減らした
-  // （08cf11c「かんたん化」。対象は40〜50代と子どもなので、選ぶものを減らす）
-  const TELOP_MINE = 5;
-  const [myTelops, setMyTelops] = useState<string[]>(() => {
-    const base = [t('eff_toutoi'), t('eff_huh'), t('eff_omg'), t('eff_party'), t('eff_choberigu')];
-    try {
-      // ⚠️ 保存キーは v2。旧キー（tinycube.telops）のままだと3つぶんの配列が
-      //    読まれて、4・5番目だけ既定に戻る
-      const saved = localStorage.getItem('tinycube.telops.v2');
-      if (saved) {
-        const arr = JSON.parse(saved) as string[];
-        return Array.from({ length: TELOP_MINE }, (_, i) => arr[i] ?? base[i]);
-      }
-    } catch { /* 壊れていたら既定に戻す */ }
-    return base;
-  });
-  const telops = myTelops;
-  const setTelop = (i: number, text: string) => {
-    setMyTelops(prev => {
-      const next = [...prev];
-      next[i] = text;
-      try { localStorage.setItem('tinycube.telops.v2', JSON.stringify(next)); } catch { /* 保存できなくても動く */ }
-      return next;
-    });
-  };
 
   const [frameId, setFrameId] = useState<string | null>(null);
   /**
@@ -276,15 +196,6 @@ function App() {
   // エフェクトも枠も透かしもそのまま乗る（2026-08-10）
   const [camOn, setCamOn] = useState(false);
   const [camFront, setCamFront] = useState(true);
-  // 動画そのものの音を録るかどうか。BGM入りの動画にアフレコするときは
-  // 消したい（2026-08-10、伊波さんの指示）
-  const [useSrcAudio, setUseSrcAudio] = useState<'mix' | 'mic' | 'off'>(() => {
-    try { return (localStorage.getItem('tinycube.srcAudio') as 'mix' | 'mic' | 'off') || 'mic'; } catch { return 'mic'; }
-  });
-  const pickSrcAudio = (v: 'mix' | 'mic' | 'off') => {
-    setUseSrcAudio(v);
-    try { localStorage.setItem('tinycube.srcAudio', v); } catch { /* 保存できなくても動く */ }
-  };
   // 形を自分で選んだかどうか。選んだあとに映像の向きで上書きすると、
   // 9:16 を選んだのに 16:9 に戻る（2026-08-10、伊波さんの指摘）。
   // 新しい映像を読み込んだときだけ、自動で合わせ直す
@@ -317,10 +228,6 @@ function App() {
   //    しまう（捨て忘れが一番こわい）
   const sheetRef = useRef<HTMLCanvasElement | null>(null);
   // 効果音の差し替え（soundInputRef / soundSlot / soundVer）は 08cf11c で廃止
-  // 文字の色。白は暗い映像に、黒は明るい映像に強い
-  const [telopDark, setTelopDark] = useState(() => {
-    try { return localStorage.getItem('tinycube.telopDark') === '1'; } catch { return false; }
-  });
   // 出る場所。いつも真ん中か、ばらけさせるか
   /**
    * ずっと出しておく飾り（2026-08-23、伊波さん「エフェクトも初めから選んで
@@ -348,46 +255,6 @@ function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setAmbient(ambientOn); }, []);
 
-  const [telopRandom, setTelopRandom] = useState(() => {
-    try { return localStorage.getItem('tinycube.telopRandom') === '1'; } catch { return false; }
-  });
-  const pickTelopPos = (random: boolean) => {
-    setTelopRandom(random);
-    try { localStorage.setItem('tinycube.telopRandom', random ? '1' : '0'); } catch { /* 保存できなくても動く */ }
-  };
-
-  const pickTelopColor = (dark: boolean) => {
-    setTelopDark(dark);
-    try { localStorage.setItem('tinycube.telopDark', dark ? '1' : '0'); } catch { /* 保存できなくても動く */ }
-  };
-
-  /**
-   * 文字の出し方（2026-08-23、伊波さん「文字の出現も自動で出す方がやりやすい」）。
-   *
-   * ■ なぜ要るか
-   *
-   * 動画の自撮りは、片手で持って自分を映しながら画面を触ることになる。
-   * **押しに行った指がレンズに被る**（伊波さん「自撮りにすると指でカメラが
-   * 隠れる」）。撮る前に決めておけば、撮影中は何も触らなくて済む。
-   *
-   *   'tap'    … 今までどおり、右の柱を押して出す
-   *   'random' … 用意した5つから、でたらめに選んで出す
-   *   'order'  … 用意した5つを、上から順に出す
-   *
-   * ⚠️ **出る間隔もでたらめにすること**（伊波さん「秒数もランダムで、
-   *    連打もあっていいね」）。等間隔だと機械が出しているように見える。
-   *    重なってもよい。適当に押していたときの気持ちよさがそれだった
-   */
-  type TelopMode = 'tap' | 'random' | 'order';
-  const [telopMode, setTelopMode] = useState<TelopMode>(() => {
-    try { return (localStorage.getItem('tinycube.telopMode') as TelopMode) || 'tap'; } catch { return 'tap'; }
-  });
-  const pickTelopMode = (mode: TelopMode) => {
-    setTelopMode(mode);
-    try { localStorage.setItem('tinycube.telopMode', mode); } catch { /* 保存できなくても動く */ }
-  };
-  /** 'order' のときに次に出すもの。録画のたびに先頭へ戻す */
-  const telopTurn = useRef(0);
 
   /**
    * 色味（2026-08-23、伊波さん「エフェクトも初めから選んで撮影中は出しておこう」
@@ -423,11 +290,10 @@ function App() {
   // 動画は「先に飾って撮る」、写真は「撮ってから飾る」で順番が逆になる
   // （2026-08-14、伊波さん「テキスト変更のとこのページみたいに動画とは逆に、
   // 撮ってから出す」）
-  const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video' | 'photo'>('agree');
+  const [screen, setScreen] = useState<'agree' | 'manner' | 'setup' | 'video' | 'photo' | 'sheet'>('agree');
   // 撮るもの。'photo' は3枚連写、'video' は今まで通りの録画。
   // フレームを選ぶ前に、まずこれを聞く（2026-08-14、伊波さん
   // 「まず（なにを撮る？）ページ追加【フレーム選択ページの前】」）
-  const [captureKind, setCaptureKind] = useState<'photo' | 'video' | null>(null);
   // カメラの寄り。顔ハメの穴に顔が入らない人がいる（2026-08-14、伊波さん
   // 「顔がデカい人は入らないと指摘、ズーム機能調整（インカメ）」）。
   // 1 が今まで通り。下げると引く（顔が小さくなって穴に収まる）
@@ -473,12 +339,6 @@ function App() {
   // 文字の自動出しから読むもの。**ref で持つこと。**
   // 直接 state を見ると、値が変わるたびにタイマーが張り直されて
   // 間隔がそこで途切れる（出たり出なかったりする）
-  const telopsRef = useRef<string[]>([]);
-  useEffect(() => { telopsRef.current = telops; }, [telops]);
-  const telopDarkRef = useRef(false);
-  useEffect(() => { telopDarkRef.current = telopDark; }, [telopDark]);
-  const telopRandomRef = useRef(false);
-  useEffect(() => { telopRandomRef.current = telopRandom; }, [telopRandom]);
   // 写真のテキスト。動画側の「出現の仕方」は静止画では意味がないので持たず、
   // 代わりに色を選べるようにした（2026-08-14、伊波さん「出現の仕方の代りに
   // 色変更増やす。手描きフォントにするほうが当時のプリクラ再現率上がる」）
@@ -556,16 +416,12 @@ function App() {
   //   0 kind  … なにを撮る？（写真／動画）。フレームより前に聞く
   const [setupStep, setSetupStep] = useState<'kind' | 'mode' | 'frame' | 'telop'>('kind');
   // 枠選び（frame）と素材選び（source）は setup に統合したので、戻り先は video だけ
-  const [backTo, setBackTo] = useState<'video'>('video');
-  // 2回目以降は「フレームだけ選び直す」ことが多いので、開いたら
-  // フレーム選びから始める（毎回1段目を踏ませない）
-  const openSetup = (from: 'video') => { setBackTo(from); setSetupStep('frame'); setScreen('setup'); };
   // 撮るものを決めて次へ。写真はフレームを選んだら撮影画面へ直行する
   // （テロップは撮ったあとに乗せるので、先に聞かない）
-  const pickKind = (k: 'photo' | 'video') => {
-    setCaptureKind(k);
-    setSetupStep('mode');
-  };
+  // 撮るものは写真だけになった（2026-08-31、伊波さん「思い切って動画やめようかな」）。
+  // 「なにを撮る？」の段は、プリクラ帳・プリシート・買い切りの入口を兼ねる
+  // 玄関として残してある
+  const pickKind = () => setSetupStep('mode');
   // 設定の段階を1つ戻す。1段目まで来たら撮影画面へ返す。
   // ヘッダーと小窓の中の両方から呼ぶので、処理はここに1つだけ置く
   const goBackStep = () => {
@@ -577,7 +433,7 @@ function App() {
     // ここは「戻る」ではなく「終わる」場所（2026-08-14、伊波さん
     // 「動画と、写真選ぶの画面の戻るはアプリ閉じるがいいかも？」）
     else if (setupStep === 'kind') closeApp();
-    else if (camOn || videoSrc) setScreen(backTo);
+    else if (camOn) setScreen('video');
   };
   // アプリを閉じる。
   // **ブラウザは自分で開いたタブしか閉じられない。**利用者が URL を打って
@@ -599,12 +455,9 @@ function App() {
   // 小さな帯だけだと、共有シートが開くまでの数秒が「固まった」に見える
   // （2026-08-16、伊波さん「保存のタイムラグ」）
   const [saveBusy, setSaveBusy] = useState(false);
-  const [loopVideo, setLoopVideo] = useState(true);
   // 買い切りの解除。フレームと透かし消しの両方が一度に解ける
   // （2026-08-11、伊波さん「両方」）
   const [unlocked, setUnlocked] = useState(isUnlocked());
-  const [keyInput, setKeyInput] = useState('');
-  const [keyNG, setKeyNG] = useState(false);
   const unlockRef = useRef<HTMLDivElement>(null);
   /**
    * 「ぜんぶ使えるようにする」を単独で開くための箱（2026-08-30）。
@@ -612,7 +465,7 @@ function App() {
    * ⚠️ **カメラが動かないと買えない、という作りだった。**
    *    購入の案内はフレーム一覧の中にしか無く、そこへ行くには
    *    「フレームを選ぶ」ボタンが要る。ところがそのボタンは
-   *      {(camOn || videoSrc) && ...}
+   *      {camOn && ...}
    *    で守られていて、**カメラが起動しないと出てこない**。
    *
    *    Apple の審査は iPad の実機で行われ、カメラが使えない状態だった。
@@ -632,14 +485,8 @@ function App() {
   //
   // ⚠️ **Web にはいま買う道が無い**（2026-08-24）。BOOTH を閉じ、Ko-fi は
   //    CUBICENGINE の寄付専用にしたため。Stripe が入るまで「準備中」を出す
-  const inApp = isNativeApp();
   const [buyBusy, setBuyBusy] = useState(false);
   const [buyNG, setBuyNG] = useState(false);
-  const submitKey = async () => {
-    const ok = await tryUnlock(keyInput);
-    setKeyNG(!ok);
-    if (ok) { setUnlocked(true); setKeyInput(''); }
-  };
 
   // アプリの中で買う。Play の画面が出て、買えたかどうかは
   // あとから onUnlockChange 経由で返ってくる（その場では分からない）
@@ -679,22 +526,26 @@ function App() {
     }, 100);
   };
 
-  // ⚠️ **透かしは常に入れる**（2026-08-17、伊波さん「無料にしても透かしは
-  //    入れる話だったはずだよ」）。
-  //    もとは「無料版の印」で、解除すると消える作りだった。8/15 に全部無料へ
-  //    切り替えたとき isUnlocked() が常に true を返すようになり、**副作用で
-  //    透かしまで消えていた。** 無料で配るからこそ、撮ったものが広まるときに
-  //    名前が残っているほうが宣伝になる。
-  //    画面に出している canvas をそのまま録るので、ここを変えれば動画も写真も変わる
+  // 透かしの扱い。**解除した人だけ消える**（2026-08-31、伊波さんの判断）。
+  //
+  // ■ 経緯（行ったり来たりしたので残す）
+  //   もとは「無料版の印」で、解除すると消える作りだった
+  //   2026-08-15  全部無料にしたとき isUnlocked() が常に true を返すようになり、
+  //               **副作用で透かしまで消えた**
+  //   2026-08-17  伊波さん「無料にしても透かしは入れる話だったはずだよ」
+  //               → 解除に関係なく常に入れるようにした
+  //   2026-08-31  ⚠️ **BOOTH と Ko-fi が「透かし消し付」で ¥300 を取っていた。**
+  //               売っている約束と実装が食い違っていたので、約束のほうへ戻す。
+  //               買っていない人には今までどおり入る。無料で配るからこそ、
+  //               撮ったものが広まるときに名前が残っているほうが宣伝になる
+  //
+  // 画面に出している canvas をそのまま録るので、ここを変えれば動画も写真も変わる
   useEffect(() => {
-    liveRef.current.watermark = 'tinyCUBE';
+    liveRef.current.watermark = unlocked ? null : 'tinyCUBE';
   }, [unlocked]);
   // tinyCUBE はスマホで使うもの。PC で開いた人には、そう伝えてから通す。
   // 塞がずに「このまま使う」を用意しているのは、確かめたい人を止めないため
   // （2026-08-10、伊波さん「基本PCで開かないから」「スマホだけ」）
-  const [pcOk, setPcOk] = useState(false);
-  const onPC = typeof window !== 'undefined'
-    && window.matchMedia('(min-width: 900px) and (pointer: fine)').matches;
   // 「試してみる」（録画せずに動画だけ流す）の状態は、いちばん上でまとめて
   // 宣言している。一発撮りなので、本番前に中身と長さを確かめられないと押すのが怖い
   // 撮る前の注意。人の動画を読み込んで声を乗せる道具なので、
@@ -726,7 +577,7 @@ function App() {
   // 押す場所が消えたもので、機能そのものが要らなくなったのかは未確認。
   // 消すと戻すのが手間なので残してある（2026-08-13、シオン）
   const confirmSource = () => {
-    if (videoSrc || camOn) { setStartHint(true); setScreen('video'); }
+    if (camOn) { setStartHint(true); setScreen('video'); }
   };
   void confirmSource;
   // 枠は全部出す。形が合わないものは端が切れるが、それでも使いたいという
@@ -806,78 +657,22 @@ function App() {
     });
   }, []);
 
-  /**
-   * 文字を自動で飛ばす（2026-08-23）。
-   *
-   * ⚠️ **setInterval を使わないこと。** 間隔がでたらめなので、
-   *    次の1回を出したあとに次の待ち時間を決める形にする。
-   * ⚠️ **一時停止のあいだは出さない。** 録画が止まっているのに
-   *    文字だけ出続けると、あとで見たときに何も無いところで字が動く。
-   * ⚠️ **止めるときは必ず片付ける。** 残ると、次に撮り始めたときに
-   *    前の回のぶんが混じって出る
-   */
-  useEffect(() => {
-    if (telopMode === 'tap') return;          // 手で押す道はこれまでどおり
-    if (!isRecording || isPaused) return;
-
-    // 撮り始めは先頭から。前の回の続きから出ると順番が合わない
-    if (!isPaused) telopTurn.current = 0;
-
-    let timer: number | undefined;
-    let alive = true;
-
-    const tick = () => {
-      if (!alive) return;
-      const list = telopsRef.current.filter(s => s.trim());
-      if (list.length) {
-        const text = telopMode === 'random'
-          ? list[Math.floor(Math.random() * list.length)]
-          : list[telopTurn.current++ % list.length];
-        // 大きさ・場所・散り方は fireTelop の中でランダムに決まる。
-        // 位置の「ランダムに出す」設定はそのまま活かす
-        fireTelop(text, telopDarkRef.current, telopRandomRef.current);
-      }
-      // 次の1回までの間隔もでたらめ（0.8〜3.2秒）。
-      // 短いほうに寄せてあるのは、適当に押していたときの手の速さに近いから。
-      // 重なって出てもよい（伊波さん「連打もあっていいね」）
-      timer = window.setTimeout(tick, 800 + Math.random() * 2400);
-    };
-
-    // 撮り始めてすぐ1つ出す。無音のまま数秒待つと、動いていないように見える
-    timer = window.setTimeout(tick, 600);
-
-    return () => { alive = false; if (timer) clearTimeout(timer); };
-  }, [telopMode, isRecording, isPaused]);
 
   // 選んだ枠の絵を読み込んでおく。録画の直前に読むと間に合わない
   useEffect(() => {
     liveRef.current.shape = shape;
-    if (!frame || (builtinFrame && locked(builtinFrame))) { liveRef.current.frame = null; return; }
+    // 鍵のかかった枠も**そのまま乗せる**（2026-08-31、伊波さん「鍵付きの絵を見せる」
+    // 「試着＋撮れる。でも帯が入る」）。前はここで null にしていたので、
+    // 買う前に一度も自分の顔に乗ったところを見られなかった。
+    // 代わりに、おためしの鍵シールを canvas に焼く（recorder.ts の drawTrial）
+    liveRef.current.trial = !!builtinFrame && locked(builtinFrame);
+    if (!frame) { liveRef.current.frame = null; return; }
     let alive = true;
     loadFrame(frame).then(({ img, bgImg }) => {
       if (alive) liveRef.current.frame = { img, bgImg, anchor: frame.anchor, faceHole: frame.faceHole, faceHoles: frame.faceHoles };
     }).catch(() => { /* 読めなければ枠なしで続ける */ });
     return () => { alive = false; };
-  }, [frame, shape]);
-
-  // 動画ファイルが選択されたとき
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      stopCam();
-      shapePicked.current = false;           // 新しい動画なので、また自動で合わせる
-      const url = URL.createObjectURL(file);
-      setVideoSrc(url);
-      setSrcIsWide(false);
-    }
-  };
-
-  // プレビューエリアをタップしてファイル選択を開く
-  const triggerFileInput = () => {
-    if (!videoSrc) {
-      fileInputRef.current?.click();
-    }
-  };
+  }, [frame, shape, unlocked]);
 
   // （保存の渡し方は下の save() に書いてある。
   //   このコメントは save() から離れた場所に取り残されていたもの。
@@ -911,11 +706,10 @@ function App() {
           height: { ideal: 1080 },
           frameRate: { ideal: 30 },
         },
-        audio: false,                        // 声は録画のときにマイクから混ぜる
+        audio: false,                        // 写真だけなので音は要らない
       });
       camStreamRef.current = stream;
       shapePicked.current = false;           // 新しい映像なので、また自動で合わせる
-      setVideoSrc(null);                     // 動画ファイルとは同時に使わない
       setCamFront(front);
       setCamOn(true);
       setCamVer(v => v + 1);      // 繋ぎ直させる
@@ -1088,30 +882,6 @@ function App() {
     }
   };
 
-  // 下見の開始・停止。録らないので、音は動画そのものの出力で鳴る
-  const togglePreview = async () => {
-    const v = videoRef.current;
-    if (!v || (!videoSrc && !camOn)) { alert(t('alert_load_first')); return; }
-    if (isPreviewing) {
-      v.pause();
-      v.currentTime = 0;
-      setIsPreviewing(false);
-      return;
-    }
-    // 音ありの再生は「指で触った」あとでないとブラウザに止められることがある。
-    // 断られたら音を消してでも絵は出す（止まったままだと壊れて見える）
-    v.muted = false;
-    try {
-      await v.play();
-    } catch {
-      v.muted = true;
-      try { await v.play(); } catch { return; }
-    }
-    setIsPreviewing(true);
-  };
-  // confirmSource と同じく、画面の作り替えで押す場所が無くなったもの。
-  // 機能が不要になったのかは未確認なので消さずに残す（2026-08-13、シオン）
-  void togglePreview;
 
   // 写真。canvas には映像・枠・エフェクト・透かしが全部乗っているので、
   // そのまま1枚に書き出すだけでよい（2026-08-11、伊波さん「昔のプリクラ」）。
@@ -1124,7 +894,7 @@ function App() {
   const shoot = async () => {
     const c = canvasRef.current;
     if (!c) return;
-    if (!videoSrc && !camOn) { alert(t('alert_load_first')); return; }
+    if (!camOn) { alert(t('alert_load_first')); return; }
     setFlash(true);
     setTimeout(() => setFlash(false), 220);
     const blob = await new Promise<Blob | null>(res => c.toBlob(res, 'image/jpeg', 0.92));
@@ -1137,7 +907,7 @@ function App() {
   const burstShoot = async () => {
     const c = canvasRef.current;
     if (!c || isBursting) return;
-    if (!videoSrc && !camOn) { alert(t('alert_load_first')); return; }
+    if (!camOn) { alert(t('alert_load_first')); return; }
     setIsBursting(true);
     setStartHint(false);
     const taken: string[] = [];
@@ -1533,6 +1303,7 @@ function App() {
     setAlbumList(list);
     setAlbumPicked(new Set());
     setAlbumEditing(false);
+    setAlbumPage(0);
     setAlbumOpen(true);
 
     // ⚠️ **wide が無い古いものを、ここで測って埋める**（2026-08-19）。
@@ -1669,16 +1440,136 @@ function App() {
    * いま何をしているか。false なら見るだけ。
    *   'del'  … 消すものを選ぶ
    *   'sort' … 並べ替える（2枚選ぶと入れ替わる）
+   *   'pick' … プリシートの材料に選ぶ（2026-08-31）
    */
-  const [albumEditing, setAlbumEditing] = useState<false | 'del' | 'sort'>(false);
+  const [albumEditing, setAlbumEditing] = useState<false | 'del' | 'sort' | 'pick'>(false);
   /** いま何枚入っているか。0枚なら入口を出さない */
   const [albumHas, setAlbumHas] = useState(0);
+  /** いま開いているページ（0 始まり）。実物のシールブックと同じで、
+   *  50枚のシートが ALBUM_PAGES 枚つづりになっている
+   *  （2026-08-31、伊波さん「１００枚とかにならない？３ページとかにして」） */
+  const [albumPage, setAlbumPage] = useState(0);
+  /** いまのページに並ぶもの */
+  const albumPageItems = albumList.slice(albumPage * PAGE_SIZE, (albumPage + 1) * PAGE_SIZE);
+
+  // ---- プリシート（2026-08-31、伊波さん「プリみたいに写真を選んで
+  //      シートを作れる機能を追加」「３枚から７枚ぐらい色んな組み合わせ」）
+  //
+  //  3枚連写のシート（buildPhotoSheet）とは別の道。あちらは「撮った直後」、
+  //  こちらは「貯めたものから選んで組む」。割り付けは sheet.ts が持っている。
+  //
+  //  📝 **あとで落書きも乗せられるようにしたい**（同日、伊波さん
+  //     「あとで落書きもできるようになればいいね」）。
+  //     写真の落書き（decos / renderShot）と同じ仕組みを、
+  //     出来上がったシートの上に重ねれば足せる。**いまは入れていない。**
+  /** シートに使う写真（data URL）。選んだ順に並ぶ。1枚目がいちばん大きく出る */
+  const [sheetPhotos, setSheetPhotos] = useState<string[]>([]);
+  /** どの割り付けを使うか。枚数が変わったら、その枚数の1つめに合わせ直す */
+  const [sheetLayoutId, setSheetLayoutId] = useState<string>('3a');
+  /** 出来上がりの見本 */
+  const [sheetPreview, setSheetPreview] = useState<string | null>(null);
+  const [sheetBusy, setSheetBusy] = useState(false);
+  const sheetCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const sheetFileRef = useRef<HTMLInputElement>(null);
+
+  /** いま選べる型。枚数が足りないうちは空 */
+  const sheetLayouts: Layout[] = layoutsFor(sheetPhotos.length);
+  const sheetLayout: Layout | null =
+    LAYOUTS.find(l => l.id === sheetLayoutId && l.n === sheetPhotos.length) ?? sheetLayouts[0] ?? null;
+
+  /** 枚数が変わったら、その枚数の型へ合わせ直す */
+  useEffect(() => {
+    const list = layoutsFor(sheetPhotos.length);
+    if (list.length && !list.some(l => l.id === sheetLayoutId)) setSheetLayoutId(list[0].id);
+  }, [sheetPhotos.length, sheetLayoutId]);
+
+  /** 写真か型が変わったら、見本を作り直す */
+  useEffect(() => {
+    let alive = true;
+    if (!sheetLayout || sheetPhotos.length < MIN_PHOTOS) { setSheetPreview(null); return; }
+    setSheetBusy(true);
+    buildSheet(sheetPhotos, sheetLayout, unlocked ? null : 'tinyCUBE')
+      .then(c => {
+        if (!alive) return;
+        sheetCanvasRef.current = c;
+        setSheetPreview(c ? c.toDataURL('image/jpeg', 0.9) : null);
+      })
+      .catch(() => { if (alive) setSheetPreview(null); })
+      .finally(() => { if (alive) setSheetBusy(false); });
+    return () => { alive = false; };
+  }, [sheetPhotos, sheetLayout, unlocked]);
+
+  /** プリシートを作る画面へ */
+  const openSheet = () => {
+    setSheetPhotos([]);
+    setSheetPreview(null);
+    setScreen('sheet');
+  };
+
+  /** プリクラ帳を「材料を選ぶ」で開く */
+  const openAlbumForSheet = async () => {
+    const list = await album.list();
+    setAlbumList(list);
+    setAlbumPicked(new Set());
+    setAlbumEditing('pick');
+    setAlbumPage(0);
+    setAlbumOpen(true);
+  };
+
+  /** 選んだものをシートの材料に入れる。**大きいほうの絵を使う**
+   *  （見本は 200px しかないので、シートに置くと粗い） */
+  const takePickedIntoSheet = async () => {
+    const ids = [...albumPicked];
+    const room = MAX_PHOTOS - sheetPhotos.length;
+    const add: string[] = [];
+    for (const id of ids.slice(0, room)) {
+      const it = await album.get(id);
+      const src = it?.full ?? it?.thumb;
+      if (src) add.push(src);
+    }
+    setSheetPhotos(prev => [...prev, ...add].slice(0, MAX_PHOTOS));
+    setAlbumPicked(new Set());
+    setAlbumEditing(false);
+    setAlbumOpen(false);
+  };
+
+  /** 端末の写真から入れる。**大きすぎる写真は縮める**
+   *  （12MP を7枚そのまま持つと、端末によっては落ちる） */
+  const takeFilesIntoSheet = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = [...(e.target.files ?? [])];
+    e.target.value = '';                     // 同じ写真をもう一度選べるように
+    const room = MAX_PHOTOS - sheetPhotos.length;
+    const add: string[] = [];
+    for (const f of files.slice(0, room)) {
+      try {
+        const raw = await new Promise<string>((res, rej) => {
+          const r = new FileReader();
+          r.onerror = () => rej(new Error('読めませんでした'));
+          r.onload = () => res(String(r.result));
+          r.readAsDataURL(f);
+        });
+        add.push(await album.makeThumb(raw, 1200));
+      } catch { /* 1枚読めなくても、残りは入れる */ }
+    }
+    setSheetPhotos(prev => [...prev, ...add].slice(0, MAX_PHOTOS));
+  };
+
+  /** 出来上がったシートを端末へ */
+  const saveSheet = async () => {
+    const c = sheetCanvasRef.current;
+    if (!c) return;
+    setSaveMessage(t('msg_storing'));
+    const blob = await new Promise<Blob | null>(res => c.toBlob(b => res(b), 'image/jpeg', 0.92));
+    if (!blob) { setSaveMessage(t('err_save_failed')); setTimeout(() => setSaveMessage(null), 4000); return; }
+    const r = await saveMedia(blob, `tinyCUBE-sheet-${Date.now()}.jpg`);
+    setSaveMessage(r.how === 'failed' ? t('err_save_failed') : t('msg_saved'));
+    setTimeout(() => setSaveMessage(null), 3000);
+  };
   const [previewBusy, setPreviewBusy] = useState(false);
   // 撮れた動画。止めた直後に黙って保存すると、何が起きたのか分からない
   // （2026-08-14、伊波さん「停止後の操作が不明」
   // 「録画停止後すぐ保存しますか？を出す？」）。
   // 写真と同じで、見てから保存するかを決められるようにする
-  const [madeVideo, setMadeVideo] = useState<{ blob: Blob; ext: string; url: string } | null>(null);
   const overTrashRef = useRef(false);
   // 指がゴミ箱の上に来ているか。離した瞬間に state を読むと
   // 反映前の古い値を見ることがあるので、ref にも同じものを持つ
@@ -1792,144 +1683,22 @@ function App() {
 
   void shoot;
 
-  // 一時停止。録画も動画も両方止める。
-  // 止めているあいだの絵と音は、まったくファイルに入らない
-  const togglePause = () => {
-    const rec = recorderRef.current;
-    const v = videoRef.current;
-    if (!rec || !isRecording || !rec.canPause) return;
-    if (isPaused) {
-      rec.resume();
-      v?.play().catch(() => { /* 動かなくても録画は続く */ });
-      setIsPaused(false);
-    } else {
-      rec.pause();
-      v?.pause();
-      setIsPaused(true);
-    }
-  };
 
-  // 録画の開始・停止
-  const toggleRecording = async () => {
-    // 数えているあいだの二度押しは受けない。二重に始まってしまう
-    if (countdown !== null) return;
-    if (isRecording) {
-      recorderRef.current?.stop();
-      recorderRef.current = null;
-      // 録り終わったら画面の大きさに戻す（軽くするため）
-      fullRef.current = false;
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0;
-      }
-      setIsRecording(false);
-      setIsPaused(false);
-      return;
-    }
-
-    if (!videoRef.current || (!videoSrc && !camOn)) {
-      alert(t('alert_load_first'));
-      return;
-    }
-
-    if (isPreviewing) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-      setIsPreviewing(false);
-    }
-
-    // 3つ数えてから始める。ここで構えてもらう
-    setStartHint(false);
-    for (let n = 3; n > 0; n--) {
-      setCountdown(n);
-      await new Promise(r => setTimeout(r, 1000));
-    }
-    setCountdown(null);
-
-    try {
-      // ⚠️ **録り始める前に全開へ戻すこと**（2026-08-30）。
-      //    captureStream は**呼んだ瞬間の canvas の大きさ**でトラックを
-      //    決める。小さいまま録り始めると小さい動画になる。
-      //    録画中に大きさを変えると録画そのものが壊れるので、
-      //    **始まる前に戻し、終わるまで全開のまま**にする
-      await 全開にする();
-      // 透かしは無料版の印。動画そのものに焼き込まれる。
-      // 有料版にしたときは null を渡すだけで消える
-      // 画面に出しているものをそのまま録る。別の絵を作らないので、
-      // 見えているものと出てくるものが必ず一致する
-      recorderRef.current = await startRecording({
-        video: videoRef.current,
-        canvas: canvasRef.current ?? undefined,
-        frame: liveRef.current.frame,
-        shape,
-        srcAudio: useSrcAudio,
-        watermark: 'tinyCUBE',   // 常に入れる（上の useEffect と同じ理由）
-        // ここで保存はしない。撮れたものを見せてから決めてもらう
-        onFinish: (blob, ext) => {
-          setMadeVideo({ blob, ext, url: URL.createObjectURL(blob) });
-        },
-        onError: (e) => alert(t('alert_rec_fail') + e.message),
-      });
-      // 録画開始と同じタイミングで動画も最初から再生する
-      if (videoSrc && videoRef.current) {
-        videoRef.current.currentTime = 0;
-      }
-      await videoRef.current.play();
-      setCanPause(recorderRef.current.canPause);
-      setIsPaused(false);
-      setIsRecording(true);
-    } catch (err: any) {
-      console.error(err);
-      alert(t('alert_mic_fail') + err.message);
-    }
-  };
-
-  if (onPC && !pcOk) {
-    return (
-      <div className="pc-notice">
-        <div className="pc-cube"></div>
-        <h1>tinyCUBE</h1>
-        <p className="pc-lead">
-          スマホで使うアプリです。<br />
-          <span>Made for phones.</span>
-        </p>
-        <p className="pc-url">tinycube.vercel.app</p>
-        <p className="pc-sub">
-          スマホのブラウザでこの住所を開いてください。<br />
-          <span>Open this address on your phone.</span>
-        </p>
-        <button className="pc-continue" onClick={() => setPcOk(true)}>
-          このまま使う / Continue anyway
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="app-container">
       {/* 映像領域（最背面で全画面） */}
-      <main className="preview-stage" onClick={triggerFileInput}>
-        <input
-          type="file"
-          ref={fileInputRef}
-          accept="video/*"
-          onChange={handleVideoUpload}
-          style={{ display: 'none' }}
-        />
-
+      <main className="preview-stage">
         <div
           className="stage-box"
           style={{ '--ar': shape === 'portrait' ? '0.5625' : '1.7778' } as React.CSSProperties}
         >
           <canvas ref={canvasRef} className="stage-canvas" />
-          {(videoSrc || camOn) && (
+          {camOn && (
             <video
               ref={videoRef}
-              src={videoSrc ?? undefined}
               className="video-player hidden-source"
-              loop={loopVideo}
               playsInline
-              onEnded={() => setIsPreviewing(false)}
               onLoadedMetadata={e => {
                 const v = e.currentTarget;
                 const wide = v.videoWidth > v.videoHeight;
@@ -1948,7 +1717,7 @@ function App() {
 
         {/* 案内は canvas の外に出す。canvas は動画の形ぴったりまで縮むので、
             中に入れると 16:9 の細い帯の中で文字と注意書きが重なる（2026-08-11） */}
-        {!videoSrc && !camOn && (
+        {!camOn && (
           <div className="video-placeholder">
             <div className="upload-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1982,11 +1751,11 @@ function App() {
             クラスで渡すこと。** ここを CSS だけで解こうとして一度失敗した
             （2026-08-14）。ズーム欄と重なると、どちらも読めなくなる */}
         {shape === 'landscape' && portraitDevice ? (
-          <div className={`turn-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>{t('warn_land_frame1')}<br/>{t('warn_land_frame2')}</div>
-        ) : startHint && !isRecording ? (
+          <div className={`turn-hint ${camOn ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>{t('warn_land_frame1')}<br/>{t('warn_land_frame2')}</div>
+        ) : startHint ? (
           /* 誘導は説明より強い。初めて撮影画面に来た人に、押す場所だけ示す
              （2026-08-12、伊波さん「説明見てわからないなら、誘導が１番でしょ？」） */
-          <div className={`turn-hint start-hint ${camOn && !isRecording ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>{t('msg_push_record')}</div>
+          <div className={`turn-hint start-hint ${camOn ? (camTuneOpen ? 'above-tune' : 'above-tune-folded') : ''}`}>{t('msg_push_record')}</div>
         ) : null}
       </main>
 
@@ -2042,57 +1811,15 @@ function App() {
           {/* 写真の道では、押すものを「3枚撮る」1つだけにする。
               録画のボタンが並んでいると、写真を撮りに来た人がどれを押すか迷う
               （2026-08-14、伊波さん「写真はフレーム選択の後→camera画面で撮影」） */}
-          {captureKind === 'photo' ? (
             <button
               className="photo-btn-round burst"
               onClick={burstShoot}
-              disabled={(!videoSrc && !camOn) || isBursting}
+              disabled={!camOn || isBursting}
               title="3枚つづけて撮る"
             >
               <span className="ctrl-icon">📸</span>
               <span className="ctrl-label">{isBursting ? t('msg_shooting') : t('btn_shoot_3')}</span>
             </button>
-          ) : (
-          <>
-          {/* 動画のときの「写真」ボタンは外した。写真を撮りたい人は
-              最初の「なにを撮る？」で写真を選ぶ道があるので重複していた
-              （2026-08-14、伊波さん「動画撮影ページの写真のボタン削除」） */}
-          {/* 録画スタート・一時停止・停止は**いつも4つとも出す**。
-              そのときに押せないものは薄くして押せなくするだけにする。
-              消してしまうと「さっきあったボタンが無い」と探すことになる
-              （2026-08-13、伊波さん「停止、一時停止は初めからボタンとして
-              あったほうがイイ」）。
-              前は赤い丸1つが押すたびに意味を変えていて、見ても始まるのか
-              止まるのか分からなかった（同日「停止ボタン追加」） */}
-          <button
-            className="record-btn-round"
-            onClick={toggleRecording}
-            disabled={isRecording}
-            title={t('btn_record')}
-          >
-            <div className="record-inner"></div>
-            <span className="ctrl-label">{t('btn_record')}</span>
-          </button>
-          <button
-            className={`pause-btn-round ${isPaused ? 'on' : ''}`}
-            onClick={togglePause}
-            disabled={!isRecording || !canPause}
-            title={!canPause ? t('pause_na') : isPaused ? t('btn_resume') : t('btn_pause')}
-          >
-            <span className="ctrl-icon">{isPaused ? '▶' : '❚❚'}</span>
-            <span className="ctrl-label">{isPaused ? t('btn_resume') : t('btn_pause')}</span>
-          </button>
-          <button
-            className={`record-btn-round stop-btn ${isRecording ? 'recording' : ''}`}
-            onClick={toggleRecording}
-            disabled={!isRecording}
-            title={t('btn_stop')}
-          >
-            <div className="record-inner"></div>
-            <span className="ctrl-label">{t('btn_stop')}</span>
-          </button>
-          </>
-          )}
         </footer>
         {/* カメラの寄りと前後の切り替え。撮影画面から動かせないと、
             穴に顔が入らないことに撮ってから気づく（2026-08-14、伊波さん
@@ -2107,7 +1834,7 @@ function App() {
             使い道が無く、映像を覆うだけになる（2026-08-14、伊波さん
             「カメラズームのボタンが邪魔。顔はめ以外ズーム隠したら？」）。
             前後の切り替えも一緒に隠れるが、設定画面から変えられる */}
-        {camOn && !isRecording && isFaceHoleFrame && (
+        {camOn && isFaceHoleFrame && (
           <div className={`cam-tune ${camTuneOpen ? '' : 'folded'}`}>
             <button
               className="cam-tune-toggle"
@@ -2145,7 +1872,6 @@ function App() {
             <div className="cam-tune-label">{Math.round(camZoom * 100)}%</div>
           </div>
         )}
-        {isPaused && <div className="pause-badge">{t('paused_badge')}</div>}
         {/* シャッターの光。CSS なので写真にも動画にも入らない */}
         {flash && <div className="shutter-flash" />}
 
@@ -2155,67 +1881,6 @@ function App() {
             つもりで音のボタンを押すことになる（2026-08-14、伊波さん
             「ズーム機能効いてない、ボタン被る」「写真の時は、テキスト
             エフェクトと音ボタンもいらないね」） */}
-        {captureKind !== 'photo' && (
-        <>
-        {/* 左側のエフェクトパネル */}
-        <div className="side-panel left" data-role="sound">
-          <div className="panel-scroll">
-            {/* 自作音の枠（my1 / my2）は 08cf11c で廃止。
-                音ファイルの読み込みごと無くなったので、空の枠だけ残しても押せない */}
-            {/* エフェクトが上、音が下（2026-08-14、伊波さん
-                「音ボタンとエフェクトボタン上下入れ替え」）。
-                前は音が上・エフェクトが下だった */}
-            {/* ⚠️ **残すのはフラッシュだけ**（2026-08-23、伊波さん
-                「フラッシュだけ、ミラーボールは先に」）。
-                ミラーボールとエモいは撮る前に選んでかけっぱなしにする形へ
-                移した。押しに行った指がレンズに被るため、撮影中に触るものは
-                減らす（「自撮りにすると指でカメラが隠れる」）。
-                フラッシュだけは**押した瞬間に光る**のが持ち味なので残す */}
-            <button className="effect-btn btn-burst" onClick={() => fire('flash')}>
-              <RailFace id="flash" label={t('eff_flash')} />
-            </button>
-            {/* 音は3つ（08cf11c「かんたん化」。10個＋自作枠2個から減らした） */}
-            {(['clap', 'drum', 'blip'] as const)
-              .map(id => (
-                <button key={id} className="effect-btn btn-sound" onClick={() => fire(id)}>
-                  <RailFace id={id} label={t(('eff_' + id) as never)} />
-                </button>
-              ))}
-          </div>
-        </div>
-
-        {/* 右側のテロップパネル。
-            ⚠️ **自動で出すときは柱ごと消す**（2026-08-23、伊波さん
-            「文字も先に出し方決めて、ボタン消そう」）。押す必要が無いのに
-            残しておくと、自撮りで**押しに行った指がレンズに被る**
-            （「自撮りにすると指でカメラが隠れる」）。
-            出しっぱなしより、無いほうがいい */}
-        {telopMode === 'tap' && (
-        <div className="side-panel right" data-role="telop">
-          <div className="panel-scroll">
-            {/* 5つとも「自分で決める場所」。全部に番号を出す（08cf11c） */}
-            {telops.map((text, i) => {
-              const empty = !text.trim();
-              return (
-                <button
-                  key={i}
-                  className={'effect-btn btn-telop' + (empty ? ' empty' : '')}
-                  onClick={() => (empty ? openSetup('video') : fireTelop(text, telopDark, telopRandom))}
-                >
-                  <span className="number-icon">{i + 1}</span>
-                  {/* 長い言葉は字を小さくして2行にする。ボタンが減って縦に
-                      余裕ができたのでできるようになった（08cf11c） */}
-                  {!empty && (
-                    <span className="btn-label" data-len={text.length >= 5 ? 'long' : undefined}>{text}</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        )}
-        </>
-        )}
       </div>
 
       {/* 開いたときのお願い。平成大プリクラの入口＝ここから枠を選びにいく */}
@@ -2363,20 +2028,12 @@ function App() {
               <h3 className="setup-section-title">{t('title_what_to_shoot')}</h3>
               <div className="kind-picker">
                 <button
-                  className={`kind-btn ${captureKind === 'photo' ? 'on' : ''}`}
-                  onClick={() => pickKind('photo')}
+                  className="kind-btn"
+                  onClick={pickKind}
                 >
                   <span className="kind-icon">📸</span>
                   <span className="kind-title">{t('btn_take_photo')}</span>
                   <span className="kind-note">{t('kind_photo_note')}</span>
-                </button>
-                <button
-                  className={`kind-btn ${captureKind === 'video' ? 'on' : ''}`}
-                  onClick={() => pickKind('video')}
-                >
-                  <span className="kind-icon">🎬</span>
-                  <span className="kind-title">{t('btn_take_video')}</span>
-                  <span className="kind-note">{t('kind_video_note')}</span>
                 </button>
               </div>
 
@@ -2386,7 +2043,7 @@ function App() {
                   なにを撮る？のページにいつでも開けるように置いておいて」）
                   最初は空でも、そこに置き場所があると分かるほうが大事。
                   隠すと「どこにあるの？」になる */}
-              <button className="album-open-btn" onClick={openAlbum}>
+              <button className="album-open-btn is-album" onClick={openAlbum}>
                 <span className="album-open-emoji">📖</span>
                 <span className="album-open-label">{t('tab_album')}</span>
                 <span className="album-open-count">
@@ -2394,12 +2051,22 @@ function App() {
                 </span>
               </button>
 
+              {/* プリシートを作る（2026-08-31、伊波さん「プリみたいに写真を
+                  選んでシートを作れる機能を追加」）。
+                  ⚠️ **プリクラ帳のすぐ下に置く。** 材料はプリクラ帳から取るので、
+                     この2つは並んでいたほうが道が分かる */}
+              <button className="album-open-btn is-sheet" onClick={openSheet}>
+                <span className="album-open-emoji">✂️</span>
+                <span className="album-open-label">{t('btn_make_sheet')}</span>
+                <span className="album-open-count">{t('sheet_note')}</span>
+              </button>
+
               {/* 買い切りの入口。**買った人には出さない。**
                   ⚠️ ここが無いと、カメラが動かない端末では買う道が無い
                      （buyOpen の宣言のところを読むこと）。
                      プリクラ帳と同じ見た目で、下に控えめに置く */}
               {!unlocked && (
-                <button className="album-open-btn" onClick={() => setBuyOpen(true)}>
+                <button className="album-open-btn is-buy" onClick={() => setBuyOpen(true)}>
                   <span className="album-open-emoji">🔓</span>
                   <span className="album-open-label">{t('unlock_buy_app')}</span>
                   <span className="album-open-count">{t('unlock_lead_short')}</span>
@@ -2440,31 +2107,9 @@ function App() {
                 </button>
               </div>
 
-              {/* 動画ファイルは動画を撮る人だけのもの。写真の道では出さない */}
-              {captureKind === 'video' && (
-              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-                <button
-                  className={`source-btn ${videoSrc ? 'on' : ''}`}
-                  style={{ width: '100%' }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <span className="source-icon">📁</span>
-                  <span className="source-text">{videoSrc ? t('setting_video_change') : t('setting_video_load')}</span>
-                </button>
-                <p style={{ margin: '8px 0 0', fontSize: '12px', lineHeight: 1.5, color: '#e2e8f0', textAlign: 'center' }}>
-                  ゲームplayの動画などを予め録画してご用意いただき<br />アップロードしてください
-                </p>
-              </div>
-              )}
-              {captureKind === 'video' && videoSrc && (
-                <div className="shape-switch" style={{ marginTop: '12px' }}>
-                  <button className={!loopVideo ? 'on' : ''} onClick={() => setLoopVideo(false)}>{t('btn_loop_no')}</button>
-                  <button className={loopVideo ? 'on' : ''} onClick={() => setLoopVideo(true)}>{t('btn_loop_yes')}</button>
-                </div>
-              )}
               {/* 選べていないうちは先へ進ませない。押せないボタンを出すより、
                   選んだ瞬間に出すほうが「次に何をするか」が分かる */}
-              {(camOn || videoSrc) && (
+              {camOn && (
                 <button
                   className="start-btn"
                   style={{ marginTop: 16 }}
@@ -2513,7 +2158,7 @@ function App() {
                   いつも出す。「フレームなし」を選んだ人も進めないと困る */}
               <button
                 className="start-btn frame-decide"
-                onClick={() => (captureKind === 'photo' ? setScreen('video') : setSetupStep('telop'))}
+                onClick={() => setScreen('video')}
               >{t('btn_decide_frame')}</button>
 
               <div className="shape-switch shape-switch--mini">
@@ -2591,7 +2236,10 @@ function App() {
                   <button
                     key={f.id}
                     className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
-                    onClick={() => (locked(f) ? showUnlock() : setFrameId(f.id))}
+                    /* 鍵つきでも**選べる**（2026-08-31、伊波さん「鍵付きの絵を見せる」）。
+                       前は解除画面へ直行していて、自分の顔に乗ったところを
+                       一度も見られなかった。買う道は一覧の下の帯から行ける */
+                    onClick={() => setFrameId(f.id)}
                     title={locked(f) ? t('locked_hint') : f.name}
                   >
                     {/* 一覧は**見本の絵**を使う。元の絵は 1400px、タイルは 145px ほどで、
@@ -2621,6 +2269,49 @@ function App() {
                 ))}
               </div>
 
+              {/* おためし中の知らせ。タイルのタップを試着に譲ったので、
+                  **ここが「買う」への入口**になる（2026-08-31） */}
+              {builtinFrame && locked(builtinFrame) && (
+                <div className="trial-bar">
+                  <span>{t('trial_hint')}</span>
+                  <button className="trial-buy" onClick={showUnlock}>{t('trial_buy')}</button>
+                </div>
+              )}
+
+              {/* 撮る前に決めておく飾り。**テロップの段が無くなったので
+                  ここへ移した**（2026-08-31、動画をやめたとき）。
+                  雰囲気と色味は写真にもそのまま乗る（canvas に描いているので） */}
+              <div className="opt-row">
+                <span className="opt-label wide">{t('title_ambient')}</span>
+                <div className="shape-switch">
+                  <button className={!ambientOn ? 'on' : ''} onClick={() => pickAmbient(null)}>{t('tone_none')}</button>
+                  <button className={ambientOn === 'emotional' ? 'on' : ''} onClick={() => pickAmbient('emotional')}>{t('eff_emotional')}</button>
+                  <button className={ambientOn === 'mirrorball' ? 'on' : ''} onClick={() => pickAmbient('mirrorball')}>{t('eff_mirrorball')}</button>
+                </div>
+              </div>
+
+              {/* 色味（2026-08-23、伊波さん「エフェクトも初めから選んで
+                  撮影中は出しておこう」）。撮っているあいだずっとかかる */}
+              <div className="opt-row">
+                <span className="opt-label wide">{t('title_tone')}</span>
+                <div className="shape-switch">
+                  <button className={!tone ? 'on' : ''} onClick={() => pickTone(null)}>{t('tone_none')}</button>
+                  <button className={tone === 'warm' ? 'on' : ''} onClick={() => pickTone('warm')}>{t('tone_warm')}</button>
+                  <button className={tone === 'cool' ? 'on' : ''} onClick={() => pickTone('cool')}>{t('tone_cool')}</button>
+                  <button className={tone === 'vivid' ? 'on' : ''} onClick={() => pickTone('vivid')}>{t('tone_vivid')}</button>
+                </div>
+              </div>
+
+              {/* 利き手。撮るボタンを持つ手に合わせる */}
+              <div className="opt-row">
+                <span className="opt-label wide">{t('title_rec_btn_pos')}</span>
+                <div className="shape-switch">
+                  <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
+                  <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
+                </div>
+              </div>
+
+
               {/* 決定ボタンは一覧の**上**へ移した（2026-08-14）。
                   ここに二重で置かない */}
 
@@ -2644,9 +2335,6 @@ function App() {
                       <li>{t('unlock_p1')}</li>
                       <li>{t('unlock_p2')}</li>
                     </ul>
-                    {/* アプリでは Play の課金、Web では外の売り場（上のコメントを見ること）*/}
-                    {inApp ? (
-                      <>
                         <button className="unlock-buy" onClick={buyNow} disabled={buyBusy}>
                           {buyBusy ? '…' : t('unlock_buy_app')}
                         </button>
@@ -2656,41 +2344,6 @@ function App() {
                           {t('unlock_restore')}
                         </button>
                         {buyNG && <p className="unlock-ng">{t('unlock_buy_ng')}</p>}
-                      </>
-                    ) : (
-                      /* ⚠️ **Web では、いま買う道が無い**（2026-08-24）。
-                         BOOTH の商品ページを閉じ（伊波さん「BOOTHは消した」）、
-                         Ko-fi は CUBICENGINE の寄付専用にした（「KOFIもCUBICENGINEの
-                         寄付だけ」）。**寄付の導線に販売を混ぜない**という約束。
-
-                         リンクを残すと 404 に当たるので、代わりに「準備中」と出す。
-                         Web 決済は Stripe に移す話が進んでいる（ヒマワリの手紙
-                         2026-08-23「tinyCUBEのWeb決済Stripe導入の件」）。
-                         **入ったらここにボタンを戻すこと。**
-
-                         キー入力（下）はそのまま残す。前にキーを配った人が
-                         使えなくなるのを防ぐため */
-                      <p className="unlock-soon">{t('unlock_web_soon')}</p>
-                    )}
-                    {/* キー入力は Web だけ。アプリに残すと「外で買う道」に見えて
-                        審査で引っかかる（買った人は Play が覚えているので要らない）*/}
-                    {!inApp && (
-                      <>
-                        <div className="unlock-row">
-                          <input
-                            className="unlock-input"
-                            value={keyInput}
-                            placeholder={t('unlock_place')}
-                            autoCapitalize="characters"
-                            autoCorrect="off"
-                            spellCheck={false}
-                            onChange={e => { setKeyInput(e.target.value); setKeyNG(false); }}
-                          />
-                          <button className="unlock-go" onClick={submitKey}>{t('unlock_go')}</button>
-                        </div>
-                        {keyNG && <p className="unlock-ng">{t('unlock_ng')}</p>}
-                      </>
-                    )}
                   </>
                 )}
               </div>
@@ -2704,115 +2357,6 @@ function App() {
             {/* ④ スタンプ（テロップ）。フレームの次に聞く。
                 言葉と「どう出るか」は同じ場所で決めたい（2026-08-13、伊波さん
                 「次（スタンプテキスト変更しますか？」「テキストの出現の仕方忘れずに」） */}
-            {setupStep === 'telop' && (
-            <div className="setup-section highlight-section">
-              {/* 見出しを1つずつ立てると50px×3、説明文で42px。それだけで
-                  画面からはみ出す。写真側と同じく、小さな札を操作の左に
-                  添える形にしてスクロールを無くす（2026-08-14、伊波さん
-                  「動画のテキストスタンプのページもスクロールなしで」）。
-                  説明は入力欄の透かしへ移した */}
-              <h3 className="setup-section-title">{t('title_edit_stamp')}</h3>
-              <div className="telop-inputs">
-                {myTelops.map((text, i) => (
-                  <div className="telop-row" key={i}>
-                    <span className="slot-no telop">{i + 1}</span>
-                    <input
-                      className="telop-input"
-                      value={text}
-                      maxLength={20}
-                      placeholder="好きな言葉を入れてね"
-                      onChange={e => setTelop(i, e.target.value)}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* 動きの飾り（2026-08-23、伊波さん「ミラーボールは先に」）。
-                  撮っているあいだずっと出る。撮影中に押さなくて済む */}
-              <div className="opt-row">
-                <span className="opt-label wide">{t('title_ambient')}</span>
-                <div className="shape-switch">
-                  <button className={!ambientOn ? 'on' : ''} onClick={() => pickAmbient(null)}>{t('tone_none')}</button>
-                  <button className={ambientOn === 'emotional' ? 'on' : ''} onClick={() => pickAmbient('emotional')}>{t('eff_emotional')}</button>
-                  <button className={ambientOn === 'mirrorball' ? 'on' : ''} onClick={() => pickAmbient('mirrorball')}>{t('eff_mirrorball')}</button>
-                </div>
-              </div>
-
-              {/* 色味（2026-08-23、伊波さん「エフェクトも初めから選んで
-                  撮影中は出しておこう」）。撮っているあいだずっとかかる。
-                  フラッシュは一瞬のものでかけっぱなしにできないので、
-                  代わりに色味を置いた */}
-              <div className="opt-row">
-                <span className="opt-label wide">{t('title_tone')}</span>
-                <div className="shape-switch">
-                  <button className={!tone ? 'on' : ''} onClick={() => pickTone(null)}>{t('tone_none')}</button>
-                  <button className={tone === 'warm' ? 'on' : ''} onClick={() => pickTone('warm')}>{t('tone_warm')}</button>
-                  <button className={tone === 'cool' ? 'on' : ''} onClick={() => pickTone('cool')}>{t('tone_cool')}</button>
-                  <button className={tone === 'vivid' ? 'on' : ''} onClick={() => pickTone('vivid')}>{t('tone_vivid')}</button>
-                </div>
-              </div>
-
-              {/* 出し方（2026-08-23、伊波さん「文字の出現も自動で出す方が
-                  やりやすい」）。自撮りは押しに行った指がレンズに被るので、
-                  撮る前に決めておけば撮影中は何も触らずに済む */}
-              <div className="opt-row">
-                <span className="opt-label wide">{t('title_telop_mode')}</span>
-                <div className="shape-switch">
-                  <button className={telopMode === 'tap' ? 'on' : ''} onClick={() => pickTelopMode('tap')}>{t('telop_tap')}</button>
-                  <button className={telopMode === 'random' ? 'on' : ''} onClick={() => pickTelopMode('random')}>{t('telop_auto_random')}</button>
-                  <button className={telopMode === 'order' ? 'on' : ''} onClick={() => pickTelopMode('order')}>{t('telop_auto_order')}</button>
-                </div>
-              </div>
-
-              <div className="opt-row">
-                <span className="opt-label">{t('title_position')}</span>
-                <div className="shape-switch">
-                  <button className={!telopRandom ? 'on' : ''} onClick={() => pickTelopPos(false)}>{t('telop_center')}</button>
-                  <button className={telopRandom ? 'on' : ''} onClick={() => pickTelopPos(true)}>{t('telop_random')}</button>
-                </div>
-              </div>
-
-              <div className="opt-row">
-                <span className="opt-label">{t('label_color')}</span>
-                <div className="shape-switch">
-                  <button className={!telopDark ? 'on' : ''} onClick={() => pickTelopColor(false)}>{t('telop_white')}</button>
-                  <button className={telopDark ? 'on' : ''} onClick={() => pickTelopColor(true)}>{t('telop_black')}</button>
-                </div>
-              </div>
-
-              {/* 利き手。録画ボタンを持つ手に合わせる */}
-              {/* 何のボタンの位置か分からないので「録画ボタン」と言い切る
-                  （2026-08-14、伊波さん「ボタンの位置の文言は
-                  録画ボタンの位置に変更」）。札は2行で置く */}
-              <div className="opt-row">
-                <span className="opt-label wide">{t('title_rec_btn_pos')}</span>
-                <div className="shape-switch">
-                  <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
-                  <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
-                </div>
-              </div>
-
-              {/* 動画の音の扱い。動画を読み込んだ人にだけ関わる */}
-              {videoSrc && (
-                <div className="opt-row">
-                  <span className="opt-label">音</span>
-                  <div className="shape-switch">
-                    <button className={useSrcAudio === 'mic' ? 'on' : ''} onClick={() => pickSrcAudio('mic')}>{t('srcaudio_mic')}</button>
-                    <button className={useSrcAudio === 'mix' ? 'on' : ''} onClick={() => pickSrcAudio('mix')}>{t('srcaudio_mix')}</button>
-                    <button className={useSrcAudio === 'off' ? 'on' : ''} onClick={() => pickSrcAudio('off')}>{t('srcaudio_off')}</button>
-                  </div>
-                </div>
-              )}
-
-              {/* 「撮る」はいちばん最後。前は真ん中にあって、その下にも
-                  設定が続いていた（押したあとに気づく並びだった） */}
-              <button
-                className="start-btn"
-                style={{ marginTop: 14, width: '100%' }}
-                onClick={() => setScreen('video')}
-              >{t('btn_shoot_with_setting')}</button>
-            </div>
-            )}
 
             {/* ③ その他の設定。普段は開かなくていいものを全部ここへ */}
           </div>
@@ -3070,35 +2614,6 @@ function App() {
           分からない（2026-08-14、伊波さん「停止後の操作が不明」
           「今の動画を保存しますか？やりなおしますか？の選択かな」）。
           撮れたものをその場で見て、保存かやりなおしかを選ぶ */}
-      {madeVideo && (
-        <div className="preview-screen">
-          <div className="preview-inner" onClick={e => e.stopPropagation()}>
-            <div className="preview-head">{t('msg_photo_taken')}</div>
-            <div className="preview-sheet">
-              {/* 音も出す。撮れた声が入っているか、ここで確かめられる */}
-              <video src={madeVideo.url} controls playsInline autoPlay loop />
-            </div>
-            <div className="preview-btns">
-              <button
-                className="sub-btn"
-                onClick={() => {
-                  URL.revokeObjectURL(madeVideo.url);
-                  setMadeVideo(null);
-                  setStartHint(true);
-                }}
-              >{t('btn_redo')}</button>
-              <button
-                className="start-btn save-btn preview-save"
-                onClick={async () => {
-                  await save(madeVideo.blob, madeVideo.ext);
-                  URL.revokeObjectURL(madeVideo.url);
-                  setMadeVideo(null);
-                }}
-              >{t('btn_save_video')}</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* できあがりの見本。ここで初めて「3枚が1枚になった姿」が見える。
           気に入らなければ閉じて直せる（2026-08-14、伊波さん
@@ -3212,6 +2727,101 @@ function App() {
         </div>
       )}
 
+      {/* プリシートを作る画面（2026-08-31）。
+          「3〜7枚えらぶ → 型をえらぶ → 保存」の3手だけ。
+          ⚠️ **型に名前を付けない。**形をそのまま小さく見せれば言葉は要らないし、
+             日本語と英語で名前を用意する手間も無くなる（sheet.ts の頭を読むこと） */}
+      {screen === 'sheet' && (
+        <div className="setup-screen sheet-screen">
+          <div className="setup-header">
+            <h2 className="setup-title">{t('sheet_title')}</h2>
+            <button className="setup-close-btn" onClick={() => setScreen('setup')}>{t('btn_back')}</button>
+          </div>
+
+          <div className="setup-content">
+            <p className="sheet-lead">{t('sheet_lead')}</p>
+
+            <div className="sheet-sources">
+              <button
+                className="sheet-src"
+                onClick={openAlbumForSheet}
+                disabled={sheetPhotos.length >= MAX_PHOTOS}
+              >{t('sheet_from_album')}</button>
+              <button
+                className="sheet-src"
+                onClick={() => sheetFileRef.current?.click()}
+                disabled={sheetPhotos.length >= MAX_PHOTOS}
+              >{t('sheet_from_device')}</button>
+              <input
+                type="file" accept="image/*" multiple
+                ref={sheetFileRef} style={{ display: 'none' }}
+                onChange={takeFilesIntoSheet}
+              />
+            </div>
+
+            {/* 選んだもの。番号は「何番目に大きく出るか」でもある */}
+            {sheetPhotos.length > 0 && (
+              <>
+                <div className="sheet-picked">
+                  {sheetPhotos.map((src, i) => (
+                    <button
+                      key={i}
+                      className="sheet-picked-cell"
+                      title={t('sheet_tap_del')}
+                      onClick={() => setSheetPhotos(prev => prev.filter((_, j) => j !== i))}
+                    >
+                      <img src={src} alt="" />
+                      <span className="sheet-picked-no">{i + 1}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="sheet-hint">
+                  {sheetPhotos.length < MIN_PHOTOS
+                    ? t('sheet_need_more').replace('{n}', String(MIN_PHOTOS - sheetPhotos.length))
+                    : sheetPhotos.length >= MAX_PHOTOS
+                      ? t('sheet_room_full').replace('{n}', String(MAX_PHOTOS))
+                      : t('sheet_tap_del')}
+                </p>
+              </>
+            )}
+
+            {sheetLayouts.length > 0 && (
+              <div className="sheet-layouts">
+                <h3 className="setup-section-title">{t('sheet_layout')}</h3>
+                <div className="sheet-layout-row">
+                  {sheetLayouts.map(l => (
+                    <button
+                      key={l.id}
+                      className={`sheet-layout ${sheetLayout?.id === l.id ? 'on' : ''}`}
+                      onClick={() => setSheetLayoutId(l.id)}
+                    >
+                      <span className="sheet-layout-paper">
+                        {l.cells.map((c, i) => (
+                          <span key={i} style={{
+                            left: `${c.x * 100}%`, top: `${c.y * 100}%`,
+                            width: `${c.w * 100}%`, height: `${c.h * 100}%`,
+                          }} />
+                        ))}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {sheetBusy && <p className="sheet-hint">{t('msg_wait')}</p>}
+
+            {sheetPreview && (
+              <>
+                <div className="sheet-preview"><img src={sheetPreview} alt="" /></div>
+                <button className="sheet-save" onClick={saveSheet}>{t('sheet_save')}</button>
+                <button className="sheet-clear" onClick={() => setSheetPhotos([])}>{t('sheet_clear')}</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {albumOpen && (
         <div className="album-screen">
           <div className="album-head">
@@ -3252,6 +2862,20 @@ function App() {
                         2枚選ぶと入れ替わる、という動きは見ただけでは分からない */}
                     <span className="album-hint">{t('msg_sort_hint')}</span>
                   </>
+                ) : albumEditing === 'pick' ? (
+                  /* プリシートの材料を選んでいるとき（2026-08-31）。
+                     ⚠️ **あと何枚入るかを出すこと。** 7枚で頭打ちなので、
+                        選べるつもりで選んで無視されると、何が起きたか分からない */
+                  <>
+                    <button className="album-tool" onClick={() => { setAlbumEditing(false); setAlbumPicked(new Set()); setAlbumOpen(false); }}>{t('btn_cancel')}</button>
+                    <button
+                      className="album-tool album-use"
+                      disabled={!albumPicked.size}
+                      onClick={takePickedIntoSheet}
+                    >{albumPicked.size
+                      ? t('btn_use_picked').replace('{n}', String(Math.min(albumPicked.size, MAX_PHOTOS - sheetPhotos.length)))
+                      : t('msg_pick_for_sheet')}</button>
+                  </>
                 ) : (
                   <>
                     <button className="album-tool" onClick={() => setAlbumEditing('del')}>{t('btn_choose_del')}</button>
@@ -3262,8 +2886,29 @@ function App() {
                 )}
               </div>
 
+              {/* ページ送り（2026-08-31）。**1ページ50枚のシートが3枚つづり。**
+                  ⚠️ **どのページに何枚入っているかを数で出すこと。**
+                     空のページを開いて「消えた」と思われるのがいちばんまずい */}
+              {ALBUM_PAGES > 1 && (
+                <div className="album-pages">
+                  {Array.from({ length: ALBUM_PAGES }, (_, i) => {
+                    const has = albumList.slice(i * PAGE_SIZE, (i + 1) * PAGE_SIZE).length;
+                    return (
+                      <button
+                        key={i}
+                        className={`album-page-btn ${albumPage === i ? 'on' : ''}`}
+                        onClick={() => setAlbumPage(i)}
+                      >
+                        <span className="album-page-no">{i + 1}</span>
+                        <span className="album-page-has">{has}/{PAGE_SIZE}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="album-grid">
-                {albumList.map(it => (
+                {albumPageItems.map(it => (
                   <button
                     key={it.id}
                     // ⚠️ **向きは、しまうときに決めた it.wide を使う**（2026-08-19）。
@@ -3307,7 +2952,9 @@ function App() {
                     実物のシールブックと同じで、**あと何枚貼れるかが目で分かる**。
                     ⚠️ **1枚も無いときは出さない**（伊波さん「空の時は空で」）。
                     空っぽの棚が50個並んでも、集めたくならない */}
-                {Array.from({ length: Math.max(0, ALBUM_LIMIT - albumList.length) }, (_, i) => (
+                {/* ⚠️ **空き枠は「そのページの残り」ぶんだけ出す。**
+                    全体の残りを出すと、1ページ目に150枚ぶんの枠が並ぶ */}
+                {Array.from({ length: Math.max(0, PAGE_SIZE - albumPageItems.length) }, (_, i) => (
                   <div key={'empty' + i} className="album-cell empty" aria-hidden="true" />
                 ))}
               </div>

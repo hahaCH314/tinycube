@@ -24,7 +24,7 @@
   margin: 0; font-size: 0.8rem; color: #94a3b8; line-height: 1.4;
 }
 .onboarding-item strong {
-  color: #66e7ff; font-size: 0.9rem;
+  color: var(--cyan); font-size: 0.9rem;
 }
 
 .setup-section {
@@ -39,7 +39,7 @@
 }
 .setup-section-title {
   margin: 0 0 12px; font-size: 0.95rem; font-weight: 900;
-  color: #66e7ff; letter-spacing: 0.04em;
+  color: var(--cyan); letter-spacing: 0.04em;
 }
 .highlight-section .setup-section-title { color: #fff; text-shadow: 0 0 8px rgba(102, 231, 255, 0.8); }
 
@@ -53,7 +53,7 @@
   color: #fff; transition: all 0.2s;
 }
 .source-btn.on {
-  border-color: #66e7ff;
+  border-color: var(--cyan);
   background: linear-gradient(145deg, rgba(31, 168, 216, 0.3), rgba(102, 231, 255, 0.1));
   box-shadow: 0 0 16px rgba(102, 231, 255, 0.3);
   color: #fff;
@@ -74,7 +74,7 @@
 .setup-start-btn {
   width: 100%; max-width: 400px; padding: 18px; border-radius: 30px;
   font-size: 1.1rem; font-weight: 900;
-  background: linear-gradient(145deg, #ff4fa3, #c9256e);
+  background: linear-gradient(145deg, var(--pink), #c9256e);
   color: #fff; border: 2px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 4px 16px rgba(255, 79, 163, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.5);
   transition: transform 0.1s;
@@ -100,8 +100,8 @@
   background: rgba(102, 231, 255, 0.1);
   border-color: rgba(102, 231, 255, 0.5);
 }
-.unlock-title { font-size: 0.95rem; font-weight: 900; color: #ffd964; }
-.unlock-done { font-size: 0.95rem; font-weight: 900; color: #66e7ff; }
+.unlock-title { font-size: 0.95rem; font-weight: 900; color: var(--lemon); }
+.unlock-done { font-size: 0.95rem; font-weight: 900; color: var(--cyan); }
 .unlock-points {
   margin: 8px 0 12px; padding-left: 4px; list-style: none;
   display: flex; flex-direction: column; gap: 6px;
@@ -113,7 +113,7 @@
   text-align: center; text-decoration: none;
   font-size: 0.9rem; font-weight: 900;
   border-radius: 16px;
-  background: linear-gradient(145deg, #ffe9a8 0%, #ffd964 55%, #e0a422 100%);
+  background: linear-gradient(145deg, var(--lemon) 0%, var(--lemon) 55%, #e0a422 100%);
   color: #4a3200;
   border: 2px solid rgba(255, 255, 255, 0.8);
   box-shadow: 0 0 16px rgba(255, 217, 100, 0.5);
@@ -128,21 +128,21 @@
   border: 2px solid rgba(255, 217, 100, 0.5);
   color: #fff; outline: none;
 }
-.unlock-input:focus { border-color: #ffd964; box-shadow: 0 0 12px rgba(255, 217, 100, 0.5); }
+.unlock-input:focus { border-color: var(--lemon); box-shadow: 0 0 12px rgba(255, 217, 100, 0.5); }
 .unlock-go {
   flex: 0 0 auto; padding: 12px 16px; border-radius: 14px;
   font-size: 0.85rem; font-weight: 900;
-  background: #ff4fa3; color: #fff;
+  background: var(--pink); color: #fff;
   border: 2px solid rgba(255, 255, 255, 0.6);
 }
 .unlock-go:active { transform: translateY(2px); }
-.unlock-ng { margin-top: 8px; font-size: 0.76rem; color: #ffb3d8; line-height: 1.5; }
+.unlock-ng { margin-top: 8px; font-size: 0.76rem; color: var(--pink-soft); line-height: 1.5; }
 
 .unlock-key {
   margin: 8px 0; padding: 10px; border-radius: 12px;
   background: rgba(0, 0, 0, 0.35);
   font-family: 'Outfit', monospace; font-size: 0.9rem; letter-spacing: 0.08em;
-  color: #66e7ff; text-align: center;
+  color: var(--cyan); text-align: center;
 }
 /* 「解除を外す」と「買ったのに使えないとき」は、どちらも控えめでよい。
    主役は買うボタンなので、同じ薄さで揃える */
@@ -156,8 +156,31 @@
 /* 買うボタンのすぐ下に置くので、少しだけ離す */
 .unlock-restore { margin-top: 8px; }
 
+/* おためし中の帯。**タイルのタップを試着に譲ったので、ここが唯一の「買う」入口**
+   （2026-08-31）。鍵つきの枠を選んでいるあいだだけ、一覧の下に出る。
+   ⚠️ 見つけやすさは大事にすること。App Store は 2026-08-30 に
+      「アプリ内課金のボタンが見つけられない」で一度リジェクトしている */
+.trial-bar {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px; padding: 10px 12px; border-radius: 14px;
+  background: rgba(255, 79, 163, 0.14);
+  border: 2px solid rgba(255, 79, 163, 0.45);
+  font-size: 0.76rem; line-height: 1.5; color: var(--pink-soft);
+}
+.trial-bar span { flex: 1 1 auto; }
+.trial-buy {
+  flex: 0 0 auto; padding: 10px 14px; border-radius: 12px;
+  font-size: 0.76rem; font-weight: 900; white-space: nowrap;
+  background: var(--pink); color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+.trial-buy:active { transform: translateY(2px); }
+
 .frame-tile.locked { position: relative; border-color: rgba(255, 217, 100, 0.5); }
-.frame-tile.locked img { filter: saturate(0.35) brightness(0.5); }
+/* ⚠️ **鍵つきでも色は殺さない**（2026-08-31、伊波さん「鍵付きの絵を見せる」）。
+   前は saturate(0.35) brightness(0.5) だった。推し色は**色そのものが商品**なので、
+   売り物だけが見えない状態になっていた。少しだけ沈めて、鍵の印で区別する */
+.frame-tile.locked img { filter: brightness(0.86); }
 .frame-tile.locked span:not(.lock-mark) { color: #94a3b8; }
 .lock-mark {
   position: absolute; top: 50%; left: 50%;
@@ -202,7 +225,7 @@
 
 .manner-title {
   margin: 0; font-size: 1.35rem; font-weight: 900; letter-spacing: 0.04em;
-  color: #66e7ff;
+  color: var(--cyan);
   text-shadow: 0 0 14px rgba(102, 231, 255, 0.6);
 }
 
@@ -214,7 +237,7 @@
 .manner-agree-btn {
   min-height: 54px; padding: 0 22px; border-radius: 999px;
   font-size: 0.95rem; font-weight: 900; color: #fff;
-  background: linear-gradient(135deg, #ff4fa3, #a855f7);
+  background: linear-gradient(135deg, var(--pink), var(--violet));
   border: 1px solid rgba(255,255,255,0.34);
   box-shadow: 0 8px 26px rgba(255, 79, 163, 0.42);
 }
@@ -261,7 +284,7 @@
      ただの文字なので、指はそのまま下へ通す */
   pointer-events: none;
   font-weight: 900; font-style: italic;
-  color: #66e7ff;
+  color: var(--cyan);
   /* ピンクの影は外した（2026-08-16、伊波さん「はじめに、なにを撮るなどの
      文字の陰にあるピンクは消去」）。水色の光だけ残して読みやすくする */
   text-shadow: 0 0 14px rgba(102, 231, 255, 0.6);
@@ -316,7 +339,7 @@
 .start-btn {
   width: 100%; min-height: 54px; padding: 0 20px; border-radius: 999px;
   font-size: 0.95rem; font-weight: 900; color: #fff;
-  background: linear-gradient(135deg, #ff4fa3, #a855f7);
+  background: linear-gradient(135deg, var(--pink), var(--violet));
   border: 1px solid rgba(255,255,255,0.34);
   box-shadow: 0 8px 26px rgba(255, 79, 163, 0.42);
 }
@@ -346,7 +369,7 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .frame-tile:hover { transform: scale(1.05); }
-.frame-tile.on { border-color: #66e7ff; box-shadow: 0 0 12px rgba(102, 231, 255, 0.4); }
+.frame-tile.on { border-color: var(--cyan); box-shadow: 0 0 12px rgba(102, 231, 255, 0.4); }
 /* ⚠️ **縮め方を指定すること。** 元の絵は 1024〜1400px、タイルは 145px ほど。
    1/8 近くまで潰すので、任せると点を間引くだけの縮小になり、細かい飾りが
    ギザギザに割れる（2026-08-16、伊波さん「絵が汚いまま」）。
@@ -372,8 +395,8 @@
   font-size: 0.75rem; font-weight: 900;
   display: flex; align-items: center; justify-content: center;
 }
-.slot-no.mine { background: #ff4fa3; color: #fff; }
-.slot-no.telop { background: #66e7ff; color: #000; }
+.slot-no.mine { background: var(--pink); color: #fff; }
+.slot-no.telop { background: var(--cyan); color: #000; }
 .sound-try {
   flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%;
   background: rgba(255,255,255,0.1); color: #fff; font-size: 0.75rem;
@@ -383,11 +406,11 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   display: flex; flex-direction: column;
 }
-.sound-name em { font-style: normal; font-size: 0.7rem; color: #ffb3d8; font-weight: 700; }
+.sound-name em { font-style: normal; font-size: 0.7rem; color: var(--pink-soft); font-weight: 700; }
 .sound-set {
   flex: 0 0 auto; padding: 6px 10px; border-radius: 8px;
   font-size: 0.75rem; font-weight: 700;
-  background: rgba(102, 231, 255, 0.15); color: #66e7ff;
+  background: rgba(102, 231, 255, 0.15); color: var(--cyan);
 }
 
 .shape-switch {
@@ -399,7 +422,7 @@
   background: transparent; color: #94a3b8; transition: all 0.2s;
 }
 .shape-switch button.on {
-  background: #66e7ff; color: #000; box-shadow: 0 2px 8px rgba(102, 231, 255, 0.3);
+  background: var(--cyan); color: #000; box-shadow: 0 2px 8px rgba(102, 231, 255, 0.3);
 }
 
 .telop-inputs { display: flex; flex-direction: column; gap: 8px; }
@@ -409,7 +432,7 @@
   background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15);
   color: #fff; font-size: 0.85rem; font-weight: 700;
 }
-.telop-input:focus { border-color: #66e7ff; box-shadow: 0 0 8px rgba(102, 231, 255, 0.3); outline: none; }
+.telop-input:focus { border-color: var(--cyan); box-shadow: 0 0 8px rgba(102, 231, 255, 0.3); outline: none; }
 
 /* --- 下バーのボタンに言葉を添える -----------------------------------------
    絵だけだと何のボタンか分からない。絵の下に必ず言葉を置く
@@ -524,7 +547,7 @@
 .lang-switch button.on {
   color: #fff;
   background: rgba(102, 231, 255, 0.18);
-  border-color: #66e7ff;
+  border-color: var(--cyan);
 }
 
 /* --- 下バーとレールの高さを実態に合わせる ---------------------------------
@@ -691,15 +714,22 @@
    暗い上に暗いものが重なって**何も見えなかった**
    （2026-08-13、伊波さん「フレーム全然見えんやんけ」「縦も横も関係なく」）。
    市松模様（透明を表す一般的な見せ方）を敷いて、絵の形が分かるようにする。 */
+/* 2026-08-31、灰色の市松を**生成りの市松**に替えた
+   （伊波さん「矢沢あい風」「スタイリッシュと可愛いの融合」）。
+   ⚠️ **仕組みは変えていない。**明るい地でないと絵が見えない、という
+      8/13 の理由はそのまま生きている。色と目の細かさだけ変えた。
+      灰色の細かい市松は Photoshop の透過表示そのもので、
+      売り物の絵（推し色）が「作りかけ」に見えていた。
+      目を粗く・差を小さくすると、紙の質感に見えて絵が主役になる */
 .frame-picker .frame-tile {
-  background-color: #6b7280 !important;
+  background-color: #fdf6ec !important;
   background-image:
-    linear-gradient(45deg, #9ca3af 25%, transparent 25%),
-    linear-gradient(-45deg, #9ca3af 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #9ca3af 75%),
-    linear-gradient(-45deg, transparent 75%, #9ca3af 75%) !important;
-  background-size: 12px 12px !important;
-  background-position: 0 0, 0 6px, 6px -6px, -6px 0px !important;
+    linear-gradient(45deg, #efe3d3 25%, transparent 25%),
+    linear-gradient(-45deg, #efe3d3 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #efe3d3 75%),
+    linear-gradient(-45deg, transparent 75%, #efe3d3 75%) !important;
+  background-size: 18px 18px !important;
+  background-position: 0 0, 0 9px, 9px -9px, -9px 0px !important;
 }
 
 /* 文字だけのタイル（マイフレーム追加・フレームなし）は市松にしない */
@@ -737,8 +767,8 @@
 
 /* 選んだものははっきり分かるように */
 .frame-picker .frame-tile.on {
-  border-color: #66e7ff;
-  box-shadow: 0 0 0 2px #66e7ff, 0 0 16px rgba(102, 231, 255, 0.5);
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px var(--cyan), 0 0 16px rgba(102, 231, 255, 0.5);
   transform: scale(1.02);
 }
 
@@ -757,11 +787,21 @@
 .kind-btn {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 20px 14px; border-radius: 14px;
-  background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
-  color: #fff; transition: all 0.2s; text-align: center;
+  /* ⚠️ **主役をいちばん目立たせること。**（2026-08-31）
+     プリクラ帳とプリシートだけが光っていて、いちばん押してほしい
+     「写真を撮る」が黒いまま沈んでいた。順番が逆になっていた */
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--pink) 30%, transparent),
+    color-mix(in srgb, var(--violet) 18%, transparent) 60%,
+    rgba(0,0,0,0.30));
+  border: 1.5px solid color-mix(in srgb, var(--cream) 62%, transparent);
+  box-shadow:
+    0 0 22px color-mix(in srgb, var(--pink) 26%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--cream) 34%, transparent);
+  color: var(--cream); transition: all 0.2s; text-align: center;
 }
 .kind-btn.on {
-  border-color: #66e7ff;
+  border-color: var(--cyan);
   background: linear-gradient(145deg, rgba(31,168,216,0.32), rgba(102,231,255,0.12));
   box-shadow: 0 0 16px rgba(102,231,255,0.35);
 }
@@ -769,7 +809,7 @@
 .kind-title { font-size: 1.05rem; font-weight: 900; }
 /* 改行は JSX 側で '\n' を渡している。<br> を入れずに済ませる */
 .kind-note {
-  font-size: 0.72rem; line-height: 1.5; color: #d7e3f5;
+  font-size: 0.72rem; line-height: 1.5; color: color-mix(in srgb, var(--cream) 78%, transparent);
   white-space: pre-line;
 }
 
@@ -810,7 +850,7 @@
   background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.2); color: #fff;
 }
 .cam-face-btn.on {
-  border-color: #66e7ff; color: #66e7ff;
+  border-color: var(--cyan); color: var(--cyan);
   background: rgba(102, 231, 255, 0.14);
 }
 /* ＋−は指で押すもの。小さいと押し損なう */
@@ -819,14 +859,14 @@
   font-size: 1.2rem; font-weight: 900; line-height: 1;
   background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.25); color: #fff;
 }
-.zoom-range { flex: 1; accent-color: #66e7ff; }
+.zoom-range { flex: 1; accent-color: var(--cyan); }
 .cam-tune-label {
   font-size: 0.68rem; color: #cfe0f5; text-align: center; line-height: 1.4;
 }
 
 /* 3枚連写のボタン。押すものが1つだけなので大きく見せる */
 .photo-btn-round.burst {
-  background: linear-gradient(145deg, #ff4fa3, #c9256e);
+  background: linear-gradient(145deg, var(--pink), #c9256e);
   border-color: rgba(255,255,255,0.85);
   box-shadow: 0 4px 16px rgba(255, 79, 163, 0.55);
 }
@@ -940,8 +980,8 @@
 }
 .shot-thumb > img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .shot-thumb.on {
-  border-color: #66e7ff;
-  box-shadow: 0 0 0 2px #66e7ff, 0 0 14px rgba(102,231,255,0.5);
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 2px var(--cyan), 0 0 14px rgba(102,231,255,0.5);
 }
 /* 小さくしたぶん、番号も小さくする。大きいままだと絵が見えない */
 .shot-no {
@@ -954,7 +994,7 @@
 /* 飾りを付けた写真に印。どれを触ったか一目で分かるように */
 .shot-dot {
   position: absolute; bottom: 4px; right: 5px;
-  font-size: 9px; color: #66e7ff; text-shadow: 0 0 6px rgba(102,231,255,0.9);
+  font-size: 9px; color: var(--cyan); text-shadow: 0 0 6px rgba(102,231,255,0.9);
 }
 
 /* 文字の色。丸を並べるだけ。名前で選ばせない（色は見たほうが早い） */
@@ -965,7 +1005,7 @@
 }
 .color-dot.on {
   border-color: #fff;
-  box-shadow: 0 0 0 3px #66e7ff, 0 0 14px rgba(102,231,255,0.6);
+  box-shadow: 0 0 0 3px var(--cyan), 0 0 14px rgba(102,231,255,0.6);
   transform: scale(1.08);
 }
 
@@ -996,7 +1036,7 @@
 
 /* 保存は終わりの操作。ほかのボタンと同じ色だと見つからない */
 .start-btn.save-btn {
-  background: linear-gradient(145deg, #ff4fa3, #c9256e);
+  background: linear-gradient(145deg, var(--pink), #c9256e);
   border-color: rgba(255,255,255,0.8);
   box-shadow: 0 4px 16px rgba(255, 79, 163, 0.55);
 }
@@ -1030,7 +1070,7 @@
   background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
 }
 .font-btn.on {
-  border-color: #66e7ff; color: #66e7ff;
+  border-color: var(--cyan); color: var(--cyan);
   background: rgba(102, 231, 255, 0.14);
   box-shadow: 0 0 12px rgba(102, 231, 255, 0.35);
 }
@@ -1052,7 +1092,7 @@
 }
 .opt-label {
   flex: 0 0 auto; min-width: 2.6em;
-  font-size: 0.78rem; font-weight: 900; color: #66e7ff;
+  font-size: 0.78rem; font-weight: 900; color: var(--cyan);
   letter-spacing: 0.04em;
 }
 /* 札の右側は残りぜんぶ使う */
@@ -1134,7 +1174,7 @@
   background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2);
 }
 .deco-tab.on {
-  border-color: #66e7ff; color: #66e7ff;
+  border-color: var(--cyan); color: var(--cyan);
   background: rgba(102, 231, 255, 0.16);
   box-shadow: 0 0 14px rgba(102, 231, 255, 0.4);
 }
@@ -1248,7 +1288,7 @@
    もう少し広げられないかな」） -------------------------------------- */
 /* 色の丸とタブを詰めて、浮いたぶんを写真に回す */
 .photo-screen .opt-row .color-dot { width: 24px; height: 24px; border-width: 2px; }
-.photo-screen .opt-row .color-dot.on { box-shadow: 0 0 0 2px #66e7ff, 0 0 10px rgba(102,231,255,0.6); }
+.photo-screen .opt-row .color-dot.on { box-shadow: 0 0 0 2px var(--cyan), 0 0 10px rgba(102,231,255,0.6); }
 .photo-screen .deco-tab { padding: 7px 6px; font-size: 0.78rem; }
 .photo-screen .deco-tabs { margin-bottom: 8px; }
 
@@ -1286,7 +1326,7 @@
   overflow: hidden;
 }
 .preview-head {
-  text-align: center; font-size: 1.05rem; font-weight: 900; color: #66e7ff;
+  text-align: center; font-size: 1.05rem; font-weight: 900; color: var(--cyan);
   text-shadow: 0 0 14px rgba(102, 231, 255, 0.6);
   letter-spacing: 0.06em;
 }
@@ -1373,7 +1413,7 @@
 }
 .credits-head {
   font-size: 0.74rem; font-weight: 900; letter-spacing: 0.08em;
-  color: #66e7ff; margin-bottom: 10px;
+  color: var(--cyan); margin-bottom: 10px;
 }
 .credits-list { margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .credits-row { display: flex; align-items: baseline; gap: 10px; }
@@ -1417,7 +1457,7 @@
   font-size: 0.72rem; font-weight: 800; color: #cfe0f5;
   background: transparent; border: none;
 }
-.cam-tune-caret { font-size: 0.62rem; color: #66e7ff; }
+.cam-tune-caret { font-size: 0.62rem; color: var(--cyan); }
 /* 畳んだときは見出しの一行だけ残す */
 .cam-tune.folded { gap: 0; padding-bottom: 6px; }
 .cam-tune.folded .cam-tune-row,
@@ -1733,7 +1773,7 @@ button:active,
 }
 .where-head {
   text-align: center; font-weight: 900; font-size: 1.1rem;
-  color: #66e7ff; margin-bottom: 14px;
+  color: var(--cyan); margin-bottom: 14px;
   /* ピンクの影は外した（2026-08-16、伊波さん「文字の陰にあるピンクは消去」）*/
 }
 .where-btn {
@@ -1771,26 +1811,52 @@ button:active,
    ここだけ光っていてほしい。中身の作りは変えていない */
 .album-open-btn {
   position: relative; overflow: hidden;
-  display: flex; align-items: center; gap: 10px;
-  width: 100%; margin-top: 14px; padding: 15px 16px;
-  background: linear-gradient(135deg,
-    rgba(255,79,163,0.34), rgba(157,92,255,0.28) 45%, rgba(102,231,255,0.30));
-  border: 2px solid rgba(255,255,255,0.34);
-  border-radius: 16px; color: #fff; min-height: 60px;
+  /* ⚠️ **札は右ではなく、文字の下へ。**（2026-08-31）
+     右に置くと「プリシートを作／る」のように見出しが割れる。
+     上の「写真を撮る」も、題の下に説明を置く形なので揃う */
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'emoji label' 'emoji note';
+  align-items: center; column-gap: 12px; row-gap: 2px;
+  width: 100%; margin-top: 14px; padding: 14px 16px;
+  text-align: left;
+  /* ⚠️ **1つの面に色は1つ**（2026-08-31、伊波さん「スタイリッシュと可愛いの融合」）。
+     前は桃・紫・水色の3色を薄く重ねていて、紺地の上で濁っていた
+     （彩度を落とした3色を混ぜると茶色に寄る）。
+     矢沢あいの絵は1枚の中で色を混ぜない。**1色＋生成りの細い線**で立てる。
+     色はボタンごとに変える（下の --accent）*/
+  --accent: var(--pink);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--accent) 40%, transparent),
+      color-mix(in srgb, var(--accent) 16%, transparent));
+  border: 1.5px solid color-mix(in srgb, var(--cream) 55%, transparent);
+  border-radius: 16px; color: var(--cream); min-height: 60px;
   box-shadow:
-    0 0 18px rgba(255,79,163,0.35),
-    0 0 34px rgba(102,231,255,0.18),
-    inset 0 1px 0 rgba(255,255,255,0.35);
+    0 0 16px color-mix(in srgb, var(--accent) 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--cream) 30%, transparent);
   animation: album-glow 2.6s ease-in-out infinite;
 }
+/* ボタンごとに1色。並んだときに見分けがつく */
+.album-open-btn.is-album { --accent: var(--pink); }
+.album-open-btn.is-sheet { --accent: var(--cyan); }
+/* ⚠️ **レモンは面に敷かない。**（2026-08-31）
+   薄い黄を紺地に重ねると、混ざってカーキになる。
+   黄は「線と光」でだけ使い、面は限りなく薄くする */
+.album-open-btn.is-buy {
+  --accent: var(--lemon);
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--lemon) 14%, transparent),
+    color-mix(in srgb, var(--lemon) 5%, transparent));
+  border-color: color-mix(in srgb, var(--lemon) 62%, transparent);
+}
+
 /* 息をするように光る。速いと落ち着かないのでゆっくり */
 @keyframes album-glow {
-  0%, 100% { box-shadow: 0 0 18px rgba(255,79,163,0.35),
-                         0 0 34px rgba(102,231,255,0.18),
-                         inset 0 1px 0 rgba(255,255,255,0.35); }
-  50%      { box-shadow: 0 0 26px rgba(255,79,163,0.55),
-                         0 0 48px rgba(102,231,255,0.30),
-                         inset 0 1px 0 rgba(255,255,255,0.45); }
+  0%, 100% { box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 28%, transparent),
+                         inset 0 1px 0 color-mix(in srgb, var(--cream) 30%, transparent); }
+  50%      { box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent),
+                         inset 0 1px 0 color-mix(in srgb, var(--cream) 42%, transparent); }
 }
 /* きらめきが左から右へ流れる。**指の邪魔をしないよう pointer-events は切る** */
 .album-open-btn::after {
@@ -1811,18 +1877,22 @@ button:active,
   .album-open-btn::after { animation: none; opacity: 0; }
 }
 .album-open-emoji {
-  font-size: 24px;
-  filter: drop-shadow(0 0 6px rgba(255,214,102,0.9));
+  grid-area: emoji;
+  font-size: 26px;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent, var(--lemon)) 80%, transparent));
 }
 .album-open-label {
+  /* ⚠️ **札に押されて割れないこと。**（2026-08-31、「プリシートを作／る」に
+     なっていた）。文字側を伸ばし、札のほうを縮ませる */
+  grid-area: label; min-width: 0;
   font-weight: 900; font-size: 16px; letter-spacing: 0.03em;
-  text-shadow: 0 0 10px rgba(255,255,255,0.45);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--cream) 40%, transparent);
 }
 .album-open-count {
-  margin-left: auto; font-size: 12px; font-weight: 800;
-  padding: 3px 9px; border-radius: 999px;
-  color: #fff; background: rgba(0,0,0,0.28);
-  border: 1px solid rgba(255,255,255,0.28);
+  grid-area: note; justify-self: start;
+  font-size: 11px; font-weight: 700; line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--cream) 72%, transparent);
 }
 
 /* ---- プリクラ帳そのもの ---- */
@@ -1858,7 +1928,7 @@ button:active,
   box-shadow: 0 2px 6px rgba(80,80,140,0.14);
 }
 .album-title {
-  font-weight: 900; font-size: 1.05rem; color: #6a5acd;
+  font-weight: 900; font-size: 1.05rem; color: var(--violet);
 }
 .album-count { margin-left: auto; font-size: 12px; font-weight: 700; color: #7b7ba8; }
 
@@ -1958,15 +2028,15 @@ button:active,
   transform-origin: center;
 }
 
-.album-cell.picked { border-color: #6a5acd; }
+.album-cell.picked { border-color: var(--violet); }
 .album-check {
   position: absolute; top: 5px; right: 5px;
   width: 22px; height: 22px; border-radius: 50%;
-  background: rgba(255,255,255,0.94); border: 2px solid #6a5acd;
-  color: #ff4fa3; font-size: 13px; font-weight: 900;
+  background: rgba(255,255,255,0.94); border: 2px solid var(--violet);
+  color: var(--pink); font-size: 13px; font-weight: 900;
   display: flex; align-items: center; justify-content: center;
 }
-.album-cell.picked .album-check { background: #ff4fa3; color: #fff; border-color: #fff; }
+.album-cell.picked .album-check { background: var(--pink); color: #fff; border-color: #fff; }
 
 .album-empty {
   flex: 1 1 auto;
@@ -1976,7 +2046,7 @@ button:active,
 }
 .album-empty-emoji { font-size: 46px; opacity: 0.9; }
 .album-empty-main {
-  font-size: 17px; font-weight: 900; color: #6a5acd;
+  font-size: 17px; font-weight: 900; color: var(--violet);
   /* ピンクの影は外した（2026-08-16、伊波さん「文字の陰にあるピンクは消去」）*/
 }
 .album-empty-sub {
@@ -2014,7 +2084,7 @@ button:active,
 .save-busy-dots { display: flex; gap: 10px; justify-content: center; margin-bottom: 16px; }
 .save-busy-dots span {
   width: 14px; height: 14px; border-radius: 50%;
-  background: #ff4fa3; display: inline-block;
+  background: var(--pink); display: inline-block;
   animation: save-bounce 1.05s infinite ease-in-out both;
 }
 .save-busy-dots span:nth-child(1) { animation-delay: -0.28s; }
@@ -2024,7 +2094,7 @@ button:active,
   35%           { transform: translateY(-12px); opacity: 1; }
 }
 .save-busy-text {
-  color: #66e7ff; font-weight: 900; font-size: 1.1rem; letter-spacing: 0.06em;
+  color: var(--cyan); font-weight: 900; font-size: 1.1rem; letter-spacing: 0.06em;
   /* ピンクの影は外した（2026-08-16）*/
 }
 .save-busy-note { color: #cbd5e1; font-size: 0.85rem; margin-top: 6px; }
@@ -2037,7 +2107,7 @@ button:active,
   position: absolute; top: 10px; left: 10px; z-index: 40;
   padding: 5px 11px; border-radius: 999px;
   font-size: 11px; font-weight: 800; letter-spacing: 0.04em;
-  color: #9beeff;
+  color: var(--cyan-soft);
   background: rgba(7, 11, 24, 0.78);
   border: 1px solid rgba(102, 231, 255, 0.42);
   pointer-events: none;   /* 指は下のカメラへ通す */
@@ -2097,7 +2167,7 @@ button:active,
 .album-hint {
   font-size: 0.78rem;
   line-height: 1.4;
-  color: #6a5acd;
+  color: var(--violet);
   align-self: center;
 }
 
@@ -2156,7 +2226,7 @@ button:active,
   background: rgba(11, 16, 36, 0.92);
   border-bottom: 1px solid rgba(102, 231, 255, 0.22);
 }
-.buy-screen .album-title { color: #9beeff; }
+.buy-screen .album-title { color: var(--cyan-soft); }
 .buy-screen .album-close {
   background: rgba(255, 255, 255, 0.08);
   color: #eaf2ff;
@@ -2167,3 +2237,97 @@ button:active,
   max-width: 520px;
   margin: 0 auto;
 }
+
+/* ============ プリシート（2026-08-31） ============
+   「3〜7枚えらぶ → 型をえらぶ → 保存」の3手だけの画面。
+   ⚠️ **型は言葉で説明せず、形そのものを小さく見せる。**
+      その見本は sheet.ts の割り付け（0〜1の割合）を、
+      そのまま % に置いただけ。数字が1か所にしかないので、ずれない */
+.sheet-lead {
+  margin: 0 0 12px; font-size: 0.8rem; line-height: 1.7; color: #cbd5e1;
+}
+.sheet-sources { display: flex; gap: 10px; margin-bottom: 14px; }
+.sheet-src {
+  flex: 1 1 0; padding: 14px 8px; border-radius: 14px;
+  font-size: 0.82rem; font-weight: 800; line-height: 1.4;
+  background: rgba(255, 255, 255, 0.06); color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+}
+.sheet-src:active { transform: translateY(2px); }
+.sheet-src:disabled { opacity: 0.4; }
+
+/* 選んだもの。番号は「何番目に大きく出るか」でもある */
+.sheet-picked {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;
+}
+.sheet-picked-cell {
+  position: relative; width: 64px; height: 64px; padding: 0;
+  border-radius: 12px; overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.3); background: #000;
+}
+.sheet-picked-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sheet-picked-no {
+  position: absolute; left: 3px; top: 3px;
+  min-width: 18px; height: 18px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900;
+  background: var(--pink); color: #fff;
+}
+.sheet-hint { margin: 0 0 14px; font-size: 0.74rem; color: #94a3b8; }
+
+.sheet-layout-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.sheet-layout {
+  flex: 0 0 auto; padding: 6px; border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+.sheet-layout.on { border-color: var(--pink); background: rgba(255, 79, 163, 0.16); }
+/* 紙の形は本物のシールシートに近い縦長（sheet.ts の 1080x1560 と同じ比） */
+.sheet-layout-paper {
+  position: relative; display: block;
+  width: 62px; height: 90px; border-radius: 6px;
+  background: #fff; overflow: hidden;
+}
+.sheet-layout-paper > span {
+  position: absolute; display: block;
+  border: 1.5px solid #fff; border-radius: 3px;
+  background: var(--pink-soft);
+  box-sizing: border-box;
+}
+
+.sheet-preview {
+  margin: 0 0 14px; padding: 10px; border-radius: 14px;
+  background: rgba(0, 0, 0, 0.3); text-align: center;
+}
+.sheet-preview img {
+  max-width: 100%; max-height: 46vh; border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+.sheet-save {
+  width: 100%; padding: 16px; border-radius: 16px;
+  font-size: 0.95rem; font-weight: 900;
+  background: var(--pink); color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+.sheet-save:active { transform: translateY(2px); }
+.sheet-clear {
+  width: 100%; margin-top: 8px; padding: 10px; border-radius: 12px;
+  font-size: 0.72rem; font-weight: 700;
+  background: transparent; color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+/* プリクラ帳で「材料を選ぶ」ときの決定ボタン。消すボタンと間違えないよう色を分ける */
+.album-tool.album-use { background: var(--pink); color: #fff; border-color: rgba(255,255,255,0.5); }
+.album-tool.album-use:disabled { opacity: 0.45; }
+
+/* プリクラ帳のページ送り（2026-08-31）。1ページ50枚のシートが3枚つづり */
+.album-pages { display: flex; gap: 8px; padding: 0 12px 8px; }
+.album-page-btn {
+  flex: 1 1 0; padding: 8px 4px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  background: rgba(255, 255, 255, 0.06); color: #cbd5e1;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+}
+.album-page-btn.on { border-color: var(--pink); background: rgba(255, 79, 163, 0.16); color: #fff; }
+.album-page-no { font-size: 0.95rem; font-weight: 900; }
+.album-page-has { font-size: 0.62rem; opacity: 0.8; }

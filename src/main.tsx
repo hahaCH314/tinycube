@@ -22,21 +22,28 @@ try {
   // 対応していない環境では何もしない（元から回る）
 }
 
-// 枠の絵を端末に貯めておく係を登録する。
-// 43種で 6.1MB あり、開くたびに落とし直すと通信の細い場所で待たされる。
-// 画面そのもの（HTML）は毎回ネットを見るので、直したものは次に開けば届く。
-// 開発中（npm run dev）は登録しない。むしろ前に登録されたものを外す。
-// 貯める係が居ると、直したものがスマホに永久に届かず「何も変わらない」に見える。
-// 実機で確かめながら直すときにこれが一番の障害になる（2026-08-13、伊波さん）
-if (import.meta.env.DEV) {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations?.().then(rs => rs.forEach(r => r.unregister())).catch(() => { });
-    caches?.keys?.().then(ks => ks.forEach(k => caches.delete(k))).catch(() => { });
-  }
-} else if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // 登録できなくてもアプリは動く（毎回落とし直すだけ）
-    });
-  });
+// 枠の絵を貯めておく係（sw.js）は 2026-08-31 に廃止した。
+//
+// ■ なぜやめたか
+//
+// Web版をやめたので（伊波さん「WEB版やめる」）、動く先はアプリだけになった。
+// **アプリの中では、枠の絵はもう端末の中にある**（capacitor.config.ts の
+// webDir: 'dist'）。落とし直す通信が無いので、貯める意味が無い。
+// 意味が無いのに、6MB ぶんを二重に持ち、2026-08-11（顔ハメが黒いまま）と
+// 2026-08-14（入れ替えた17枚が届かない）で2回転んだ仕組みが動き続けていた。
+//
+// ■ ⚠️ **登録をやめるだけでは足りない**
+//
+// すでに入っている Android のアプリには、**登録済みの係が生きている。**
+// 係は sw.js を消しても自分の写しで動き続けるので、こちらから外しにいく。
+// iOS は capacitor:// で動くため、もともと登録できていない。
+//
+// **この片付けは、何度か版を重ねたら消してよい**（全員の端末から外れたあと）。
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations?.()
+    .then(rs => rs.forEach(r => r.unregister()))
+    .catch(() => { /* 外せなくてもアプリは動く */ });
+  caches?.keys?.()
+    .then(ks => ks.forEach(k => caches.delete(k)))
+    .catch(() => { /* 消せなくてもアプリは動く */ });
 }

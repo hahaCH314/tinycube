@@ -29,8 +29,14 @@ const DB_NAME = 'tinycube.album';
 const DB_VER = 1;
 const STORE = 'shots';
 
-/** 何枚まで持つか。超えた分は古いものから消える */
-export const ALBUM_LIMIT = 50;
+/** 1ページに貼れる枚数。実物のシールブックと同じで、**空の枠も出す**
+ *  （2026-08-25、伊波さん「プリクラ帳は初めから５０枚入りのしーとにしたら？」） */
+export const PAGE_SIZE = 50;
+/** 何ページぶん持つか（2026-08-31、伊波さん「１００枚とかにならない？
+ *  ３ページとかにして」）。50枚のシートを3枚つづりにした */
+export const ALBUM_PAGES = 3;
+/** 何枚まで持つか。**いっぱいになったら勝手に消さず、断る**（下の add を読むこと） */
+export const ALBUM_LIMIT = PAGE_SIZE * ALBUM_PAGES;
 
 export type AlbumItem = {
   /** 撮った時刻。そのまま並び順と id を兼ねる */

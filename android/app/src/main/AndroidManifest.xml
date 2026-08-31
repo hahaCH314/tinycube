@@ -45,8 +45,14 @@
          したとたん「カメラが許可できない」になる
          （2026-08-15、伊波さんが内部テストの実機で発見）。 -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- ⚠️ **マイクの権限は 2026-08-31 に外した。**
+         録画をやめて写真だけにしたので、音をまったく扱わなくなった
+         （伊波さん「思い切って動画やめようかな」）。
+         要らない権限を宣言したままにすると、ストアの審査でも
+         入れる人の目にも「なぜ？」が残る。**戻すときは、
+         本当に録音するようになってからにすること。**
+         前は RECORD_AUDIO と MODIFY_AUDIO_SETTINGS の2つがあった -->
 
     <!-- ⚠️ **保存のための権限は1つも宣言しない**（2026-08-16）。
          写真アプリへ直接しまう形（@capacitor-community/media）に変えたとき、
