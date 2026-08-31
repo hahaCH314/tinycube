@@ -77,6 +77,24 @@ for (const [w, h, tag] of SIZES) {
   await tap('フレームを選ぶ', 1800);
   await shot('3-frame');
 
+  // 4. 鍵つきの段を開いたところ（¥300 で何が手に入るかが分かる）
+  await page.locator('.paid-open').click({ force: true }).catch(() => {});
+  await page.waitForTimeout(1400);
+  // 段が画面の中ほどに来るように送る
+  await page.locator('.paid-open').scrollIntoViewIfNeeded().catch(() => {});
+  await page.waitForTimeout(700);
+  await shot('4-paid');
+
+  // 5. 写真をコラージュ（プリシートを作る画面）
+  //    フレームの段から「戻る」で なにを撮る？ まで戻す
+  await page.locator('.setup-close-btn').click({ force: true }).catch(() => {});
+  await page.waitForTimeout(900);
+  await page.locator('.setup-close-btn').click({ force: true }).catch(() => {});
+  await page.waitForTimeout(1100);
+  await page.locator('.album-open-btn.is-sheet').click({ force: true }).catch(() => {});
+  await page.waitForTimeout(1500);
+  await shot('5-collage');
+
   await ctx.close();
 }
 
