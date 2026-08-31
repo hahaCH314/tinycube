@@ -65,3 +65,18 @@ export function isUnlocked(): boolean {
   return unlocked;
 }
 
+/** 解除を外す。**確かめるために要る。**（2026-08-31、伊波さん「課金ボタンないよ」）
+ *
+ *  ⚠️ **これが無いと、一度でも解除された端末では二度と購入画面を出せない。**
+ *     買う入口は `{!unlocked && ...}` で消えるので、テストで一度解けたら
+ *     そこで手詰まりになる（8/15 に外され、8/31 に私が関数ごと消していた）。
+ *
+ *  ⚠️ **買った事実まで消えるわけではない。** ストア側が持ち主を覚えているので、
+ *     次に起動すれば initBilling が拾って、また解除された状態に戻る。
+ *     ここで消すのは「この端末が覚えている印」だけ。 */
+export function relock() {
+  unlocked = false;
+  try { localStorage.removeItem(STORE_PLAY); } catch { /* 消せなくても次に開けば効く */ }
+  listeners.forEach(fn => fn(false));
+}
+

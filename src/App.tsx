@@ -11,7 +11,7 @@ import { setAmbient, setTone, type ToneId } from './effects'
 import { t, getLang, setLang } from './i18n'
 // savedKey / relock は 2026-08-15 に全部無料にしたとき使わなくなった。
 // unlock.ts 側には残してある（気が変わったときに戻せるように）
-import { isUnlocked, startBilling, onUnlockChange } from './unlock'
+import { isUnlocked, startBilling, onUnlockChange, relock } from './unlock'
 import { buy as buyInApp, restore as restoreInApp } from './billing'
 import { saveMedia, takeLastMediaError } from './save'
 import { FaceIcon, SceneIcon } from './CamIcon'
@@ -2384,6 +2384,14 @@ function App() {
                         買う仕組みが動いていない以上どちらも意味がないので外した */}
                     <b className="unlock-done">{t('unlock_done')}</b>
                     <p className="sheet-note">{t('unlock_done_note')}</p>
+                    {/* ⚠️ **「解除をやめる」を必ず残すこと。**（2026-08-31、
+                        伊波さん「課金ボタンないよ」）。買う入口は
+                        `{!unlocked && ...}` で全部消えるので、これが無いと
+                        **一度解除された端末では二度と購入画面を確かめられない。**
+                        買った事実はストア側が覚えているので、次に起動すれば戻る */}
+                    <button className="unlock-relock" onClick={() => { relock(); setUnlocked(false); }}>
+                      {t('unlock_relock')}
+                    </button>
                   </>
                 ) : (
                   <>
