@@ -53,6 +53,8 @@ type I18nDict = {
   unlock_done: string;
   unlock_done_note: string;
   unlock_relock: string;
+  /** 鍵つきフレームの段の見出し（畳めるところ）*/
+  paid_section: string;
   frame_locked: string;
   locked_hint: string;
   trial_hint: string;
@@ -267,14 +269,22 @@ const dictJa: I18nDict = {
   // 絵はボタン側（.ctrl-icon）で出すので、言葉だけ持つ。
   // ここに ● や ■ を付けると、ボタンの上で二重に出る（2026-08-13）
   btn_stop: '停止',
-  unlock_title: '追加フレームを使う（¥300・買い切り）',
-  unlock_lead: '一度きりの買い物で、あとから足したフレームが全部使えます。',
-  unlock_p1: '🖼 新しいフレームが使える（サイバー・ゴシック・和風など）',
-  unlock_p2: '✨ これから足すぶんも、追加のお金なしで使えます',
+  // ⚠️ **将来のフレームを約束しないこと。**（2026-08-31、伊波さん
+  //    「またいつか足したフレームもこの300円で使えるみたいに聞こえるし」）
+  //    前は「あとから足したフレームが全部使えます」「これから足すぶんも、
+  //    追加のお金なしで」と書いていた。これだと**一度買えば永久に全部**という
+  //    約束になり、¥500 の追加フレームを別に売る方針と食い違う。
+  //    ⚠️ **¥300 で手に入るのは「いま鍵がかかっている53枚」と「透かし消し」だけ。**
+  //       枚数は frames.ts の paid: true の数と合わせること（いま53枚）
+  //    ⚠️ **商品名は「推し色キラリフレームセット」**（2026-08-31、伊波さんが命名）
+  unlock_title: '推し色キラリフレームセット（¥300・買い切り）',
+  unlock_lead: '鍵つきの53枚が全部ひらきます（縦むき26枚・横むき27枚）。月々のお金はかかりません。',
+  unlock_p1: '🔓 鍵つきの53枚がひらく（推し色・サイバー・ゴシック・和風・顔ハメ）',
+  unlock_p2: '💧 写真の「tinyCUBE」の透かしが消える',
   unlock_buy: 'BOOTH で買う（¥300）',
   unlock_web_soon: 'いまはアプリ版でだけ買えます。ブラウザからのお支払いは準備中です。',
-  unlock_buy_app: 'ぜんぶ使えるようにする（¥300）',
-  unlock_lead_short: 'フレーム53枚＋透かし消し',
+  unlock_buy_app: '推し色キラリフレームセット（¥300）',
+  unlock_lead_short: '鍵つき53枚＋透かし消し',
   unlock_restore: '買ったのに使えないとき',
   unlock_buy_ng: 'いま買えませんでした。少し時間をおいて、もう一度ためしてください。',
   unlock_have: 'キーを持っている',
@@ -296,10 +306,16 @@ const dictJa: I18nDict = {
   unlock_done_note: `開発者から、みんなのフレームで遊ぶ姿、楽しく遊んでくれていたら嬉しいです。
 いつかSNSでtinyCUBEで撮った写真たちに出会えることを、楽しみにしております。`,
   unlock_relock: 'この端末の解除をやめる',
+  /** {n} はセットの枚数（53）。⚠️ **ここはパックの中身を見せる場所**なので、
+      縦むき26枚・横むき27枚をまとめて出す（2026-08-31、伊波さん
+      「53枚1パックにできないの？」）*/
+  paid_section: '🔒 推し色キラリフレームセット（{n}枚ぜんぶ・¥300）',
   frame_locked: '🔒',
-  locked_hint: 'このフレームは「ぜんぶ使う」に入っています。',
-  trial_hint: '🔒 おためし中。この枠のまま撮れますが、斜めに鍵のシールが入ります。',
-  trial_buy: 'シールを外す（¥300）',
+  // ⚠️ **何が有料なのかを言い切ること。**（2026-08-31、伊波さん
+  //    「どこから有料か何なのかなにもわからん」）
+  locked_hint: '🔒 鍵つき。推し色キラリフレームセット（¥300）でひらきます',
+  trial_hint: '🔒 鍵つきの枠です。このまま撮れますが、斜めに鍵のシールが入ります。',
+  trial_buy: '¥300でひらく（53枚セット）',
   btn_make_sheet: 'プリシートを作る',
   sheet_note: 'ためた写真を1枚に',
   sheet_title: 'プリシートを作る',
@@ -506,14 +522,17 @@ const dictEn: I18nDict = {
   
   btn_preview_stop: '⏸ Stop',
   btn_stop: 'Stop',
-  unlock_title: 'Unlock the extra frames (¥300, one-time)',
-  unlock_lead: 'One purchase unlocks every frame added later.',
-  unlock_p1: '🖼 New frames (cyber, gothic, Japanese and more)',
-  unlock_p2: '✨ Frames added in future are included too',
+  // ⚠️ 日本語側と同じ。**将来のフレームを約束しない**（前は
+  //    'every frame added later' と書いていた）。¥300 で手に入るのは
+  //    **いま鍵のかかっている53枚と、透かし消しだけ**
+  unlock_title: 'Sparkle Frame Set (¥300, one-time)',
+  unlock_lead: 'Opens all 53 locked frames (26 portrait, 27 landscape). No monthly fee.',
+  unlock_p1: '🔓 All 53 locked frames (cyber, gothic, Japanese, face-cutout)',
+  unlock_p2: '💧 Removes the "tinyCUBE" watermark from your photos',
   unlock_buy: 'Buy on Ko-fi (¥300)',
   unlock_web_soon: 'Purchases are available in the app for now. Payment from the browser is coming soon.',
-  unlock_buy_app: 'Unlock everything (¥300)',
-  unlock_lead_short: '53 more frames, no watermark',
+  unlock_buy_app: 'Sparkle Frame Set (¥300)',
+  unlock_lead_short: '53 locked frames + no watermark',
   unlock_restore: 'Already bought it?',
   unlock_buy_ng: 'Could not start the purchase. Please try again in a moment.',
   unlock_have: 'I have a key',
@@ -529,10 +548,12 @@ const dictEn: I18nDict = {
   unlock_done_note: `From the developer: I hope you have fun playing with all the frames.
 I am looking forward to the day I run into your tinyCUBE shots on social media.`,
   unlock_relock: 'Remove the unlock from this device',
+  paid_section: '🔒 Sparkle Frame Set (all {n} frames, ¥300)',
   frame_locked: '🔒',
-  locked_hint: 'This frame is part of "Unlock everything".',
-  trial_hint: '🔒 Trying it on. You can still shoot, but a little lock sticker goes in.',
-  trial_buy: 'Remove the sticker (¥300)',
+  // ⚠️ **何が有料なのかを言い切る**（日本語側と同じ）
+  locked_hint: '🔒 Locked. Opens with the Sparkle Frame Set (¥300)',
+  trial_hint: '🔒 A locked frame. You can still shoot, but a lock sticker goes in.',
+  trial_buy: 'Open for ¥300 (53 frames)',
   btn_make_sheet: 'Make a photo sheet',
   sheet_note: 'Turn saved shots into one sheet',
   sheet_title: 'Make a photo sheet',

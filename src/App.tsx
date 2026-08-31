@@ -91,6 +91,10 @@ function App() {
    *    ここを true にして別の一覧に切り替える
    */
   const [seasonOpen, setSeasonOpen] = useState(false);
+  // 鍵つき（¥300 のセット）の段を開いているか。⚠️ **畳んだ状態から始める**
+  // （2026-08-31、伊波さん「追加フレームで畳んでもいいし」）。
+  // 最初から開いていると、無料の一覧より先に有料が目に入る
+  const [paidOpen, setPaidOpen] = useState(false);
   const [customFrames, setCustomFrames] = useState<CustomFrameRecord[]>([]);
   useEffect(() => {
     getCustomFrames().then(setCustomFrames).catch(console.error);
@@ -239,17 +243,13 @@ function App() {
    * 自撮りは押しに行った指がレンズに被るので、触らずに済ませたい
    */
   type AmbientKind = 'emotional' | 'mirrorball';
-  const [ambientOn, setAmbientOn] = useState<AmbientKind | null>(() => {
+  const [ambientOn] = useState<AmbientKind | null>(() => {
     try { return (localStorage.getItem('tinycube.ambient') as AmbientKind) || null; } catch { return null; }
   });
-  const pickAmbient = (kind: AmbientKind | null) => {
-    setAmbientOn(kind);
-    setAmbient(kind);
-    try {
-      if (kind) localStorage.setItem('tinycube.ambient', kind);
-      else localStorage.removeItem('tinycube.ambient');
-    } catch { /* 保存できなくても動く */ }
-  };
+  // ⚠️ **選ぶ画面は 2026-08-31 に外した**（伊波さん「3つとも消す」）。
+  //    かけっぱなしの仕組み（effects.ts の setAmbient）は生きていて、
+  //    前に選んだものは下の useEffect で今も効く。
+  //    選び直す口を戻すときは、git の履歴から pickAmbient ごと戻すこと
   // 前に選んだものは開き直しても効かせる。描く側は effects.ts が持っている。
   // ⚠️ **起動のときだけでよい。** ambientOn を見張ると、選び直すたびに
   //    ここも走って pickAmbient と二重に渡すことになる
@@ -264,17 +264,10 @@ function App() {
    * フラッシュは一瞬光るものなので、かけっぱなしにできない。
    * 代わりに色味を3つ置いた。撮る前に選んで、撮影中はずっとかかる
    */
-  const [tone, setToneState] = useState<ToneId | null>(() => {
+  const [tone] = useState<ToneId | null>(() => {
     try { return (localStorage.getItem('tinycube.tone') as ToneId) || null; } catch { return null; }
   });
-  const pickTone = (kind: ToneId | null) => {
-    setToneState(kind);
-    setTone(kind);
-    try {
-      if (kind) localStorage.setItem('tinycube.tone', kind);
-      else localStorage.removeItem('tinycube.tone');
-    } catch { /* 保存できなくても動く */ }
-  };
+  // 色味も同じ（選ぶ画面は外した。仕組みは effects.ts の setTone が持つ）
   // 前に選んだ色味は、開き直しても効かせる。
   // **描く側は effects.ts が持っているので、起動時に一度渡し直す**
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -401,7 +394,9 @@ function App() {
     try { localStorage.setItem('tinycube.guideSeen', '1'); } catch { /* 保存できなくても動く */ }
     setScreen('setup');
   };
-  const [hand, setHand] = useState<'right' | 'left'>('right');
+  // 撮るボタンを置く側。⚠️ **選ぶ画面は 2026-08-31 に外した**（同上）。
+  //    右で固定。左利き用に戻すときは opt-row ごと git から戻すこと
+  const [hand] = useState<'right' | 'left'>('right');
   // 初めて撮影画面に来た人に、押す場所だけ示すための旗
   const [startHint, setStartHint] = useState(false);
   // 撮る前の数え。押した瞬間に始まると構える間がない
@@ -2290,7 +2285,12 @@ function App() {
                 {/* 季節の限定フレーム（2026-08-25、ヒマワリからの手紙）。
                     ⚠️ **通常の一覧には混ぜない。** 期間中だけ、ここに
                        専用のボタンが出る。押すと一覧が季節のものに変わる */}
-                {(seasonOpen ? seasonFrames(shape) : inDisplayOrder(FRAMES.filter(f => fitsShape(f, shape)))).map(f => (
+                {/* ⚠️ **鍵つきは混ぜない。下の畳める段にまとめる**
+                    （2026-08-31、伊波さん「追加フレームで畳んでもいいし」
+                     →「それで行こう」）。混ぜて並べると、どこから有料なのか
+                    分からなかった（同日「どこから有料か何なのかなにもわからん」） */}
+                {(seasonOpen ? seasonFrames(shape)
+                  : inDisplayOrder(FRAMES.filter(f => fitsShape(f, shape) && !locked(f)))).map(f => (
                   <button
                     key={f.id}
                     className={`frame-tile ${frameId === f.id ? 'on' : ''} ${locked(f) ? 'locked' : ''}`}
@@ -2327,6 +2327,79 @@ function App() {
                 ))}
               </div>
 
+              {/* ⚠️ **鍵つき（¥300 のセット）は、ここに畳んで置く。**
+                  （2026-08-31、伊波さん「追加フレームで畳んでもいいし」）
+
+                  無料の一覧に混ぜていたときは、**どこから有料なのか分からな
+                  かった**（同日「どこから有料か何なのかなにもわからん」）。
+                  段を分けて、見出しに枚数と値段を書けば一目で分かる。
+
+                  ⚠️ **解除した人には出さない**（鍵が無くなるので、上の一覧に
+                     全部混ざる）。買っていない人にだけ、この段が出る。
+                  ⚠️ 季節の一覧を見ているときも出さない（別の話なので） */}
+              {!unlocked && !seasonOpen
+                && FRAMES.some(f => locked(f) && !f.season) && (
+                <>
+                  <button
+                    className={'paid-open' + (paidOpen ? ' on' : '')}
+                    onClick={() => setPaidOpen(v => !v)}
+                  >
+                    <span className="paid-open-mark">{paidOpen ? '▼' : '▶'}</span>
+                    {/* ⚠️ **ここは「パックの中身を見せる場所」。**（2026-08-31、
+                        伊波さん「53枚1パックにできないの？」）
+                        上の無料の一覧は「いま使える絵」だけを出すが、
+                        この段は**買うと何が手に入るか**を見せるところなので、
+                        縦むき26枚・横むき27枚を**まとめて53枚**並べる */}
+                    <span className="paid-open-label">
+                      {t('paid_section').replace(
+                        '{n}',
+                        String(FRAMES.filter(f => locked(f) && !f.season).length),
+                      )}
+                    </span>
+                  </button>
+                  {paidOpen && (
+                    <>
+                      <div className={`frame-picker ${shape === 'portrait' ? 'ar-portrait' : 'ar-landscape'}`}>
+                        {inDisplayOrder(FRAMES.filter(f => locked(f) && !f.season)).map(f => (
+                          <button
+                            key={f.id}
+                            className={`frame-tile locked ${frameId === f.id ? 'on' : ''}`
+                              + (fitsShape(f, shape) ? '' : ' other-shape')}
+                            /* 鍵つきでも選べる（試着できる）。撮ると斜めの
+                               鍵シールが焼かれる。買う道はすぐ下の帯から。
+                               ⚠️ **いまの向きに合わない絵を押したら、向きも
+                                  一緒に変える。** 押しても何も起きないと
+                                  「壊れている」に見える（2026-08-31） */
+                            onClick={() => {
+                              if (!fitsShape(f, shape)) {
+                                pickShape(shape === 'portrait' ? 'landscape' : 'portrait');
+                              }
+                              setFrameId(f.id);
+                            }}
+                            title={t('locked_hint')}
+                          >
+                            <img
+                              src={f.file.replace('./frames/', './frames/thumb/') + '?v=20260816_thumb'}
+                              alt={f.name}
+                              loading="lazy"
+                              onError={e => {
+                                const el = e.currentTarget;
+                                if (!el.dataset.fellBack) {
+                                  el.dataset.fellBack = '1';
+                                  el.src = f.file + '?v=20260813_raw';
+                                }
+                              }}
+                            />
+                            <span className="lock-mark">{t('frame_locked')}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <button className="paid-buy" onClick={showUnlock}>{t('unlock_buy_app')}</button>
+                    </>
+                  )}
+                </>
+              )}
+
               {/* おためし中の知らせ。タイルのタップを試着に譲ったので、
                   **ここが「買う」への入口**になる（2026-08-31） */}
               {builtinFrame && locked(builtinFrame) && (
@@ -2336,38 +2409,14 @@ function App() {
                 </div>
               )}
 
-              {/* 撮る前に決めておく飾り。**テロップの段が無くなったので
-                  ここへ移した**（2026-08-31、動画をやめたとき）。
-                  雰囲気と色味は写真にもそのまま乗る（canvas に描いているので） */}
-              <div className="opt-row">
-                <span className="opt-label wide">{t('title_ambient')}</span>
-                <div className="shape-switch">
-                  <button className={!ambientOn ? 'on' : ''} onClick={() => pickAmbient(null)}>{t('tone_none')}</button>
-                  <button className={ambientOn === 'emotional' ? 'on' : ''} onClick={() => pickAmbient('emotional')}>{t('eff_emotional')}</button>
-                  <button className={ambientOn === 'mirrorball' ? 'on' : ''} onClick={() => pickAmbient('mirrorball')}>{t('eff_mirrorball')}</button>
-                </div>
-              </div>
+              {/* ⚠️ 「動き」「色み」「撮るボタンの位置」を外した。
+                  2026-08-31、伊波さん「動きのエフェクトも、色味もいらないよ？」
+                  「3つとも消す」。
 
-              {/* 色味（2026-08-23、伊波さん「エフェクトも初めから選んで
-                  撮影中は出しておこう」）。撮っているあいだずっとかかる */}
-              <div className="opt-row">
-                <span className="opt-label wide">{t('title_tone')}</span>
-                <div className="shape-switch">
-                  <button className={!tone ? 'on' : ''} onClick={() => pickTone(null)}>{t('tone_none')}</button>
-                  <button className={tone === 'warm' ? 'on' : ''} onClick={() => pickTone('warm')}>{t('tone_warm')}</button>
-                  <button className={tone === 'cool' ? 'on' : ''} onClick={() => pickTone('cool')}>{t('tone_cool')}</button>
-                  <button className={tone === 'vivid' ? 'on' : ''} onClick={() => pickTone('vivid')}>{t('tone_vivid')}</button>
-                </div>
-              </div>
-
-              {/* 利き手。撮るボタンを持つ手に合わせる */}
-              <div className="opt-row">
-                <span className="opt-label wide">{t('title_rec_btn_pos')}</span>
-                <div className="shape-switch">
-                  <button className={hand === 'right' ? 'on' : ''} onClick={() => setHand('right')}>右</button>
-                  <button className={hand === 'left' ? 'on' : ''} onClick={() => setHand('left')}>左</button>
-                </div>
-              </div>
+                  フレームを選ぶ画面に3段も設定が並んでいて、主役のフレーム
+                  一覧を下へ押していた。選ぶものが多いほど迷う。
+                  仕組み（effects.ts の setAmbient / setTone）は残してある。
+                  戻すときは git の履歴からここへ戻すこと */}
 
 
               {/* 決定ボタンは一覧の**上**へ移した（2026-08-14）。

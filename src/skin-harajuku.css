@@ -449,16 +449,21 @@
   font-weight: 900;
   line-height: 1.1;
   color: #ffffff;
-  /* ⚠️ **-webkit-text-stroke を使わないこと。**（2026-08-31、ストア用の
-     スクショを撮って気づいた）。stroke は**文字の内側も削る**ので、
-     太い字だと白い部分が痩せ、そこに影が重なって**黒く潰れて読めない**。
-     縁取りは text-shadow を8方向に重ねて、外側だけに付ける */
+  /* ⚠️ **-webkit-text-stroke を使わないこと。** stroke は**文字の内側も
+     削る**ので、太い字だと白い部分が痩せ、影が重なって黒く潰れる。
+     縁取りは text-shadow を8方向に重ねて、外側だけに付ける。
+
+     ⚠️ **ただし重ねすぎないこと。**（2026-08-31、実機で伊波さん
+        「写真を撮るの文字は horror だし」）。3px で8方向に重ねたら、
+        字の隙間まで黒が回り込んで**滲んだ影絵**になっていた。
+        **1.5px まで。** 落ち影も 5px → 4px に。
+        白い部分がはっきり残る太さで止める */
   text-shadow:
-    -2px -2px 0 var(--y2k-ink), 2px -2px 0 var(--y2k-ink),
-    -2px 2px 0 var(--y2k-ink), 2px 2px 0 var(--y2k-ink),
-    -3px 0 0 var(--y2k-ink), 3px 0 0 var(--y2k-ink),
-    0 -3px 0 var(--y2k-ink), 0 3px 0 var(--y2k-ink),
-    5px 5px 0 var(--y2k-ink);
+    -1.5px -1.5px 0 var(--y2k-ink), 1.5px -1.5px 0 var(--y2k-ink),
+    -1.5px 1.5px 0 var(--y2k-ink), 1.5px 1.5px 0 var(--y2k-ink),
+    -1.5px 0 0 var(--y2k-ink), 1.5px 0 0 var(--y2k-ink),
+    0 -1.5px 0 var(--y2k-ink), 0 1.5px 0 var(--y2k-ink),
+    4px 4px 0 var(--y2k-ink);
   transform: rotate(-3deg);
 }
 /* 買う導線は控えめに（プリクラ帳より目立ってはいけない） */
@@ -606,8 +611,13 @@
    ⚠️ **ここが tinyCUBE の売り。** フレームの絵が主役に見えるようにする
    ========================================================================= */
 
-/* 縦／横のふせんタブ */
-.shape-switch,
+/* 縦／横のふせんタブ。
+   ⚠️ **`.shape-switch` だけで指定しないこと。**（2026-08-31、実機で発覚）
+      同じクラスを「雰囲気（なし／エモい／ミラーボール）」「色み（なし／
+      あたたかい／つめたい／こい）」「撮るボタンの位置」も**流用している**。
+      タブ用の太い字と 3px の枠を当てたら、4つ並ぶ「色み」が入りきらず
+      **1文字ずつ縦に潰れた**（伊波さん「全然違う」）。
+      → フレーム決定の段（.shape-switch--mini）だけに効かせる */
 .shape-switch--mini {
   display: flex;
   gap: 6px;
@@ -616,7 +626,7 @@
   border: none;
   border-radius: 0;
 }
-.shape-switch button {
+.shape-switch--mini button {
   flex: 1 1 0;
   min-height: 46px;
   font-family: var(--y2k-font);
@@ -629,11 +639,32 @@
   border-bottom: none;
   box-shadow: none;
 }
-.shape-switch button.on {
+.shape-switch--mini button.on {
   color: #ffffff;
   background: var(--y2k-cyan);
 }
-.shape-switch button:nth-child(2).on { background: var(--y2k-pink); }
+.shape-switch--mini button:nth-child(2).on { background: var(--y2k-pink); }
+
+/* 設定の並び（雰囲気・色み・撮るボタンの位置）。
+   **文字を折らないこと。** 3〜4個が横に並ぶので、字は小さくてよい */
+.opt-row .shape-switch button {
+  font-family: var(--y2k-font);
+  font-size: clamp(11px, 3.1vw, 13px);
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+  padding: 8px 4px;
+  color: var(--y2k-ink);
+  background: #ffffff;
+  border: 2px solid var(--y2k-ink);
+  border-radius: 8px;
+  box-shadow: 1px 2px 0 var(--y2k-ink);
+}
+.opt-row .shape-switch button.on {
+  color: #ffffff;
+  background: var(--y2k-cyan);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.45), 1px 2px 0 var(--y2k-ink);
+}
 
 /* 「フレーム決定」の判。黄色の付箋 */
 .start-btn.frame-decide {
@@ -1055,12 +1086,112 @@
   text-decoration: underline;
 }
 
-/* 鍵つきも色を殺さない（2026-08-31、伊波さん「鍵付きの絵を見せる」） */
-.frame-tile.locked { opacity: 1; color: var(--y2k-ink); }
+/* 鍵つきのフレーム。
+   ⚠️ **絵は見せる**（2026-08-31、伊波さん「鍵付きの絵を見せる」）。
+      灰色にして色を殺すと、何が買えるのか分からなくなる。
+   ⚠️ **でも「有料だ」と分かること**（同日「なにが鍵付きなのか明確にして、
+      少し見えにくいぐらいのフィルターと鍵はつけたら？」）。
+      → 絵はそのまま、上に**薄い膜**をかけて、鍵の札を貼る。
+      濃くしすぎない。絵が見えなくなったら意味がない */
+.frame-tile.locked {
+  position: relative;
+  opacity: 1;
+  color: var(--y2k-ink);
+}
+/* 薄い膜＋斜めのしま。「これは鍵つき」と一目で分かるように
+   （2026-08-31、伊波さん「フレーム選択の斜め線は大きく」） */
+.frame-tile.locked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(17, 17, 17, 0.14) 0 10px,
+      transparent 10px 22px
+    ),
+    rgba(255, 255, 255, 0.38);
+  pointer-events: none;
+}
 
+/* 鍵つきの段（畳めるところ）。
+   ⚠️ **無料の一覧と混ぜない**（2026-08-31、伊波さん「追加フレームで
+      畳んでもいいし」）。混ぜていたとき「どこから有料か分からない」と
+      言われた。見出しに枚数と値段を書いて、押すと開く */
+.paid-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  font-family: var(--y2k-font);
+  /* 見出しは1行に収める。2行に折れると「¥300）」だけ落ちて格好がつかない */
+  font-size: clamp(11px, 3.2vw, 15px);
+  font-weight: 900;
+  text-align: left;
+  color: var(--y2k-ink);
+  background: var(--y2k-yellow);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 4px 5px 0 var(--y2k-ink);
+}
+.paid-open:active { transform: translate(2px, 3px); box-shadow: 2px 3px 0 var(--y2k-ink); }
+.paid-open-mark { flex: 0 0 auto; font-size: 12px; }
+.paid-open-label { flex: 1 1 auto; line-height: 1.3; }
+
+/* いまの向きに合わない絵。**隠さずに、少し控えめに置く**
+   （2026-08-31、伊波さん「53枚1パックにできないの？」）。
+   パックの中身を全部見せるのが目的なので、出すことが大事。
+   押すと向きも一緒に変わる（App.tsx 側） */
+.frame-tile.other-shape {
+  opacity: 0.66;
+}
+/* 「縦むき」「横むき」と分かる小さな印を、左下に付ける */
+.frame-tile.other-shape::before {
+  content: "↻";
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+  font-weight: 900;
+  color: #ffffff;
+  background: var(--y2k-purple);
+  border: 2px solid var(--y2k-ink);
+  border-radius: 50%;
+}
+
+/* 段の中の「買う」。プリクラ帳より目立たせない */
+.paid-buy {
+  width: 100%;
+  min-height: 56px;
+  margin-top: 10px;
+  font-family: var(--y2k-font);
+  font-size: clamp(15px, 4.4vw, 19px);
+  font-weight: 900;
+  color: #ffffff;
+  background: var(--y2k-purple);
+  border: 3px solid var(--y2k-ink);
+  border-radius: 0;
+  box-shadow: 4px 5px 0 var(--y2k-ink);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+.paid-buy:active { transform: translate(2px, 3px); box-shadow: 2px 3px 0 var(--y2k-ink); }
+
+/* 鍵の札。角に貼った黄色いシールに見せる。
+   ⚠️ **タイルの外へ出さないこと。** -8px にしていたら、段の上端で
+      札の頭が切れていた（2026-08-31、実測）。内側に入れる */
 .lock-mark {
-  top: -8px;
-  right: -8px;
+  top: 4px;
+  right: 4px;
+  z-index: 2;   /* 上の膜より手前 */
   width: 26px;
   height: 26px;
   font-size: 13px;
