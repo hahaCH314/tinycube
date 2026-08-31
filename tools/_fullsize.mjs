@@ -19,7 +19,7 @@ const canvasの大きさ = () => page.evaluate(() => {
   const c = document.querySelector('canvas');
   return c ? `${c.width}x${c.height}` : 'なし';
 });
-await tap('同意してはじめる');
+await tap('はじめる');
 await tap('写真を撮る');
 await tap('自分を写す', 2500);
 await tap('フレームを選ぶ', 1200);

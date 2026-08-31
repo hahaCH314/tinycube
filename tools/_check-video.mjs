@@ -27,7 +27,7 @@ const tap = async (t, ms=1200) => {
 const ok = (n,v) => console.log(`  ${v?'OK  ':'NG  '} ${n}`);
 
 console.log('\n=== 動画の道 ===');
-ok('同意画面', await tap('同意してはじめる'));
+ok('同意画面', await tap('はじめる'));
 ok('動画を撮る', await tap('動画を撮る'));
 ok('自分を写す', await tap('自分を写す', 2500));
 ok('フレームを選ぶ', await tap('フレームを選ぶ'));

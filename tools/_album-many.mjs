@@ -24,11 +24,11 @@ await page.goto('http://localhost:5440/', { waitUntil:'domcontentloaded' });
 await page.waitForTimeout(1500);
 const tap = async (t, ms=1000) => { const e=page.locator('button',{hasText:t}).filter({visible:true}).first();
   if(!(await e.count())) return false; await e.click({force:true}).catch(()=>{}); await page.waitForTimeout(ms); return true; };
-await tap('同意してはじめる');
+await tap('はじめる');
 await page.evaluate(() => window.__seed());
 await page.reload({ waitUntil:'domcontentloaded' });
 await page.waitForTimeout(1500);
-await tap('同意してはじめる');
+await tap('はじめる');
 await tap('プリクラ帳', 3000);
 const info = await page.evaluate(() => {
   const scr=document.querySelector('.album-screen');

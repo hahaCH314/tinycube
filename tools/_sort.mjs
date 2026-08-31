@@ -20,11 +20,11 @@ await page.waitForTimeout(1500);
 const tap = async (t, ms=1000) => { const e=page.locator('button',{hasText:t}).filter({visible:true}).first();
   if(!(await e.count())) return false; await e.click({force:true}).catch(()=>{}); await page.waitForTimeout(ms); return true; };
 const ok = (n,v) => console.log(`  ${v?'OK  ':'NG  '} ${n}`);
-await tap('同意してはじめる');
+await tap('はじめる');
 await page.evaluate(() => window.__seed());
 await page.reload({ waitUntil:'domcontentloaded' });
 await page.waitForTimeout(1200);
-await tap('同意してはじめる');
+await tap('はじめる');
 ok('プリクラ帳を開く', await tap('プリクラ帳', 2500));
 // 並びを読む（見本の絵の中身で判別）
 const read = async () => page.evaluate(async () => {

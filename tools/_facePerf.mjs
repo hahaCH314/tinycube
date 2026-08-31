@@ -14,7 +14,7 @@ const 測る = async (ラベル, 選ぶ) => {
   await page.waitForTimeout(1200);
   const tap = async (t, ms=900) => { const e=page.locator('button',{hasText:t}).filter({visible:true}).first();
     if(!(await e.count())) return false; await e.click({force:true}).catch(()=>{}); await page.waitForTimeout(ms); return true; };
-  await tap('同意してはじめる');
+  await tap('はじめる');
   await tap('動画を撮る');
   await tap('自分を写す', 2500);
   await tap('フレームを選ぶ', 1200);

@@ -27,7 +27,7 @@ const 生きてる = async () => {
   // 画面が応答していれば 700ms で 30 コマ以上進む
   return (b2 - a) > 20;
 };
-await tap('同意してはじめる');
+await tap('はじめる');
 await tap('写真を撮る');
 await tap('自分を写す', 2500);
 ok('カメラが動いている', await 生きてる());

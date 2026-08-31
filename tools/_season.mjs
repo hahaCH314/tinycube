@@ -25,7 +25,7 @@ for (const [ラベル, 日付] of [['期間中（10月1日）','2026-10-01T12:00
   const tap = async (t, ms=1000) => { const e=page.locator('button',{hasText:t}).filter({visible:true}).first();
     if(!(await e.count())) return false; await e.click({force:true}).catch(()=>{}); await page.waitForTimeout(ms); return true; };
   console.log(`\n=== ${ラベル} ===`);
-  await tap('同意してはじめる');
+  await tap('はじめる');
   await tap('写真を撮る');
   await tap('自分を写す', 2500);
   await tap('フレームを選ぶ', 1500);

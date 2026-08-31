@@ -88,7 +88,7 @@ const measure = async (label) => {
 console.log(`\n=== カメラの重さ（CPU ${RATE}倍遅く）===\n`);
 await page.goto('http://localhost:5440/?fps=2', { waitUntil:'domcontentloaded' });
 await page.waitForTimeout(2000);
-await tap('同意してはじめる');
+await tap('はじめる');
 await tap('写真を撮る');
 await tap('自分を写す', 3000);
 

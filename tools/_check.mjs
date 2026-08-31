@@ -11,7 +11,7 @@ await page.waitForTimeout(1500);
 const tap = async (t, ms=1200) => { const e=page.locator('button',{hasText:t}).filter({visible:true}).first();
   if(!(await e.count())) return false; await e.click({force:true}).catch(()=>{}); await page.waitForTimeout(ms); return true; };
 const ok=(n,v)=>console.log(`  ${v?'OK  ':'NG  '} ${n}`);
-await tap('同意してはじめる'); await tap('写真を撮る'); await tap('自分を写す',2500);
+await tap('はじめる'); await tap('写真を撮る'); await tap('自分を写す',2500);
 await tap('フレームを選ぶ'); await page.waitForTimeout(1500);
 // 全部読み込ませる
 await page.evaluate(async()=>{ const el=document.querySelector('.frame-picker')||document.scrollingElement;

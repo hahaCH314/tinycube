@@ -24,7 +24,7 @@ const 四隅 = async () => page.evaluate(() => {
   const m = 12;
   return [p(m,m), p(c.width-m,m), p(m,c.height-m), p(c.width-m,c.height-m)];
 });
-await tap('同意してはじめる');
+await tap('はじめる');
 // ⚠️ **写真の道で確かめること。** 動画の道だと、戻ったあとに一覧が
 //    再表示されず（タイル0件）、枠を選び直せない。ズームの作りは
 //    どちらも同じなので、通るほうで見る（2026-08-30）
