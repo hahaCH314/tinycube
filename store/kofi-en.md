@@ -1,3 +1,9 @@
+> ⚠️ **この店はもう閉じています（2026-08-31 時点）。**
+> Ko-fi での販売は終わり、買う道はストアの課金だけになりました。
+> ここに書いてある「動画に声とエフェクトを乗せる」も、いまのアプリには
+> ありません（動画の機能は 2026-08-31 に廃止）。
+> **記録として残してあるだけです。そのまま使わないこと。**
+
 # Ko-fi Shop listing (English)
 
 Title: **tinyCUBE — 53 Frame Pack: Fan Colours, Face Cut-outs, Sparkle (watermark removal included)**
