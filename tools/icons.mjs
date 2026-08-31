@@ -9,6 +9,14 @@
 // maskable は端末側が丸や角丸に切り抜くので、角の丸みを外して四角いまま出す。
 //
 // 焼くのは headless Chrome。SVG をそのまま描けるので、画像ライブラリが要らない。
+//
+// ⚠️ **絵は縁いっぱいまで使うこと。周りに余白を残さない。**（2026-08-31）
+//    支給された新ロゴは「白い紙に貼ったシール」の絵で、周囲に薄い余白が
+//    焼き込まれていた。そのまま出したら、ホーム画面が**白い四角の中に
+//    小さいロゴ**になった。ic_launcher_round は端末が丸く抜く前提なので、
+//    角が不透明だと丸くならない。
+//    → SVG の中で **viewBox を絵の実寸に切って**、余白を外に追い出す。
+//    元絵を差し替えたときは、`tools/_logobox.mjs` で余白を測り直すこと。
 
 import { spawn } from 'node:child_process';
 import { writeFileSync, readFileSync, mkdtempSync, existsSync, mkdirSync } from 'node:fs';
@@ -46,6 +54,9 @@ const JOBS = [
 
   // Play Console に出す「ストアのアイコン」。512x512 の PNG が要る
   { out: 'store/play-icon-512.png', size: 512, maskable: true },
+
+  // iOS のアプリアイコン（Xcode の「単一サイズ」形式。1024px が1枚あればよい）
+  { out: 'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png', size: 1024 },
 ];
 
 if (!existsSync(CHROME)) {
@@ -54,7 +65,23 @@ if (!existsSync(CHROME)) {
 }
 if (!existsSync(SVG)) { console.error('無い:', SVG); process.exit(1); }
 
-const source = readFileSync(SVG, 'utf8');
+let source = readFileSync(SVG, 'utf8');
+
+// ⚠️ favicon.svg は絵を **`href="/logo-src.png"` で外から指している**
+//    （中に base64 で埋めると 2.3MB になり、JS 本体の 7.8 倍になる）。
+//    ここは file:// で開くので、その絶対パスは解決できない。
+//    **焼くときだけ**中身を data URI に差し替える
+{
+  const m = source.match(/href="\/([^"]+)"/);
+  if (m) {
+    const img = resolve('public', m[1]);
+    if (!existsSync(img)) { console.error('絵が無い:', img); process.exit(1); }
+    const ext = m[1].endsWith('.svg') ? 'svg+xml' : m[1].endsWith('.webp') ? 'webp' : 'png';
+    const b64 = readFileSync(img).toString('base64');
+    source = source.replace(m[0], `href="data:image/${ext};base64,${b64}"`);
+  }
+}
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const profile = mkdtempSync(join(tmpdir(), 'icons-'));
 const chrome = spawn(CHROME, [
